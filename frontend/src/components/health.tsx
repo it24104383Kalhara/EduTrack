@@ -33,19 +33,33 @@ function Health({ onLoginSuccess }: HealthProps) {
       {/* LEFT HERO SECTION */}
       <div className="hero">
         <div className="hero-content">
-          <h1 className="title">Student First Aid & Health Management</h1>
+          {/* Main Title */}
+          <h1 className="title">
+            <span className="highlight">Student First Aid</span> & Health
+            Management
+          </h1>
 
+          {/* Description */}
           <p className="description">
             A smart system to digitally record student clinic visits, symptoms,
-            treatments and emergency details. Reduce paperwork and securely
+            treatments, and emergency details. Reduce paperwork and securely
             manage student health records.
           </p>
 
+          {/* Features with icons */}
           <ul className="features">
-            <li>✔ Record student medical visits</li>
-            <li>✔ Track symptoms & treatments</li>
-            <li>✔ Inform parents quickly</li>
-            <li>✔ Find nearest hospitals</li>
+            <li>
+              <span className="icon">🏥</span> Record student medical visits
+            </li>
+            <li>
+              <span className="icon">💊</span> Track symptoms & treatments
+            </li>
+            <li>
+              <span className="icon">📩</span> Inform parents quickly
+            </li>
+            <li>
+              <span className="icon">📍</span> Find nearest hospitals
+            </li>
           </ul>
         </div>
       </div>
