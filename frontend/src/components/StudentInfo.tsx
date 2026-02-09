@@ -1,5 +1,9 @@
 import { useState } from "react";
+import emailjs from "@emailjs/browser";
 import "./StudentInfo.css";
+
+// Initialize EmailJS
+emailjs.init("rYGO2WGoNycyRkdCN"); // Replace with your actual public key
 
 interface StudentInfoProps {
   onLogout: () => void;
@@ -11,6 +15,7 @@ function StudentInfo({ onLogout }: StudentInfoProps) {
     age: "",
     date: "",
     symptoms: "",
+    parentEmail: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,10 +28,43 @@ function StudentInfo({ onLogout }: StudentInfoProps) {
       });
       const data = await response.json();
       alert(data.message);
-      setStudent({ name: "", age: "", date: "", symptoms: "" });
+      setStudent({
+        name: "",
+        age: "",
+        date: "",
+        symptoms: "",
+        parentEmail: "",
+      });
     } catch (error) {
       alert("Connection error");
     }
+  };
+
+  const handleSendEmail = () => {
+    if (!student.parentEmail || !student.name) {
+      alert("Please enter student name and parent email");
+      return;
+    }
+
+    const templateParams = {
+      to_email: student.parentEmail,
+      student_name: student.name,
+      symptoms: student.symptoms,
+    };
+
+    emailjs
+      .send(
+        "service_8f43bgp", // Replace with your service ID
+        "template_aegm6lm", // Replace with your template ID
+        templateParams,
+      )
+      .then(() => {
+        alert(`Email sent successfully to ${student.parentEmail}!`);
+      })
+      .catch((error) => {
+        console.error(error);
+        alert("Failed to send email");
+      });
   };
 
   return (
@@ -62,7 +100,19 @@ function StudentInfo({ onLogout }: StudentInfoProps) {
           onChange={(e) => setStudent({ ...student, symptoms: e.target.value })}
           required
         />
+        <input
+          type="email"
+          placeholder="Parent Email"
+          value={student.parentEmail}
+          onChange={(e) =>
+            setStudent({ ...student, parentEmail: e.target.value })
+          }
+          required
+        />
         <button type="submit">Add Student</button>
+        <button type="button" onClick={handleSendEmail} className="email-btn">
+          Send Email to Parent
+        </button>
       </form>
     </div>
   );
