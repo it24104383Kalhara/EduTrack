@@ -626,6 +626,88 @@ x-user-role: Coach
 
 ---
 
+## Real-Time Alerts & Verification Endpoints
+
+### 1. Initialize Alerts System (One-Time Setup)
+**POST** `/alerts/initialize`
+
+**Access:** Admin only
+
+**Purpose:** Creates the alerts table in the database. Run this once during initial setup.
+
+### 2. Create Alert
+**POST** `/alerts`
+
+**Access:** Admin, Coach, Teacher
+
+**Request Body:**
+```json
+{
+  "alert_type": "Missing_Student",
+  "severity": "High",
+  "title": "Student missed practice",
+  "message": "Student ID 101 did not attend scheduled football practice",
+  "related_student_id": 101,
+  "related_session_id": 5
+}
+```
+
+**Alert Types:** Missing_Student | Equipment_Issue | Facility_Conflict | General
+**Severity:** Low | Medium | High | Critical
+**Status:** Pending | Acknowledged | Resolved
+
+### 3. Get Alerts
+**GET** `/alerts?status=Pending&alert_type=Missing_Student`
+
+**Access:** All authenticated users
+
+### 4. Update Alert Status
+**PUT** `/alerts/:id/status`
+
+**Access:** Admin, Coach
+
+**Request Body:**
+```json
+{
+  "status": "Acknowledged"
+}
+```
+
+### 5. Check for Missing Students (Automatic)
+**POST** `/alerts/check-missing/:sessionId`
+
+**Access:** Admin, Coach
+
+**Purpose:** Automatically creates alerts for students who didn't attend their scheduled practice.
+
+**Response:**
+```json
+{
+  "message": "Checked for missing students",
+  "alerts_created": 3,
+  "session_id": 5
+}
+```
+
+### 6. Get Alert Statistics
+**GET** `/alerts/stats`
+
+**Access:** Admin, Coach
+
+**Response:**
+```json
+{
+  "total_alerts": 45,
+  "pending": 12,
+  "by_type": {
+    "missing_student": 30,
+    "equipment_issue": 8
+  }
+}
+```
+
+---
+
 ## Testing with Postman/Thunder Client
 
 ### Example: Create an Activity
