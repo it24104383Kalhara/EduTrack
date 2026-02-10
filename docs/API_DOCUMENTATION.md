@@ -440,6 +440,192 @@ x-user-role: Coach
 
 ---
 
+## Attendance & Practice Session Endpoints
+
+### 1. Create Practice Session
+**POST** `/attendance/sessions`
+
+**Access:** Admin, Coach
+
+**Request Body:**
+```json
+{
+  "activity_id": 1,
+  "coach_id": 5,
+  "start_time": "2026-02-15T14:00:00",
+  "end_time": "2026-02-15T16:00:00",
+  "location_id": 1
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "activity_id": 1,
+  "coach_id": 5,
+  "start_time": "2026-02-15T14:00:00",
+  "end_time": "2026-02-15T16:00:00",
+  "location_id": 1
+}
+```
+
+### 2. Get Practice Sessions
+**GET** `/attendance/sessions?activity_id=1&coach_id=5`
+
+**Access:** All authenticated users
+
+**Query Parameters:**
+- `activity_id` (optional): Filter by activity
+- `coach_id` (optional): Filter by coach
+
+### 3. Get Single Session
+**GET** `/attendance/sessions/:id`
+
+**Access:** All authenticated users
+
+### 4. Delete Practice Session
+**DELETE** `/attendance/sessions/:id`
+
+**Access:** Admin, Coach
+
+### 5. Mark Attendance (Single Student)
+**POST** `/attendance/mark`
+
+**Access:** Admin, Coach
+
+**Request Body:**
+```json
+{
+  "session_id": 1,
+  "student_id": 101,
+  "status": "Present"
+}
+```
+
+**Status Options:** Present | Absent | Excused | Late
+
+**Response:**
+```json
+{
+  "id": 1,
+  "session_id": 1,
+  "student_id": 101,
+  "status": "Present",
+  "message": "Attendance marked successfully"
+}
+```
+
+### 6. Mark Attendance (Bulk)
+**POST** `/attendance/mark-bulk`
+
+**Access:** Admin, Coach
+
+**Request Body:**
+```json
+{
+  "session_id": 1,
+  "attendances": [
+    { "student_id": 101, "status": "Present" },
+    { "student_id": 102, "status": "Late" },
+    { "student_id": 103, "status": "Absent" }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Bulk attendance marked successfully",
+  "count": 3,
+  "results": [
+    { "id": 1, "student_id": 101, "status": "Present" },
+    { "id": 2, "student_id": 102, "status": "Late" },
+    { "id": 3, "student_id": 103, "status": "Absent" }
+  ]
+}
+```
+
+### 7. Get Session Attendance
+**GET** `/attendance/session/:sessionId`
+
+**Access:** All authenticated users
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "session_id": 1,
+    "student_id": 101,
+    "status": "Present",
+    "recorded_at": "2026-02-15T14:05:00.000Z"
+  }
+]
+```
+
+### 8. Get Student Attendance History
+**GET** `/attendance/student/:studentId`
+
+**Access:** All authenticated users
+
+### 9. Get Student Attendance Statistics
+**GET** `/attendance/student/:studentId/stats?activity_id=1`
+
+**Access:** All authenticated users
+
+**Query Parameters:**
+- `activity_id` (optional): Filter stats by specific activity
+
+**Response:**
+```json
+{
+  "student_id": 101,
+  "total_sessions": 20,
+  "present": 18,
+  "absent": 1,
+  "excused": 1,
+  "late": 0,
+  "attendance_rate": 90.00
+}
+```
+
+### 10. Verify Student Practice (For Teachers)
+**GET** `/attendance/verify/:studentId?time=2026-02-15T14:30:00`
+
+**Access:** Admin, Coach, Teacher
+
+**Query Parameters:**
+- `time` (optional): ISO datetime to check. Defaults to current time.
+
+**Use Case:** Teachers can verify if a student claiming to be at practice actually has a scheduled session.
+
+**Response (Has Practice):**
+```json
+{
+  "has_practice": true,
+  "session": {
+    "id": 1,
+    "activity_id": 1,
+    "coach_id": 5,
+    "start_time": "2026-02-15T14:00:00",
+    "end_time": "2026-02-15T16:00:00",
+    "location_id": 1
+  },
+  "message": "Student has a valid practice session"
+}
+```
+
+**Response (No Practice):**
+```json
+{
+  "has_practice": false,
+  "message": "Student does not have a scheduled practice at this time"
+}
+```
+
+---
+
 ## Testing with Postman/Thunder Client
 
 ### Example: Create an Activity
