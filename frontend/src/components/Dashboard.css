@@ -1,0 +1,59 @@
+.dashboard-page {
+  min-height: 100vh;
+  padding: 40px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.logout-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  background: #ff4d6d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.dashboard-page h1 {
+  color: white;
+  text-align: center;
+  font-size: 2.5em;
+  margin-bottom: 50px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-card {
+  background: white;
+  padding: 40px;
+  border-radius: 15px;
+  cursor: pointer;
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s;
+  text-align: center;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.dashboard-card h2 {
+  color: #667eea;
+  font-size: 1.8em;
+  margin-bottom: 15px;
+}
+
+.dashboard-card p {
+  color: #666;
+  font-size: 1.1em;
+}

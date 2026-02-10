@@ -6,7 +6,7 @@ import pool from "./db";
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = 5000;
 
 app.use(cors());
 app.use(express.json());
@@ -32,12 +32,13 @@ app.post("/api/login", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 app.post("/api/students", async (req, res) => {
-  const { name, age, date, symptoms } = req.body;
+  const { name, age, date, symptoms, parentEmail } = req.body;
   try {
     await pool.query(
-      "INSERT INTO students (name, age, date, symptoms) VALUES (?, ?, ?, ?)",
-      [name, age, date, symptoms],
+      "INSERT INTO students (name, age, date, symptoms, parent_email) VALUES (?, ?, ?, ?, ?)",
+      [name, age, date, symptoms, parentEmail],
     );
     res.json({ success: true, message: "Student added successfully" });
   } catch (error) {
@@ -46,6 +47,18 @@ app.post("/api/students", async (req, res) => {
   }
 });
 
+app.get("/api/students", async (req, res) => {
+  console.log("GET /api/students called");
+  try {
+    const [rows] = await pool.query("SELECT * FROM students ORDER BY id DESC");
+    console.log("Rows from DB:", rows);
+    res.json(rows);
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json([]);
+  }
+});
+
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`Server running on port ${port}`);
 });

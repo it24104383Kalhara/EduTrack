@@ -3,13 +3,14 @@ import emailjs from "@emailjs/browser";
 import "./StudentInfo.css";
 
 // Initialize EmailJS
-emailjs.init("rYGO2WGoNycyRkdCN"); // Replace with your actual public key
+emailjs.init("rYGO2WGoNycyRkdCN");
 
 interface StudentInfoProps {
   onLogout: () => void;
+  onBack: () => void;
 }
 
-function StudentInfo({ onLogout }: StudentInfoProps) {
+function StudentInfo({ onLogout, onBack }: StudentInfoProps) {
   const [student, setStudent] = useState({
     name: "",
     age: "",
@@ -53,11 +54,7 @@ function StudentInfo({ onLogout }: StudentInfoProps) {
     };
 
     emailjs
-      .send(
-        "service_8f43bgp", // Replace with your service ID
-        "template_aegm6lm", // Replace with your template ID
-        templateParams,
-      )
+      .send("service_8f43bgp", "template_aegm6lm", templateParams)
       .then(() => {
         alert(`Email sent successfully to ${student.parentEmail}!`);
       })
@@ -69,6 +66,9 @@ function StudentInfo({ onLogout }: StudentInfoProps) {
 
   return (
     <div className="student-page">
+      <button className="back-btn" onClick={onBack}>
+        ← Back to Dashboard
+      </button>
       <button className="logout-btn" onClick={onLogout}>
         Logout
       </button>
