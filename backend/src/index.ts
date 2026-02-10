@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import sportActivityRoutes from './routes/sportActivityRoutes';
+import membershipRoutes from './routes/membershipRoutes';
 
 dotenv.config();
 
@@ -13,6 +14,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/sports', sportActivityRoutes);
+app.use('/api/sports/memberships', membershipRoutes);
 
 app.get('/', (req, res) => {
     res.send('EduTrack Backend is running!');
