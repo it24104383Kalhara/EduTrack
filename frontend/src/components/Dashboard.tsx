@@ -4,15 +4,20 @@ interface DashboardProps {
   onLogout: () => void;
   onNavigateToStudentForm: () => void;
   onNavigateToViewStudents: () => void;
+  onNavigateToResetPassword: () => void;
 }
 
 function Dashboard({
   onLogout,
   onNavigateToStudentForm,
   onNavigateToViewStudents,
+  onNavigateToResetPassword,
 }: DashboardProps) {
   return (
     <div className="dashboard-page">
+      <button className="reset-btn" onClick={onNavigateToResetPassword}>
+        Reset Password
+      </button>
       <button className="logout-btn" onClick={onLogout}>
         Logout
       </button>

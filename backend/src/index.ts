@@ -59,6 +59,30 @@ app.get("/api/students", async (req, res) => {
   }
 });
 
+app.post("/api/reset-password", async (req, res) => {
+  const { oldPassword, newPassword, username } = req.body;
+  try {
+    const [rows]: any = await pool.query(
+      "SELECT * FROM users WHERE username = ? AND password = ?",
+      [username, oldPassword],
+    );
+
+    if (rows.length === 0) {
+      return res.json({ success: false, message: "Old password is incorrect" });
+    }
+
+    await pool.query("UPDATE users SET password = ? WHERE username = ?", [
+      newPassword,
+      username,
+    ]);
+
+    res.json({ success: true, message: "Password reset successfully!" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

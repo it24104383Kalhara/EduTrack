@@ -3,21 +3,29 @@ import Health from "./components/health";
 import Dashboard from "./components/Dashboard";
 import StudentInfo from "./components/StudentInfo";
 import ViewStudents from "./components/ViewStudents";
+import ResetPassword from "./components/ResetPassword";
 import "./App.css";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState("");
   const [currentPage, setCurrentPage] = useState<
-    "dashboard" | "studentForm" | "viewStudents"
+    "dashboard" | "studentForm" | "viewStudents" | "resetPassword"
   >("dashboard");
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setUsername("");
     setCurrentPage("dashboard");
   };
 
+  const handleLoginSuccess = (user: string) => {
+    setUsername(user);
+    setIsLoggedIn(true);
+  };
+
   if (!isLoggedIn) {
-    return <Health onLoginSuccess={() => setIsLoggedIn(true)} />;
+    return <Health onLoginSuccess={handleLoginSuccess} />;
   }
 
   if (currentPage === "studentForm") {
@@ -38,11 +46,21 @@ function App() {
     );
   }
 
+  if (currentPage === "resetPassword") {
+    return (
+      <ResetPassword
+        onBack={() => setCurrentPage("dashboard")}
+        username={username}
+      />
+    );
+  }
+
   return (
     <Dashboard
       onLogout={handleLogout}
       onNavigateToStudentForm={() => setCurrentPage("studentForm")}
       onNavigateToViewStudents={() => setCurrentPage("viewStudents")}
+      onNavigateToResetPassword={() => setCurrentPage("resetPassword")}
     />
   );
 }

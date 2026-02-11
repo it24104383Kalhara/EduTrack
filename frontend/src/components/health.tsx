@@ -2,7 +2,7 @@ import { useState } from "react";
 import "./health.css";
 
 interface HealthProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (username: string) => void;
 }
 
 function Health({ onLoginSuccess }: HealthProps) {
@@ -19,7 +19,7 @@ function Health({ onLoginSuccess }: HealthProps) {
       });
       const data = await response.json();
       if (data.success) {
-        onLoginSuccess();
+        onLoginSuccess(username);
       } else {
         alert(data.message);
       }
