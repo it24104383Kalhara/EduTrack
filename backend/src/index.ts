@@ -83,6 +83,17 @@ app.post("/api/reset-password", async (req, res) => {
   }
 });
 
+app.delete("/api/students/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query("DELETE FROM students WHERE id = ?", [id]);
+    res.json({ success: true, message: "Student deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

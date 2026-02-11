@@ -20,6 +20,10 @@ function ViewStudents({ onLogout, onBack }: ViewStudentsProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = () => {
     fetch("http://localhost:5000/api/students")
       .then((res) => res.json())
       .then((data) => {
@@ -30,7 +34,27 @@ function ViewStudents({ onLogout, onBack }: ViewStudentsProps) {
         console.error(err);
         setLoading(false);
       });
-  }, []);
+  };
+
+  const handleDelete = async (id: number, name: string) => {
+    if (!confirm(`Are you sure you want to delete ${name}?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/students/${id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        alert(data.message);
+        fetchStudents(); // Refresh the list
+      }
+    } catch (error) {
+      alert("Failed to delete student");
+    }
+  };
 
   return (
     <div className="view-students-page">
@@ -52,6 +76,12 @@ function ViewStudents({ onLogout, onBack }: ViewStudentsProps) {
         <div className="students-grid">
           {students.map((student) => (
             <div key={student.id} className="student-card">
+              <button
+                className="delete-btn"
+                onClick={() => handleDelete(student.id, student.name)}
+              >
+                ✕
+              </button>
               <h2>{student.name}</h2>
               <p>
                 <strong>Age:</strong> {student.age}
