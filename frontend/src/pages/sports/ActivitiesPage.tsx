@@ -2,13 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { activityService } from '../../services/api';
 import { useAuth } from '../../utils/auth';
 import { useState } from 'react';
-import {
-    PlusIcon,
-    TrashIcon,
-    AcademicCapIcon,
-    TrophyIcon,
-    UserGroupIcon
-} from '@heroicons/react/24/outline';
+import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
+import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
+import AcademicCapIcon from '@heroicons/react/24/outline/AcademicCapIcon';
+import TrophyIcon from '@heroicons/react/24/outline/TrophyIcon';
+import UserGroupIcon from '@heroicons/react/24/outline/UserGroupIcon';
 
 export default function ActivitiesPage() {
     const { user } = useAuth();
