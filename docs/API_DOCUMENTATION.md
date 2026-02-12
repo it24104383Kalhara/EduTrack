@@ -708,6 +708,139 @@ x-user-role: Coach
 
 ---
 
+## Achievement & Match Endpoints
+
+### 1. Create Match (Upcoming or Past)
+**POST** `/achievements/matches`
+
+**Access:** Admin, Coach
+
+**Request Body:**
+```json
+{
+  "activity_id": 1,
+  "date": "2026-02-20",
+  "opponent": "St. Peters College",
+  "result": "Upcoming",
+  "location": "Home Ground",
+  "notes": "Big match of the season"
+}
+```
+
+**Result Options:** Win | Loss | Draw | Upcoming
+
+**Response:**
+```json
+{
+  "id": 1,
+  "activity_id": 1,
+  "date": "2026-02-20",
+  "opponent": "St. Peters College",
+  "result": "Upcoming",
+  "location": "Home Ground",
+  "notes": "Big match of the season",
+  "message": "Match created successfully"
+}
+```
+
+### 2. Get Matches
+**GET** `/achievements/matches?activity_id=1`
+
+**Access:** All authenticated users
+
+**Query Parameters:**
+- `activity_id` (optional): Filter matches by activity
+
+### 3. Update Match Result
+**PUT** `/achievements/matches/:id`
+
+**Access:** Admin, Coach
+
+**Request Body:**
+```json
+{
+  "result": "Win",
+  "score_team": 2,
+  "score_opponent": 1,
+  "notes": "Hard fought victory"
+}
+```
+
+### 4. Delete Match
+**DELETE** `/achievements/matches/:id`
+
+**Access:** Admin only
+
+### 5. Add Achievement / Merit Points
+**POST** `/achievements/achievements`
+
+**Access:** Admin, Coach
+
+**Request Body:**
+```json
+{
+  "student_id": 101,
+  "activity_id": 1,
+  "match_id": 1,
+  "title": "Man of the Match",
+  "description": "Scored the winning goal",
+  "date": "2026-02-20",
+  "merit_points": 50,
+  "type": "Match_Award"
+}
+```
+
+**Achievement Types:** Match_Award | Season_Award | Special_Recognition | Participation
+
+### 6. Get Student Sports CV
+**GET** `/achievements/cv/:studentId`
+
+**Access:** All authenticated users
+
+**Response:**
+```json
+{
+  "total_merit_points": 120,
+  "achievements": [
+    {
+      "id": 1,
+      "title": "Man of the Match",
+      "merit_points": 50,
+      "date": "2026-02-20",
+      "type": "Match_Award"
+    }
+  ],
+  "current_activities": [
+    {
+      "id": 10,
+      "activity_name": "Football",
+      "role": "Captain"
+    }
+  ]
+}
+```
+
+### 7. Get Leaderboard
+**GET** `/achievements/leaderboard?limit=10`
+
+**Access:** All authenticated users
+
+**Response:**
+```json
+[
+  {
+    "student_id": 101,
+    "total_points": 120
+  },
+  {
+    "student_id": 105,
+    "total_points": 95
+  }
+]
+```
+
+---
+
 ## Testing with Postman/Thunder Client
 
 ### Example: Create an Activity
