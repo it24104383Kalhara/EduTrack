@@ -110,14 +110,22 @@ export default function ActivitiesPage() {
 
                             <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-sm">
                                 <span className="text-gray-400 text-xs">ID: {activity.id}</span>
-                                {(user?.role === 'Admin') && (
-                                    <button
-                                        onClick={() => handleDelete(activity.id)}
-                                        className="text-gray-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition"
+                                <div className="flex gap-2">
+                                    <a
+                                        href={`/sports/activities/${activity.id}/members`}
+                                        className="text-indigo-600 hover:text-indigo-900 font-medium text-xs bg-indigo-50 px-2 py-1 rounded hover:bg-indigo-100 transition"
                                     >
-                                        <TrashIcon className="h-4 w-4" />
-                                    </button>
-                                )}
+                                        View Members
+                                    </a>
+                                    {(user?.role === 'Admin') && (
+                                        <button
+                                            onClick={() => handleDelete(activity.id)}
+                                            className="text-gray-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition"
+                                        >
+                                            <TrashIcon className="h-4 w-4" />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>

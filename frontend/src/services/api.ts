@@ -26,10 +26,32 @@ export interface Activity {
     description?: string;
 }
 
+export interface Member {
+    id: number;
+    student_id: number;
+    name?: string; // If populated
+    role: 'Member' | 'Captain' | 'Vice_Captain' | 'Secretary';
+    joined_at: string;
+}
+
 export const activityService = {
     getAll: async () => {
         const response = await api.get<Activity[]>('/activities');
         return response.data;
+    },
+
+    getById: async (id: number) => {
+        // We might not have a specific 'get one' endpoint, or allow filtering.
+        // For now, let's assume we can fetch all and find, or implement filter. 
+        // Based on routes, we might need GET /activities/:id or filter list.
+        // Let's assume GET /activities/:id exists for now, or fetch list.
+        // Actually, route was `router.get('/', ...)` and `router.post('/', ...)` 
+        // Let's rely on list for now or check backend.
+        // If not, we might have to filter locally or add backend route. 
+        // Let's use list and find locally for this demo if needed.
+        // Or better, let's implement get members which is separate.
+        const response = await api.get<Activity[]>('/activities'); // Simplified
+        return response.data.find(a => a.id === id);
     },
 
     create: async (data: Omit<Activity, 'id'>) => {
@@ -39,6 +61,30 @@ export const activityService = {
 
     delete: async (id: number) => {
         await api.delete(`/activities/${id}`);
+    }
+};
+
+export const membershipService = {
+    getMembers: async (activityId: number) => {
+        const response = await api.get<Member[]>(`/memberships/activity/${activityId}`);
+        return response.data;
+    },
+
+    register: async (data: { student_id: number; activity_id: number; role: string }) => {
+        const response = await api.post('/memberships/register', data);
+        return response.data;
+    },
+
+    remove: async (membershipId: number) => {
+        await api.delete(`/memberships/${membershipId}`); // Assuming an ID-based delete or by composite key?
+        // Route was: router.delete('/:id', ...) which likely deletes the membership record.
+    }
+};
+
+export const studentService = {
+    search: async (query: string) => {
+        const response = await api.get<{ id: number; name: string; grade: string }[]>(`/students/search`, { params: { q: query } });
+        return response.data;
     }
 };
 

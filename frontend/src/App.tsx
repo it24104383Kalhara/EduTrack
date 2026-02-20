@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import LoginPage from "./pages/auth/LoginPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import ActivitiesPage from "./pages/sports/ActivitiesPage";
+import ActivityMembersPage from "./pages/sports/ActivityMembersPage";
 import { ProtectedRoute } from "./utils/auth";
 import { useState } from "react";
 
@@ -29,6 +30,16 @@ function App() {
                 {/* Wrap specific page in layout */}
                 <DashboardLayout>
                   <ActivitiesPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sports/activities/:id/members"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <ActivityMembersPage />
                 </DashboardLayout>
               </ProtectedRoute>
             }

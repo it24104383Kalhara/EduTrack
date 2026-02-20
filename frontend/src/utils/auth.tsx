@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import React from 'react';
 
 export const useAuth = () => {
     const navigate = useNavigate();
@@ -21,7 +22,7 @@ export const useAuth = () => {
     return { user, login, logout, isAuthenticated: !!user };
 };
 
-export const ProtectedRoute = ({ children, allowedRoles }: { children: JSX.Element, allowedRoles?: string[] }) => {
+export const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
     const { user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
 
