@@ -29,9 +29,28 @@ export interface Activity {
 export interface Member {
     id: number;
     student_id: number;
-    name?: string; // If populated
+    name?: string;
     role: 'Member' | 'Captain' | 'Vice_Captain' | 'Secretary';
     joined_at: string;
+}
+
+export interface PracticeSession {
+    id: number;
+    activity_id: number;
+    coach_id: number;
+    start_time: string;
+    end_time: string;
+    location_id?: number;
+}
+
+export type AttendanceStatus = 'Present' | 'Absent' | 'Excused' | 'Late';
+
+export interface AttendanceRecord {
+    id: number;
+    session_id: number;
+    student_id: number;
+    status: AttendanceStatus;
+    recorded_at?: string;
 }
 
 export const activityService = {
@@ -86,6 +105,32 @@ export const studentService = {
         const response = await api.get<{ id: number; name: string; grade: string }[]>(`/students/search`, { params: { q: query } });
         return response.data;
     }
+};
+
+export const attendanceService = {
+    getSessions: async (activityId?: number) => {
+        const response = await api.get<PracticeSession[]>('/attendance/sessions', { params: { activity_id: activityId } });
+        return response.data;
+    },
+    createSession: async (data: Omit<PracticeSession, 'id'>) => {
+        const response = await api.post<PracticeSession>('/attendance/sessions', data);
+        return response.data;
+    },
+    deleteSession: async (id: number) => {
+        await api.delete(`/attendance/sessions/${id}`);
+    },
+    getSessionAttendance: async (sessionId: number) => {
+        const response = await api.get<AttendanceRecord[]>(`/attendance/session/${sessionId}`);
+        return response.data;
+    },
+    bulkMark: async (session_id: number, attendances: { student_id: number; status: AttendanceStatus }[]) => {
+        const response = await api.post('/attendance/mark-bulk', { session_id, attendances });
+        return response.data;
+    },
+    mark: async (session_id: number, student_id: number, status: AttendanceStatus) => {
+        const response = await api.post('/attendance/mark', { session_id, student_id, status });
+        return response.data;
+    },
 };
 
 export default api;

@@ -41,7 +41,7 @@
     - [x] **Registration UI** <!-- id: 32 -->
         - [x] Student Lookup & Assignment <!-- id: 33 -->
     - [ ] **Attendance Interface** <!-- id: 34 -->
-        - [ ] Mobile-friendly check-in for coaches <!-- id: 35 -->
+        - [x] Mobile-friendly check-in for coaches <!-- id: 35 -->
         - [ ] **Sport Attendance Report Workflow** <!-- id: 50 -->
             - [ ] Coach: Generate daily sport attendance report <!-- id: 51 -->
             - [ ] Coach: Submit report to Principal (via API) <!-- id: 52 -->

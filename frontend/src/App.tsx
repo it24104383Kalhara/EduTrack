@@ -4,6 +4,7 @@ import LoginPage from "./pages/auth/LoginPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import ActivitiesPage from "./pages/sports/ActivitiesPage";
 import ActivityMembersPage from "./pages/sports/ActivityMembersPage";
+import AttendancePage from "./pages/sports/AttendancePage";
 import { ProtectedRoute } from "./utils/auth";
 import { useState } from "react";
 
@@ -40,6 +41,16 @@ function App() {
               <ProtectedRoute>
                 <DashboardLayout>
                   <ActivityMembersPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sports/attendance"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <AttendancePage />
                 </DashboardLayout>
               </ProtectedRoute>
             }
