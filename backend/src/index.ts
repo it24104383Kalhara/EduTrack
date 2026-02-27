@@ -3,9 +3,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import gradeRoutes from './routes/grades-simple';
 import studentRoutes from './routes/students';
+import subjectRoutes from './routes/subjects';
 import { testConnection } from './config/database';
 import { StudentModel } from './models/Student';
 import { GradeModel } from './models/Grade';
+import { SubjectModel } from './models/Subject';
 
 dotenv.config();
 
@@ -27,6 +29,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/grades', gradeRoutes);
 app.use('/api/students', studentRoutes);
+app.use('/api/subjects', subjectRoutes);
 
 // Initialize database and start server
 const initializeDatabase = async () => {
@@ -41,9 +44,10 @@ const initializeDatabase = async () => {
     await StudentModel.createTable();
     await GradeModel.createTable();
     await GradeModel.createAssignmentsTable();
+    await SubjectModel.createTable();
     
     console.log('✅ Database initialized successfully');
-    console.log('📊 Tables: students, grades, student_assignments');
+    console.log('📊 Tables: students, grades, student_assignments, subjects');
     
   } catch (error) {
     console.error('❌ Database initialization failed:', error);
@@ -70,6 +74,12 @@ const startServer = async () => {
     console.log('  - GET  /api/students/:id - Get student by ID');
     console.log('  - PUT  /api/students/:id - Update student');
     console.log('  - DELETE /api/students/:id - Delete student');
+    console.log('  - GET  /api/subjects - Get all subjects');
+    console.log('  - POST /api/subjects - Create new subject');
+    console.log('  - GET  /api/subjects/:id - Get subject by ID');
+    console.log('  - PUT  /api/subjects/:id - Update subject');
+    console.log('  - DELETE /api/subjects/:id - Delete subject');
+    console.log('  - GET  /api/subjects/type/:type - Get subjects by type');
     console.log('  - GET  /health - Health check');
   });
 };

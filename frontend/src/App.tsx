@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import StudentRegistrationForm from './components/StudentRegistrationForm';
 import StudentList from './components/StudentList';
+import StudentRegistrationForm from './components/StudentRegistrationForm';
 import GradeManagement from './components/GradeManagement';
+import SubjectManagement from './components/SubjectManagement';
 import { gradeApi, studentApi } from './services/api';
 import './App.css';
 
@@ -13,7 +14,7 @@ declare global {
 }
 
 function App() {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'register' | 'list' | 'grades'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'register' | 'list' | 'grades' | 'subjects'>('dashboard');
   const [studentCount, setStudentCount] = useState(0);
   const [gradeCount, setGradeCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -158,9 +159,7 @@ function App() {
         {/* Navigation Menu */}
         <div style={{ 
           flex: 1, 
-          padding: '15px 12px',
-          overflow: 'auto',
-          maxHeight: 'calc(100vh - 140px)'
+          padding: '15px 12px'
         }}>
           <button
             onClick={() => setCurrentView('dashboard')}
@@ -397,6 +396,71 @@ function App() {
               }} />
             )}
           </button>
+
+          <button
+            onClick={() => setCurrentView('subjects')}
+            style={{
+              width: '100%',
+              padding: '12px',
+              background: currentView === 'subjects' 
+                ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' 
+                : 'rgba(30, 41, 59, 0.5)',
+              color: currentView === 'subjects' ? 'white' : '#e2e8f0',
+              border: currentView === 'subjects' ? 'none' : '1px solid rgba(148, 163, 184, 0.2)',
+              borderRadius: '12px',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '15px',
+              marginBottom: '8px',
+              textAlign: 'left',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+            onMouseOver={(e) => {
+              if (currentView !== 'subjects') {
+                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                e.currentTarget.style.transform = 'translateX(5px)';
+                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (currentView !== 'subjects') {
+                e.currentTarget.style.background = 'rgba(30, 41, 59, 0.5)';
+                e.currentTarget.style.transform = 'translateX(0)';
+                e.currentTarget.style.borderColor = 'rgba(148, 163, 184, 0.2)';
+              }
+            }}
+          >
+            <span style={{ 
+              fontSize: '1.3rem',
+              filter: currentView === 'subjects' ? 'drop-shadow(0 0 10px rgba(255,255,255,0.5))' : 'none'
+            }}>📖</span>
+            <div>
+              <div style={{ marginBottom: '4px' }}>Manage Subjects</div>
+              <div style={{
+                fontSize: '0.85rem',
+                opacity: currentView === 'subjects' ? 0.9 : 0.6,
+                fontWeight: '400'
+              }}>
+                Create and manage subjects
+              </div>
+            </div>
+            {currentView === 'subjects' && (
+              <div style={{
+                position: 'absolute',
+                right: '20px',
+                width: '8px',
+                height: '8px',
+                background: '#10b981',
+                borderRadius: '50%',
+                boxShadow: '0 0 10px #10b981'
+              }} />
+            )}
+          </button>
         </div>
 
         {/* Footer */}
@@ -607,7 +671,9 @@ function App() {
                 </div>
               </div>
             </div>
-          ) : currentView === 'register' ? <StudentRegistrationForm /> : currentView === 'grades' ? <GradeManagement /> : <StudentList />}
+          ) : currentView === 'register' ? <StudentRegistrationForm /> : currentView === 'grades' ? <GradeManagement /> : currentView === 'subjects' ? (
+            <SubjectManagement /> 
+          ) : <StudentList />}
         </div>
       </div>
     </div>
