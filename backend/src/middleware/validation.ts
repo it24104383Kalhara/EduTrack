@@ -150,6 +150,56 @@ export const validateStudentRegistration = (req: Request, res: Response, next: N
   next();
 };
 
+export const validateGradeCreation = (req: Request, res: Response, next: NextFunction) => {
+  const errors: ValidationError[] = [];
+  const grade: { grade?: number; grade_part?: string } = req.body;
+
+  // Validate required fields
+  if (!grade.grade || typeof grade.grade !== 'number') {
+    errors.push({
+      field: 'grade',
+      message: 'Grade number is required and must be a number'
+    });
+  }
+
+  if (!grade.grade_part || typeof grade.grade_part !== 'string') {
+    errors.push({
+      field: 'grade_part',
+      message: 'Grade part is required and must be a string'
+    });
+  }
+
+  // Validate grade number range (1-12)
+  if (grade.grade && (grade.grade < 1 || grade.grade > 12)) {
+    errors.push({
+      field: 'grade',
+      message: 'Grade number must be between 1 and 12'
+    });
+  }
+
+  // Validate grade part format (letters only, max 2 characters)
+  if (grade.grade_part && !/^[A-Za-z]{1,2}$/.test(grade.grade_part.trim())) {
+    errors.push({
+      field: 'grade_part',
+      message: 'Grade part must contain only letters (A-Z) and be 1-2 characters long'
+    });
+  }
+
+  // If there are validation errors, return them
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Grade validation failed',
+      errors,
+      timestamp: new Date().toISOString(),
+      endpoint: req.path
+    });
+  }
+
+  // If validation passes, continue to next middleware
+  next();
+};
+
 export const errorHandler = (error: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Error:', error);
 

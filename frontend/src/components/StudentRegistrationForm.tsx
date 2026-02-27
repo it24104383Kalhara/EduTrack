@@ -88,9 +88,14 @@ const StudentRegistrationForm: React.FC = () => {
     };
     
     // Store in localStorage for demo persistence
-    const existingStudents = JSON.parse(localStorage.getItem('demoStudents') || '[]');
+    const existingStudents = JSON.parse(localStorage.getItem('students') || '[]');
     existingStudents.push(newStudent);
-    localStorage.setItem('demoStudents', JSON.stringify(existingStudents));
+    localStorage.setItem('students', JSON.stringify(existingStudents));
+    
+    // Dispatch custom event to notify dashboard of changes
+    window.dispatchEvent(new CustomEvent('localStorageUpdated', { 
+      detail: { type: 'students', data: newStudent } 
+    }));
     
     // Set registration state for demo
     setRegistration({

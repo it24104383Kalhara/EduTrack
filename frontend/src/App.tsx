@@ -1,16 +1,94 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import StudentRegistrationForm from './components/StudentRegistrationForm';
 import StudentList from './components/StudentList';
+import GradeManagement from './components/GradeManagement';
+import { gradeApi, studentApi } from './services/api';
 import './App.css';
 
+// Extend Window interface for global refresh function
+declare global {
+  interface Window {
+    refreshDashboard?: () => Promise<void>;
+  }
+}
+
 function App() {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'register' | 'list'>('dashboard');
-  
-  // Get students from localStorage for demo
-  const getStudentCount = () => {
-    const students = JSON.parse(localStorage.getItem('demoStudents') || '[]');
-    return students.length;
+  const [currentView, setCurrentView] = useState<'dashboard' | 'register' | 'list' | 'grades'>('dashboard');
+  const [studentCount, setStudentCount] = useState(0);
+  const [gradeCount, setGradeCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCounts();
+  }, []);
+
+  const fetchCounts = async () => {
+    try {
+      // Fetch grades from backend API
+      const gradesData = await gradeApi.getAll();
+      setGradeCount(gradesData.length);
+      
+      // Fetch students from both localStorage and backend API
+      let totalStudents = 0;
+      
+      // Get students from localStorage (demo mode)
+      const localStorageStudents = JSON.parse(localStorage.getItem('students') || '[]');
+      totalStudents += localStorageStudents.length;
+      
+      // Get students from backend API
+      try {
+        const backendStudents = await studentApi.getAll();
+        totalStudents += backendStudents.length;
+      } catch (error) {
+        console.log('Backend API not available, using localStorage only');
+      }
+      
+      setStudentCount(totalStudents);
+    } catch (error) {
+      console.error('Failed to fetch counts:', error);
+      
+      // Fallback to localStorage only
+      const localStorageStudents = JSON.parse(localStorage.getItem('students') || '[]');
+      const localStorageGrades = JSON.parse(localStorage.getItem('grades') || '[]');
+      
+      setStudentCount(localStorageStudents.length);
+      setGradeCount(localStorageGrades.length);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Refresh counts when switching views
+  useEffect(() => {
+    if (currentView === 'dashboard') {
+      fetchCounts();
+    }
+  }, [currentView]);
+
+  // Global refresh function that child components can call
+  window.refreshDashboard = fetchCounts;
+
+  // Listen for localStorage changes to refresh dashboard
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'students' || e.key === 'grades') {
+        fetchCounts();
+      }
+    };
+
+    // Also listen for custom events from localStorage updates
+    const handleCustomStorageChange = () => {
+      fetchCounts();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('localStorageUpdated', handleCustomStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('localStorageUpdated', handleCustomStorageChange);
+    };
+  }, []);
 
   return (
     <div className="App" style={{ minHeight: '100vh', display: 'flex', background: '#0f172a' }}>
@@ -28,35 +106,36 @@ function App() {
         left: '0',
         top: '0',
         zIndex: '1000',
-        borderRight: '1px solid rgba(148, 163, 184, 0.1)'
+        borderRight: '1px solid rgba(148, 163, 184, 0.1)',
+        overflow: 'hidden'
       }}>
         {/* Logo/Brand */}
         <div style={{
           textAlign: 'center',
-          padding: '40px 30px',
+          padding: '20px 15px',
           borderBottom: '1px solid rgba(148, 163, 184, 0.1)',
           background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)'
         }}>
           <div style={{
-            width: '80px',
-            height: '80px',
-            borderRadius: '20px',
+            width: '50px',
+            height: '50px',
+            borderRadius: '12px',
             background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto 20px',
-            fontSize: '2.5rem',
+            margin: '0 auto 10px',
+            fontSize: '1.8rem',
             color: 'white',
             fontWeight: 'bold',
-            boxShadow: '0 10px 30px rgba(99, 102, 241, 0.3)',
+            boxShadow: '0 6px 15px rgba(99, 102, 241, 0.3)',
             transform: 'rotate(-5deg)'
           }}>
             📚
           </div>
           <h2 style={{
             margin: '0',
-            fontSize: '2rem',
+            fontSize: '1.4rem',
             fontWeight: '800',
             background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
             WebkitBackgroundClip: 'text',
@@ -67,8 +146,8 @@ function App() {
             EduTrack
           </h2>
           <p style={{
-            margin: '8px 0 0 0',
-            fontSize: '1rem',
+            margin: '3px 0 0 0',
+            fontSize: '0.75rem',
             color: '#94a3b8',
             fontWeight: '500'
           }}>
@@ -77,26 +156,31 @@ function App() {
         </div>
 
         {/* Navigation Menu */}
-        <div style={{ flex: 1, padding: '30px 20px' }}>
+        <div style={{ 
+          flex: 1, 
+          padding: '15px 12px',
+          overflow: 'auto',
+          maxHeight: 'calc(100vh - 140px)'
+        }}>
           <button
             onClick={() => setCurrentView('dashboard')}
             style={{
               width: '100%',
-              padding: '20px',
+              padding: '12px',
               background: currentView === 'dashboard' 
                 ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' 
                 : 'rgba(30, 41, 59, 0.5)',
               color: currentView === 'dashboard' ? 'white' : '#e2e8f0',
               border: currentView === 'dashboard' ? 'none' : '1px solid rgba(148, 163, 184, 0.2)',
-              borderRadius: '16px',
-              fontSize: '1.1rem',
+              borderRadius: '12px',
+              fontSize: '1rem',
               fontWeight: '600',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '20px',
-              marginBottom: '15px',
+              gap: '15px',
+              marginBottom: '8px',
               textAlign: 'left',
               position: 'relative',
               overflow: 'hidden'
@@ -104,7 +188,7 @@ function App() {
             onMouseOver={(e) => {
               if (currentView !== 'dashboard') {
                 e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
-                e.currentTarget.style.transform = 'translateX(8px)';
+                e.currentTarget.style.transform = 'translateX(5px)';
                 e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)';
               }
             }}
@@ -116,28 +200,28 @@ function App() {
               }
             }}
           >
-            <span style={{ fontSize: '1.5rem' }}>📊</span>
+            <span style={{ fontSize: '1.3rem' }}>📊</span>
             Dashboard
           </button>
           <button
             onClick={() => setCurrentView('register')}
             style={{
               width: '100%',
-              padding: '20px',
+              padding: '12px',
               background: currentView === 'register' 
                 ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' 
                 : 'rgba(30, 41, 59, 0.5)',
               color: currentView === 'register' ? 'white' : '#e2e8f0',
               border: currentView === 'register' ? 'none' : '1px solid rgba(148, 163, 184, 0.2)',
-              borderRadius: '16px',
-              fontSize: '1.1rem',
+              borderRadius: '12px',
+              fontSize: '1rem',
               fontWeight: '600',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '20px',
-              marginBottom: '15px',
+              gap: '15px',
+              marginBottom: '8px',
               textAlign: 'left',
               position: 'relative',
               overflow: 'hidden'
@@ -145,7 +229,7 @@ function App() {
             onMouseOver={(e) => {
               if (currentView !== 'register') {
                 e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
-                e.currentTarget.style.transform = 'translateX(8px)';
+                e.currentTarget.style.transform = 'translateX(5px)';
                 e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)';
               }
             }}
@@ -158,7 +242,7 @@ function App() {
             }}
           >
             <span style={{ 
-              fontSize: '1.5rem',
+              fontSize: '1.3rem',
               filter: currentView === 'register' ? 'drop-shadow(0 0 10px rgba(255,255,255,0.5))' : 'none'
             }}>📝</span>
             <div>
@@ -188,21 +272,21 @@ function App() {
             onClick={() => setCurrentView('list')}
             style={{
               width: '100%',
-              padding: '20px',
+              padding: '12px',
               background: currentView === 'list' 
                 ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' 
                 : 'rgba(30, 41, 59, 0.5)',
               color: currentView === 'list' ? 'white' : '#e2e8f0',
               border: currentView === 'list' ? 'none' : '1px solid rgba(148, 163, 184, 0.2)',
-              borderRadius: '16px',
-              fontSize: '1.1rem',
+              borderRadius: '12px',
+              fontSize: '1rem',
               fontWeight: '600',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '20px',
-              marginBottom: '15px',
+              gap: '15px',
+              marginBottom: '8px',
               textAlign: 'left',
               position: 'relative',
               overflow: 'hidden'
@@ -210,7 +294,7 @@ function App() {
             onMouseOver={(e) => {
               if (currentView !== 'list') {
                 e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
-                e.currentTarget.style.transform = 'translateX(8px)';
+                e.currentTarget.style.transform = 'translateX(5px)';
                 e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)';
               }
             }}
@@ -223,7 +307,7 @@ function App() {
             }}
           >
             <span style={{ 
-              fontSize: '1.5rem',
+              fontSize: '1.3rem',
               filter: currentView === 'list' ? 'drop-shadow(0 0 10px rgba(255,255,255,0.5))' : 'none'
             }}>📋</span>
             <div>
@@ -248,15 +332,80 @@ function App() {
               }} />
             )}
           </button>
+
+          <button
+            onClick={() => setCurrentView('grades')}
+            style={{
+              width: '100%',
+              padding: '12px',
+              background: currentView === 'grades' 
+                ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' 
+                : 'rgba(30, 41, 59, 0.5)',
+              color: currentView === 'grades' ? 'white' : '#e2e8f0',
+              border: currentView === 'grades' ? 'none' : '1px solid rgba(148, 163, 184, 0.2)',
+              borderRadius: '12px',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '15px',
+              marginBottom: '8px',
+              textAlign: 'left',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+            onMouseOver={(e) => {
+              if (currentView !== 'grades') {
+                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                e.currentTarget.style.transform = 'translateX(5px)';
+                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (currentView !== 'grades') {
+                e.currentTarget.style.background = 'rgba(30, 41, 59, 0.5)';
+                e.currentTarget.style.transform = 'translateX(0)';
+                e.currentTarget.style.borderColor = 'rgba(148, 163, 184, 0.2)';
+              }
+            }}
+          >
+            <span style={{ 
+              fontSize: '1.3rem',
+              filter: currentView === 'grades' ? 'drop-shadow(0 0 10px rgba(255,255,255,0.5))' : 'none'
+            }}>📚</span>
+            <div>
+              <div style={{ marginBottom: '4px' }}>Manage Grades</div>
+              <div style={{
+                fontSize: '0.85rem',
+                opacity: currentView === 'grades' ? 0.9 : 0.6,
+                fontWeight: '400'
+              }}>
+                Create and manage school grades
+              </div>
+            </div>
+            {currentView === 'grades' && (
+              <div style={{
+                position: 'absolute',
+                right: '20px',
+                width: '8px',
+                height: '8px',
+                background: '#10b981',
+                borderRadius: '50%',
+                boxShadow: '0 0 10px #10b981'
+              }} />
+            )}
+          </button>
         </div>
 
         {/* Footer */}
         <div style={{
           textAlign: 'center',
-          padding: '30px',
+          padding: '20px',
           borderTop: '1px solid rgba(148, 163, 184, 0.1)',
           color: '#64748b',
-          fontSize: '0.85rem'
+          fontSize: '0.75rem'
         }}>
           <div style={{
             display: 'flex',
@@ -283,7 +432,8 @@ function App() {
       <div style={{
         flex: 1,
         marginLeft: '320px',
-        width: 'calc(100% - 250px)',
+        width: '100%',
+        minWidth: 0,
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
         minHeight: '100vh',
         position: 'relative'
@@ -396,14 +546,14 @@ function App() {
                   background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)',
                   borderRadius: '20px',
                   padding: '30px',
-                  margin: '30px 0',
+                  margin: '20px 0',
                   border: '1px solid rgba(148, 163, 184, 0.4)',
                   backdropFilter: 'blur(10px)',
                   boxShadow: '0 10px 30px rgba(99, 102, 241, 0.3)',
                   position: 'relative',
                   overflow: 'hidden'
                 }}>
-                  <div style={{ fontSize: '1.2rem', fontWeight: '500', marginBottom: '10px', opacity: 0.9 }}>
+                  <div style={{ fontSize: '1.2rem', fontWeight: '500', marginBottom: '8px', opacity: 0.9 }}>
                     Total Students in School
                   </div>
                   <div style={{ 
@@ -414,7 +564,34 @@ function App() {
                     lineHeight: '1',
                     position: 'relative'
                   }}>
-                    {getStudentCount()}
+                    {loading ? '...' : studentCount}
+                  </div>
+                </div>
+
+                {/* Grade Count Display */}
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(5, 150, 105, 0.3) 100%)',
+                  borderRadius: '20px',
+                  padding: '30px',
+                  margin: '20px 0',
+                  border: '1px solid rgba(148, 163, 184, 0.4)',
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: '0 10px 30px rgba(16, 185, 129, 0.3)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ fontSize: '1.2rem', fontWeight: '500', marginBottom: '8px', opacity: 0.9 }}>
+                    Total Grades in School
+                  </div>
+                  <div style={{ 
+                    fontSize: '4rem', 
+                    fontWeight: '800', 
+                    color: '#fff',
+                    textShadow: '0 0 30px rgba(16, 185, 129, 0.8)',
+                    lineHeight: '1',
+                    position: 'relative'
+                  }}>
+                    {loading ? '...' : gradeCount}
                   </div>
                 </div>
                 
@@ -430,11 +607,11 @@ function App() {
                 </div>
               </div>
             </div>
-          ) : currentView === 'register' ? <StudentRegistrationForm /> : <StudentList />}
+          ) : currentView === 'register' ? <StudentRegistrationForm /> : currentView === 'grades' ? <GradeManagement /> : <StudentList />}
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default App;

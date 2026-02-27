@@ -7,6 +7,7 @@ interface Student {
   date_of_birth: string;
   gender: 'male' | 'female' | 'other';
   religion: string;
+  ethnicity: string;
   address: string;
   nationality: string;
   parent_type: 'father' | 'mother' | 'guardian';
@@ -16,6 +17,7 @@ interface Student {
   parent_gender: 'male' | 'female' | 'other';
   parent_email?: string;
   parent_religion: string;
+  parent_ethnicity: string;
   parent_nationality: string;
   created_at?: string;
 }
@@ -25,16 +27,29 @@ const StudentList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deletingStudentId, setDeletingStudentId] = useState<number | null>(null);
+  const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
 
   useEffect(() => {
     fetchStudents();
   }, []);
 
   const clearAllStudents = () => {
-    setStudents([]);
-    localStorage.removeItem('demoStudents');
+    if (confirm('Are you sure you want to delete all students? This action cannot be undone.')) {
+      setStudents([]);
+      localStorage.removeItem('students');
+    }
+  };
+
+  const fetchStudents = () => {
+    // Get students from localStorage
+    const savedStudents = JSON.parse(localStorage.getItem('students') || '[]');
+    setStudents(savedStudents);
+    setLoading(false);
+  };
+
+  const generateRegistrationNumber = (student: Student) => {
+    return `EDU${student.id.toString().padStart(4, '0')}${new Date().getFullYear()}`;
   };
 
   const handleEditStudent = (student: Student) => {
@@ -42,360 +57,404 @@ const StudentList: React.FC = () => {
     setShowEditModal(true);
   };
 
-  const handleDeleteStudent = (studentId: number) => {
-    setDeletingStudentId(studentId);
-    setShowDeleteModal(true);
+  const handleViewStudent = (student: Student) => {
+    setViewingStudent(student);
+    setShowViewModal(true);
   };
 
   const handleUpdateStudent = (updatedStudent: Student) => {
-    const demoStudents = JSON.parse(localStorage.getItem('demoStudents') || '[]');
-    const updatedStudents = demoStudents.map((student: Student) => 
-      student.id === updatedStudent.id ? updatedStudent : student
+    const students = JSON.parse(localStorage.getItem('students') || '[]');
+    const updatedStudents = students.map((s: Student) => 
+      s.id === updatedStudent.id ? updatedStudent : s
     );
-    localStorage.setItem('demoStudents', JSON.stringify(updatedStudents));
+    localStorage.setItem('students', JSON.stringify(updatedStudents));
     setStudents(updatedStudents);
     setShowEditModal(false);
     setEditingStudent(null);
   };
 
-  const handleConfirmDelete = () => {
-    if (deletingStudentId) {
-      const demoStudents = JSON.parse(localStorage.getItem('demoStudents') || '[]');
-      const updatedStudents = demoStudents.filter((student: Student) => student.id !== deletingStudentId);
-      localStorage.setItem('demoStudents', JSON.stringify(updatedStudents));
+  const handleDeleteStudent = (studentId: number) => {
+    // TODO: Implement delete confirmation
+    if (confirm('Are you sure you want to delete this student?')) {
+      const students = JSON.parse(localStorage.getItem('students') || '[]');
+      const updatedStudents = students.filter((s: Student) => s.id !== studentId);
+      localStorage.setItem('students', JSON.stringify(updatedStudents));
       setStudents(updatedStudents);
-      setShowDeleteModal(false);
-      setDeletingStudentId(null);
     }
   };
 
   const handleDownloadPDF = (student: Student) => {
     // Create a beautiful HTML document for PDF
-    const studentName = `${student.first_name}_${student.last_name}`;
-    const registrationNumber = generateRegistrationNumber(student);
-    
-    // Create beautiful HTML content
-    const htmlContent = `
+    const pdfContent = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Student Details - ${student.first_name} ${student.last_name}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration Details - ${student.first_name} ${student.last_name}</title>
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
             margin: 0;
-            padding: 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #1e293b;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
             min-height: 100vh;
         }
-        .container {
-            max-width: 800px;
+        
+        .page-wrapper {
+            max-width: 900px;
             margin: 0 auto;
+            padding: 60px 40px;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            border-radius: 20px;
+            position: relative;
             overflow: hidden;
         }
+        
+        .page-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #6366f1 100%);
+            border-radius: 20px 20px 0 0;
+        }
+        
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px;
             text-align: center;
+            padding: 40px 0;
+            margin-bottom: 40px;
+            position: relative;
         }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 2px;
+        }
+        
         .header h1 {
-            font-size: 28px;
-            margin: 0 0 10px 0;
-            font-weight: 300;
-            letter-spacing: 2px;
+            color: #1e293b;
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        .header p {
-            font-size: 14px;
-            margin: 0;
-            opacity: 0.9;
-        }
-        .reg-number {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        
+        .registration-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
             color: white;
-            padding: 20px;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+            letter-spacing: 0.5px;
+        }
+        
+        .meta-info {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 20px;
+        }
+        
+        .meta-item {
             text-align: center;
+        }
+        
+        .meta-label {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .meta-value {
             font-size: 18px;
-            font-weight: bold;
-            letter-spacing: 1px;
-            margin: 30px;
-            border-radius: 10px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-        .section {
-            margin: 30px;
-            padding: 25px;
-            border-radius: 10px;
-            background: #f8f9fa;
-            border-left: 5px solid #667eea;
-        }
-        .section h2 {
-            font-size: 20px;
-            margin: 0 0 20px 0;
-            color: #667eea;
+            color: #1e293b;
             font-weight: 600;
         }
+        
+        .section {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            position: relative;
+        }
+        
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .section-title {
+            color: #1e293b;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .section-icon {
+            font-size: 28px;
+        }
+        
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 24px;
         }
+        
         .info-item {
-            margin: 10px 0;
-            display: flex;
-            align-items: center;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
         }
+        
+        .info-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
         .info-label {
+            font-size: 13px;
+            color: #64748b;
             font-weight: 600;
-            color: #333;
-            min-width: 120px;
-            margin-right: 10px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
+        
         .info-value {
-            color: #555;
-            flex: 1;
+            font-size: 16px;
+            color: #1e293b;
+            font-weight: 500;
+            line-height: 1.5;
         }
-        .address-item {
-            grid-column: 1 / -1;
-        }
+        
         .footer {
-            background: #2c3e50;
-            color: white;
+            text-align: center;
+            margin-top: 50px;
             padding: 30px;
-            text-align: center;
-        }
-        .footer p {
-            margin: 5px 0;
-            font-size: 12px;
-        }
-        .validation {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 16px;
             color: white;
-            padding: 15px;
-            text-align: center;
-            font-weight: bold;
-            border-radius: 5px;
-            margin-top: 20px;
         }
+        
+        .footer p {
+            margin: 8px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .footer strong {
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+        
         @media print {
             body { 
                 background: white; 
-                padding: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
-            .container {
-                box-shadow: none;
-                border-radius: 0;
-            }
-            .section {
-                page-break-inside: avoid;
+            .page-wrapper { 
+                box-shadow: none; 
+                border: 1px solid #e2e8f0;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="page-wrapper">
         <div class="header">
-            <h1>STUDENT REGISTRATION DETAILS</h1>
-            <p>EduTrack Student Management System | Professional Student Management Solution</p>
-        </div>
-
-        <div class="reg-number">
-            🎓 REGISTRATION NUMBER: ${registrationNumber}
-        </div>
-
-        <div class="section">
-            <h2>📚 STUDENT INFORMATION</h2>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="info-label">Full Name:</span>
-                    <span class="info-value">${student.first_name} ${student.last_name}</span>
+            <h1>Student Registration Details</h1>
+            <div class="registration-badge">Registration Number: ${generateRegistrationNumber(student)}</div>
+            <div class="meta-info">
+                <div class="meta-item">
+                    <div class="meta-label">Student ID</div>
+                    <div class="meta-value">#${student.id}</div>
                 </div>
-                <div class="info-item">
-                    <span class="info-label">Date of Birth:</span>
-                    <span class="info-value">${student.date_of_birth}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Gender:</span>
-                    <span class="info-value">${student.gender.charAt(0).toUpperCase() + student.gender.slice(1)}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Religion:</span>
-                    <span class="info-value">${student.religion}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Nationality:</span>
-                    <span class="info-value">${student.nationality}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Student ID:</span>
-                    <span class="info-value">#${student.id}</span>
-                </div>
-                <div class="info-item address-item">
-                    <span class="info-label">Address:</span>
-                    <span class="info-value">${student.address}</span>
+                <div class="meta-item">
+                    <div class="meta-label">Generated</div>
+                    <div class="meta-value">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
                 </div>
             </div>
         </div>
 
         <div class="section">
-            <h2>👨‍👩‍👧‍👦 PARENT/GUARDIAN INFORMATION</h2>
+            <div class="section-title">
+                <span class="section-icon">👤</span>
+                Personal Information
+            </div>
             <div class="info-grid">
                 <div class="info-item">
-                    <span class="info-label">Parent Type:</span>
-                    <span class="info-value">${student.parent_type ? student.parent_type.charAt(0).toUpperCase() + student.parent_type.slice(1) : 'Not provided'}</span>
+                    <div class="info-label">Full Name</div>
+                    <div class="info-value">${student.first_name} ${student.last_name}</div>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Parent Name:</span>
-                    <span class="info-value">${student.parent_name}</span>
+                    <div class="info-label">Date of Birth</div>
+                    <div class="info-value">${student.date_of_birth}</div>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Parent Phone:</span>
-                    <span class="info-value">${student.parent_phone}</span>
+                    <div class="info-label">Gender</div>
+                    <div class="info-value">${student.gender}</div>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Parent Gender:</span>
-                    <span class="info-value">${student.parent_gender.charAt(0).toUpperCase() + student.parent_gender.slice(1)}</span>
+                    <div class="info-label">Religion</div>
+                    <div class="info-value">${student.religion}</div>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Parent Email:</span>
-                    <span class="info-value">${student.parent_email || 'Not provided'}</span>
+                    <div class="info-label">Ethnicity</div>
+                    <div class="info-value">${student.ethnicity}</div>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Parent Religion:</span>
-                    <span class="info-value">${student.parent_religion}</span>
+                    <div class="info-label">Nationality</div>
+                    <div class="info-value">${student.nationality}</div>
                 </div>
-                <div class="info-item">
-                    <span class="info-label">Parent Nationality:</span>
-                    <span class="info-value">${student.parent_nationality}</span>
-                </div>
-                <div class="info-item address-item">
-                    <span class="info-label">Parent Address:</span>
-                    <span class="info-value">${student.parent_address}</span>
+                <div class="info-item" style="grid-column: 1 / -1;">
+                    <div class="info-label">Address</div>
+                    <div class="info-value">${student.address}</div>
                 </div>
             </div>
         </div>
 
         <div class="section">
-            <h2>📅 REGISTRATION INFORMATION</h2>
+            <div class="section-title">
+                <span class="section-icon">👨‍👩‍👧‍👦</span>
+                Parent/Guardian Information
+            </div>
             <div class="info-grid">
                 <div class="info-item">
-                    <span class="info-label">Registration Date:</span>
-                    <span class="info-value">${student.created_at ? new Date(student.created_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) : 'Recently'}</span>
+                    <div class="info-label">Parent Type</div>
+                    <div class="info-value" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; font-weight: 600; padding: 12px 16px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;">${student.parent_type.charAt(0).toUpperCase() + student.parent_type.slice(1)}</div>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">System Version:</span>
-                    <span class="info-value">EduTrack Pro v2.0.0</span>
+                    <div class="info-label">Parent Name</div>
+                    <div class="info-value">${student.parent_name}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Parent Phone</div>
+                    <div class="info-value">${student.parent_phone}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Parent Email</div>
+                    <div class="info-value">${student.parent_email || 'Not provided'}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Parent Gender</div>
+                    <div class="info-value">${student.parent_gender}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Parent Religion</div>
+                    <div class="info-value">${student.parent_religion}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Parent Ethnicity</div>
+                    <div class="info-value">${student.parent_ethnicity}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Parent Nationality</div>
+                    <div class="info-value">${student.parent_nationality}</div>
+                </div>
+                <div class="info-item" style="grid-column: 1 / -1;">
+                    <div class="info-label">Parent Address</div>
+                    <div class="info-value">${student.parent_address}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">
+                <span class="section-icon">📋</span>
+                Registration Details
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Registration Date</div>
+                    <div class="info-value">${student.created_at ? new Date(student.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Recently'}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Status</div>
+                    <div class="info-value" style="color: #059669; font-weight: 600;">✅ Active</div>
                 </div>
             </div>
         </div>
 
         <div class="footer">
-            <p><strong>🔐 VALID DOCUMENT FOR OFFICIAL USE</strong></p>
-            <p>This document is electronically generated by EduTrack Student Management System</p>
-            <p>Generated on: ${new Date().toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}</p>
-            <p>© 2024 EduTrack. All rights reserved. | www.edutrack.com | support@edutrack.com</p>
-            <p>Authentication Code: EDU-${student.id}-${Date.now()}</p>
+            <p><strong>Edu Track Management System</strong></p>
+            <p>Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+            <p>© 2024 Edu Track - Empowering Education Management</p>
         </div>
     </div>
 </body>
 </html>
     `;
 
-    // Create blob and download as HTML file
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${studentName}.html`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-
-    // Also open in new window for immediate viewing and printing
+    // Create a new window and print
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-        printWindow.document.write(htmlContent);
-        printWindow.document.close();
-        
-        // Auto-trigger print dialog for PDF option
-        setTimeout(() => {
-            printWindow.print();
-        }, 1000);
+      printWindow.document.write(pdfContent);
+      printWindow.document.close();
+      
+      // Wait for content to load, then print
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
     }
-  };
-
-  const fetchStudents = async () => {
-    try {
-      setLoading(true);
-      
-      // First try to get demo students from localStorage
-      const demoStudents = JSON.parse(localStorage.getItem('demoStudents') || '[]');
-      
-      if (demoStudents.length > 0) {
-        setStudents(demoStudents);
-        setLoading(false);
-        return;
-      }
-      
-      // If no demo students, try backend
-      const response = await fetch('http://localhost:5000/api/students');
-      
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          setStudents(result.data);
-        } else {
-          // Start with empty array
-          setStudents([]);
-        }
-      } else {
-        // Start with empty array
-        setStudents([]);
-      }
-    } catch (error) {
-      console.error('Error fetching students:', error);
-      // Start with empty array
-      setStudents([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const generateRegistrationNumber = (student: Student) => {
-    return `EDU-${new Date().getFullYear()}-${String(student.id).padStart(6, '0')}`;
   };
 
   if (loading) {
     return (
       <div style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #0f172a 50%, #1e293b 75%, #0f172a 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
       }}>
         <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          padding: '40px',
-          borderRadius: '20px',
           textAlign: 'center',
           color: '#333'
         }}>
@@ -418,8 +477,10 @@ const StudentList: React.FC = () => {
       position: 'relative',
       boxSizing: 'border-box',
       width: '100%',
+      minWidth: 0,
       height: '100%',
-      overflow: 'auto'
+      overflowX: 'hidden',
+      overflowY: 'auto'
     }}>
       {/* Developer Grid Pattern */}
       <div style={{
@@ -460,17 +521,18 @@ const StudentList: React.FC = () => {
         width: '100%',
         height: '100%',
         position: 'relative',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        padding: '40px'
       }}>
         {/* Header */}
         <div style={{
           background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 50%, rgba(15, 23, 42, 0.9) 100%)',
           backdropFilter: 'blur(20px)',
-          borderRadius: '24px',
-          padding: '40px 90px',
-          marginBottom: '30px',
+          borderRadius: '20px',
+          padding: '25px 40px',
+          marginBottom: '25px',
           textAlign: 'center',
-          boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5), 0 0 100px rgba(99, 102, 241, 0.2)',
+          boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4), 0 0 60px rgba(99, 102, 241, 0.15)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -488,7 +550,7 @@ const StudentList: React.FC = () => {
             right: '-2px',
             bottom: '-2px',
             background: 'linear-gradient(45deg, #6366f1, #8b5cf6, #3b82f6, #6366f1)',
-            borderRadius: '24px',
+            borderRadius: '20px',
             zIndex: '-1',
             opacity: '0.6',
             filter: 'blur(8px)'
@@ -496,107 +558,95 @@ const StudentList: React.FC = () => {
           
           <div>
             <h1 style={{
-              fontSize: '3.5rem',
+              fontSize: '1.8rem',
               fontWeight: '800',
-              margin: '0 0 15px 0',
-              letterSpacing: '-1px',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              backgroundImage: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-              backgroundColor: 'transparent',
-              textShadow: '0 0 30px rgba(99, 102, 241, 0.5)'
+              margin: '0 0 8px 0',
+              color: '#f1f5f9',
+              letterSpacing: '-0.5px',
+              textShadow: '0 0 20px rgba(99, 102, 241, 0.3)'
             }}>
-              Registered Students
+              📋 Student Management
             </h1>
             <p style={{
-              color: '#e2e8f0',
-              fontSize: '1.2rem',
+              fontSize: '0.95rem',
               margin: '0',
-              opacity: 0.9
+              color: '#94a3b8',
+              fontWeight: '500'
             }}>
-              Total Students: {students.length}
+              View and manage registered students
             </p>
           </div>
-          {students.length > 0 && (
-            <button
-              onClick={clearAllStudents}
-              style={{
-                padding: '15px 30px',
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '16px',
-                fontSize: '1.1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 10px 30px rgba(239, 68, 68, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                position: 'fixed',
-                bottom: '30px',
-                right: '50px',
-                zIndex: '1000'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 15px 40px rgba(239, 68, 68, 0.4)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 10px 30px rgba(239, 68, 68, 0.3)';
-              }}
-            >
-              <span style={{ fontSize: '1.3rem' }}>🗑️</span>
-              Clear All
-            </button>
-          )}
+          
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '15px'
+          }}>
+            <div style={{
+              padding: '10px 20px',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
+              borderRadius: '12px',
+              border: '1px solid rgba(99, 102, 241, 0.3)',
+              color: '#e2e8f0',
+              fontSize: '0.9rem',
+              fontWeight: '600'
+            }}>
+              Total: {students.length} Students
+            </div>
+            {students.length > 0 && (
+              <button
+                onClick={clearAllStudents}
+                style={{
+                  padding: '10px 20px',
+                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: '#fca5a5',
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.3) 100%)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                🗑️ Clear All
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Students Grid */}
+        {/* Student Cards */}
         {students.length === 0 ? (
           <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '400px',
             background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 50%, rgba(15, 23, 42, 0.9) 100%)',
             backdropFilter: 'blur(20px)',
-            padding: '140px 200px',
-            borderRadius: '24px',
-            textAlign: 'center',
+            borderRadius: '20px',
             border: '1px solid rgba(99, 102, 241, 0.3)',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5), 0 0 100px rgba(99, 102, 241, 0.2)',
-            width: '100%',
-            boxSizing: 'border-box',
-            position: 'relative',
-            overflow: 'hidden'
+            boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4), 0 0 60px rgba(99, 102, 241, 0.15)'
           }}>
-            {/* Empty State Glow Effect */}
             <div style={{
-              position: 'absolute',
-              top: '-2px',
-              left: '-2px',
-              right: '-2px',
-              bottom: '-2px',
-              background: 'linear-gradient(45deg, #6366f1, #8b5cf6, #3b82f6, #6366f1)',
-              borderRadius: '24px',
-              zIndex: '-1',
-              opacity: '0.4',
-              filter: 'blur(8px)'
-            }} />
-            <div style={{ 
-              fontSize: '6rem', 
-              marginBottom: '30px',
-              filter: 'drop-shadow(0 0 30px rgba(99, 102, 241, 0.6))'
+              fontSize: '4rem',
+              marginBottom: '20px',
+              opacity: 0.7
             }}>📚</div>
-            <h2 style={{ 
-              fontSize: '2.5rem', 
-              margin: '0 0 15px 0',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              fontWeight: '700',
-              backgroundImage: 'linear-gradient(135deg, #64748b 0%, #94a3b8 100%)',
-              backgroundColor: 'transparent',
+            <h2 style={{
+              fontSize: '1.8rem',
+              fontWeight: '800',
+              margin: '0 0 8px 0',
+              color: '#f1f5f9',
+              letterSpacing: '-0.5px',
               textShadow: '0 0 20px rgba(99, 102, 241, 0.3)'
             }}>
               No Students Yet
@@ -610,39 +660,15 @@ const StudentList: React.FC = () => {
             }}>
               Start by registering your first student!
             </p>
-            <button
-              onClick={() => {/* This would need to be passed as prop */}}
-              style={{
-                marginTop: '30px',
-                padding: '15px 35px',
-                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '16px',
-                fontSize: '1.1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 10px 30px rgba(99, 102, 241, 0.3)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 15px 40px rgba(99, 102, 241, 0.4)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 10px 30px rgba(99, 102, 241, 0.3)';
-              }}
-            >
-              Register First Student
-            </button>
           </div>
         ) : (
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
-            gap: '50px',
-            width: '100%'
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            width: '100%',
+            maxWidth: '800px',
+            margin: '0 auto'
           }}>
             {students.map((student, index) => (
               <div
@@ -650,23 +676,22 @@ const StudentList: React.FC = () => {
                 style={{
                   background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 50%, rgba(15, 23, 42, 0.9) 100%)',
                   backdropFilter: 'blur(20px)',
-                  borderRadius: '24px',
-                  padding: '30px',
-                  boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5), 0 0 80px rgba(99, 102, 241, 0.2)',
+                  borderRadius: '18px',
+                  padding: '20px',
+                  boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4), 0 0 60px rgba(99, 102, 241, 0.15)',
                   border: '1px solid rgba(99, 102, 241, 0.3)',
-                  transition: 'all 0.4s ease',
+                  transition: 'all 0.3s ease',
                   position: 'relative',
                   overflow: 'hidden',
                   animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px) scale(1.02)';
-                  e.currentTarget.style.boxShadow = '0 30px 60px rgba(0, 0, 0, 0.6), 0 0 100px rgba(99, 102, 241, 0.3)';
+                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.01)';
+                  e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.5), 0 0 80px rgba(99, 102, 241, 0.25)';
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.3)';
-                  e.currentTarget.style.borderColor = 'rgba(148, 163, 184, 0.1)';
+                  e.currentTarget.style.boxShadow = '0 15px 35px rgba(0, 0, 0, 0.4), 0 0 60px rgba(99, 102, 241, 0.15)';
                 }}
               >
                 {/* Background Gradient */}
@@ -683,16 +708,16 @@ const StudentList: React.FC = () => {
                 {/* Registration Number Badge */}
                 <div style={{
                   position: 'absolute',
-                  top: '20px',
-                  right: '20px',
+                  top: '15px',
+                  right: '15px',
                   background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                   color: 'white',
-                  padding: '10px 18px',
-                  borderRadius: '20px',
-                  fontSize: '0.9rem',
-                  fontWeight: '700',
+                  padding: '6px 12px',
+                  borderRadius: '12px',
+                  fontSize: '0.7rem',
+                  fontWeight: '600',
                   fontFamily: 'monospace',
-                  boxShadow: '0 8px 25px rgba(16, 185, 129, 0.4)',
+                  boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
                   border: '1px solid rgba(16, 185, 129, 0.3)',
                   zIndex: '1'
                 }}>
@@ -700,42 +725,42 @@ const StudentList: React.FC = () => {
                 </div>
 
                 {/* Student Info */}
-                <div style={{ marginBottom: '25px', position: 'relative', zIndex: '1' }}>
+                <div style={{ marginBottom: '18px', position: 'relative', zIndex: '1' }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '20px',
-                    marginBottom: '15px'
+                    gap: '15px',
+                    marginBottom: '12px'
                   }}>
                     <div style={{
-                      width: '60px',
-                      height: '60px',
-                      borderRadius: '16px',
+                      width: '45px',
+                      height: '45px',
+                      borderRadius: '12px',
                       background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '1.8rem',
-                      boxShadow: '0 8px 25px rgba(99, 102, 241, 0.3)'
+                      fontSize: '1.4rem',
+                      boxShadow: '0 6px 20px rgba(99, 102, 241, 0.3)'
                     }}>
                       {student.gender === 'male' ? '👦' : student.gender === 'female' ? '👧' : '👤'}
                     </div>
                     <div style={{ flex: 1 }}>
                       <h3 style={{
                         color: '#f1f5f9',
-                        fontSize: '1.8rem',
+                        fontSize: '1.2rem',
                         fontWeight: '700',
-                        margin: '0 0 5px 0',
-                        letterSpacing: '-0.5px'
+                        margin: '0 0 4px 0',
+                        letterSpacing: '-0.3px'
                       }}>
                         {student.first_name} {student.last_name}
                       </h3>
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '15px',
+                        gap: '12px',
                         color: '#94a3b8',
-                        fontSize: '0.95rem'
+                        fontSize: '0.75rem'
                       }}>
                         <span>🎂 {student.date_of_birth}</span>
                         <span>🌍 {student.nationality}</span>
@@ -747,17 +772,17 @@ const StudentList: React.FC = () => {
                 {/* Parent Info */}
                 <div style={{
                   background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(30, 41, 59, 0.6) 100%)',
-                  padding: '20px',
-                  borderRadius: '16px',
-                  marginBottom: '20px',
+                  padding: '15px',
+                  borderRadius: '12px',
+                  marginBottom: '15px',
                   border: '1px solid rgba(148, 163, 184, 0.1)',
                   position: 'relative',
                   zIndex: '1'
                 }}>
                   <div style={{
-                    fontSize: '0.85rem',
+                    fontSize: '0.7rem',
                     color: '#64748b',
-                    marginBottom: '8px',
+                    marginBottom: '6px',
                     fontWeight: '600',
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px'
@@ -767,17 +792,17 @@ const StudentList: React.FC = () => {
                   <div style={{
                     color: '#e2e8f0',
                     fontWeight: '600',
-                    fontSize: '1.1rem',
-                    marginBottom: '8px'
+                    fontSize: '0.9rem',
+                    marginBottom: '6px'
                   }}>
                     {student.parent_name}
                   </div>
                   <div style={{
                     color: '#94a3b8',
-                    fontSize: '0.9rem',
+                    fontSize: '0.75rem',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '6px'
                   }}>
                     <span>📞</span>
                     <span>{student.parent_phone}</span>
@@ -790,111 +815,144 @@ const StudentList: React.FC = () => {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   color: '#64748b',
-                  fontSize: '0.85rem',
+                  fontSize: '0.7rem',
                   position: 'relative',
                   zIndex: '1'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{
-                      width: '6px',
-                      height: '6px',
-                      background: '#10b981',
-                      borderRadius: '50%',
-                      boxShadow: '0 0 8px #10b981'
-                    }} />
-                    <span>Active</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>📅</span>
+                    <span>{student.created_at ? new Date(student.created_at).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    }) : 'Recently'}</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <div style={{ fontSize: '0.75rem', opacity: '0.7' }}>
-                      ID: #{student.id}
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        onClick={() => handleEditStudent(student)}
-                        style={{
-                          padding: '6px 12px',
-                          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          fontSize: '0.75rem',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                          boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 6px 20px rgba(59, 130, 246, 0.4)';
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
-                        }}
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button
-                        onClick={() => handleDownloadPDF(student)}
-                        style={{
-                          padding: '6px 12px',
-                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          fontSize: '0.75rem',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                          boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.4)';
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
-                        }}
-                      >
-                        📄 Download
-                      </button>
-                      <button
-                        onClick={() => handleDeleteStudent(student.id)}
-                        style={{
-                          padding: '6px 12px',
-                          background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          fontSize: '0.75rem',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                          boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.4)';
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.3)';
-                        }}
-                      >
-                        🗑️ Delete
-                      </button>
-                    </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>🆔</span>
+                    <span>#{student.id}</span>
                   </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  marginTop: '15px',
+                  position: 'relative',
+                  zIndex: '1'
+                }}>
+                  <button
+                    onClick={() => handleEditStudent(student)}
+                    style={{
+                      padding: '6px 12px',
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '0.7rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(59, 130, 246, 0.4)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+                    }}
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    onClick={() => handleViewStudent(student)}
+                    style={{
+                      padding: '6px 12px',
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '0.7rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.4)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+                    }}
+                  >
+                    👁️ Read
+                  </button>
+                  <button
+                    onClick={() => handleDownloadPDF(student)}
+                    style={{
+                      padding: '6px 12px',
+                      background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '0.7rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.3)';
+                    }}
+                  >
+                    📄 PDF
+                  </button>
+                  <button
+                    onClick={() => handleDeleteStudent(student.id)}
+                    style={{
+                      padding: '6px 12px',
+                      background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '0.7rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.4)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.3)';
+                    }}
+                  >
+                    🗑️ Delete
+                  </button>
                 </div>
               </div>
             ))}
@@ -914,167 +972,80 @@ const StudentList: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: '2000'
+          zIndex: 2000
         }}>
           <div style={{
             background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
             backdropFilter: 'blur(20px)',
-            borderRadius: '24px',
-            padding: '40px',
-            maxWidth: '600px',
-            width: '90%',
-            maxHeight: '80vh',
+            borderRadius: '16px',
+            padding: '20px',
+            maxWidth: '500px',
+            width: '85%',
+            maxHeight: '70vh',
             overflowY: 'auto',
             border: '1px solid rgba(148, 163, 184, 0.2)',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)'
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)'
           }}>
             <h2 style={{
               color: '#f1f5f9',
-              fontSize: '1.8rem',
+              fontSize: '1.2rem',
               fontWeight: '700',
-              margin: '0 0 30px 0',
+              margin: '0 0 15px 0',
               textAlign: 'center'
             }}>
-              Edit Student Information
+              Edit Student
             </h2>
             
-            <div style={{ display: 'grid', gap: '20px', maxHeight: '60vh', overflowY: 'auto', paddingRight: '10px' }}>
-              {/* Student Details Section */}
-              <div style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-                <h3 style={{ color: '#6366f1', fontSize: '1.1rem', fontWeight: '700', margin: '0 0 15px 0' }}>Student Details</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.first_name}
-                      onChange={(e) => setEditingStudent({...editingStudent, first_name: e.target.value})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.last_name}
-                      onChange={(e) => setEditingStudent({...editingStudent, last_name: e.target.value})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Date of Birth
-                    </label>
-                    <input
-                      type="date"
-                      value={editingStudent.date_of_birth}
-                      onChange={(e) => setEditingStudent({...editingStudent, date_of_birth: e.target.value})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Gender
-                    </label>
-                    <select
-                      value={editingStudent.gender}
-                      onChange={(e) => setEditingStudent({...editingStudent, gender: e.target.value as 'male' | 'female' | 'other'})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    >
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Religion
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.religion}
-                      onChange={(e) => setEditingStudent({...editingStudent, religion: e.target.value})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Nationality
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.nationality}
-                      onChange={(e) => setEditingStudent({...editingStudent, nationality: e.target.value})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-                </div>
-                
-                <div style={{ marginTop: '15px' }}>
-                  <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                    Address
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div>
+                <label style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: '600', marginBottom: '4px', display: 'block' }}>
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  value={editingStudent.first_name}
+                  onChange={(e) => setEditingStudent({...editingStudent, first_name: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    background: 'rgba(15, 23, 42, 0.6)',
+                    border: '1px solid rgba(148, 163, 184, 0.2)',
+                    borderRadius: '6px',
+                    color: '#e2e8f0',
+                    fontSize: '0.85rem'
+                  }}
+                />
+              </div>
+              
+              <div>
+                <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  value={editingStudent.last_name}
+                  onChange={(e) => setEditingStudent({...editingStudent, last_name: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    background: 'rgba(15, 23, 42, 0.6)',
+                    border: '1px solid rgba(148, 163, 184, 0.2)',
+                    borderRadius: '6px',
+                    color: '#e2e8f0',
+                    fontSize: '0.9rem'
+                  }}
+                />
+              </div>
+              
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                    Date of Birth
                   </label>
-                  <textarea
-                    value={editingStudent.address}
-                    onChange={(e) => setEditingStudent({...editingStudent, address: e.target.value})}
-                    rows={2}
+                  <input
+                    type="date"
+                    value={editingStudent.date_of_birth}
+                    onChange={(e) => setEditingStudent({...editingStudent, date_of_birth: e.target.value})}
                     style={{
                       width: '100%',
                       padding: '10px',
@@ -1082,172 +1053,129 @@ const StudentList: React.FC = () => {
                       border: '1px solid rgba(148, 163, 184, 0.2)',
                       borderRadius: '6px',
                       color: '#e2e8f0',
-                      fontSize: '0.9rem',
-                      resize: 'vertical'
+                      fontSize: '0.9rem'
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                    Gender
+                  </label>
+                  <select
+                    value={editingStudent.gender}
+                    onChange={(e) => setEditingStudent({...editingStudent, gender: e.target.value as 'male' | 'female' | 'other'})}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      border: '1px solid rgba(148, 163, 184, 0.2)',
+                      borderRadius: '6px',
+                      color: '#e2e8f0',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                    Religion
+                  </label>
+                  <input
+                    type="text"
+                    value={editingStudent.religion}
+                    onChange={(e) => setEditingStudent({...editingStudent, religion: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      border: '1px solid rgba(148, 163, 184, 0.2)',
+                      borderRadius: '6px',
+                      color: '#e2e8f0',
+                      fontSize: '0.9rem'
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                    Ethnicity
+                  </label>
+                  <input
+                    type="text"
+                    value={editingStudent.ethnicity}
+                    onChange={(e) => setEditingStudent({...editingStudent, ethnicity: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      border: '1px solid rgba(148, 163, 184, 0.2)',
+                      borderRadius: '6px',
+                      color: '#e2e8f0',
+                      fontSize: '0.9rem'
                     }}
                   />
                 </div>
               </div>
 
-              {/* Parent/Guardian Details Section */}
-              <div style={{ background: 'rgba(139, 92, 246, 0.1)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
-                <h3 style={{ color: '#8b5cf6', fontSize: '1.1rem', fontWeight: '700', margin: '0 0 15px 0' }}>Parent/Guardian Details</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Parent Type
-                    </label>
-                    <select
-                      value={editingStudent.parent_type}
-                      onChange={(e) => setEditingStudent({...editingStudent, parent_type: e.target.value as 'father' | 'mother' | 'guardian'})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    >
-                      <option value="father">Father</option>
-                      <option value="mother">Mother</option>
-                      <option value="guardian">Guardian</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Parent Name
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.parent_name}
-                      onChange={(e) => setEditingStudent({...editingStudent, parent_name: e.target.value})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Parent Phone
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.parent_phone}
-                      onChange={(e) => setEditingStudent({...editingStudent, parent_phone: e.target.value})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Parent Gender
-                    </label>
-                    <select
-                      value={editingStudent.parent_gender}
-                      onChange={(e) => setEditingStudent({...editingStudent, parent_gender: e.target.value as 'male' | 'female' | 'other'})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    >
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Parent Email
-                    </label>
-                    <input
-                      type="email"
-                      value={editingStudent.parent_email || ''}
-                      onChange={(e) => setEditingStudent({...editingStudent, parent_email: e.target.value})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Parent Religion
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.parent_religion}
-                      onChange={(e) => setEditingStudent({...editingStudent, parent_religion: e.target.value})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Parent Nationality
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.parent_nationality}
-                      onChange={(e) => setEditingStudent({...editingStudent, parent_nationality: e.target.value})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-                </div>
-                
-                <div style={{ marginTop: '15px' }}>
-                  <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                    Parent Address
+              <div>
+                <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                  Nationality
+                </label>
+                <input
+                  type="text"
+                  value={editingStudent.nationality}
+                  onChange={(e) => setEditingStudent({...editingStudent, nationality: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    background: 'rgba(15, 23, 42, 0.6)',
+                    border: '1px solid rgba(148, 163, 184, 0.2)',
+                    borderRadius: '6px',
+                    color: '#e2e8f0',
+                    fontSize: '0.9rem'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                  Address
+                </label>
+                <textarea
+                  value={editingStudent.address}
+                  onChange={(e) => setEditingStudent({...editingStudent, address: e.target.value})}
+                  rows={2}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    background: 'rgba(15, 23, 42, 0.6)',
+                    border: '1px solid rgba(148, 163, 184, 0.2)',
+                    borderRadius: '6px',
+                    color: '#e2e8f0',
+                    fontSize: '0.9rem',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              {/* Parent/Guardian Details */}
+              <h3 style={{ color: '#f1f5f9', fontSize: '1.1rem', fontWeight: '700', margin: '20px 0 15px 0' }}>
+                Parent/Guardian Details
+              </h3>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                    Parent Type
                   </label>
-                  <textarea
-                    value={editingStudent.parent_address}
-                    onChange={(e) => setEditingStudent({...editingStudent, parent_address: e.target.value})}
-                    rows={2}
+                  <select
+                    value={editingStudent.parent_type}
+                    onChange={(e) => setEditingStudent({...editingStudent, parent_type: e.target.value as 'father' | 'mother' | 'guardian'})}
                     style={{
                       width: '100%',
                       padding: '10px',
@@ -1255,30 +1183,198 @@ const StudentList: React.FC = () => {
                       border: '1px solid rgba(148, 163, 184, 0.2)',
                       borderRadius: '6px',
                       color: '#e2e8f0',
-                      fontSize: '0.9rem',
-                      resize: 'vertical'
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    <option value="father">Father</option>
+                    <option value="mother">Mother</option>
+                    <option value="guardian">Guardian</option>
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                    Parent Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editingStudent.parent_name}
+                    onChange={(e) => setEditingStudent({...editingStudent, parent_name: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      border: '1px solid rgba(148, 163, 184, 0.2)',
+                      borderRadius: '6px',
+                      color: '#e2e8f0',
+                      fontSize: '0.9rem'
                     }}
                   />
                 </div>
               </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                    Parent Phone
+                  </label>
+                  <input
+                    type="text"
+                    value={editingStudent.parent_phone}
+                    onChange={(e) => setEditingStudent({...editingStudent, parent_phone: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      border: '1px solid rgba(148, 163, 184, 0.2)',
+                      borderRadius: '6px',
+                      color: '#e2e8f0',
+                      fontSize: '0.9rem'
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                    Parent Email
+                  </label>
+                  <input
+                    type="email"
+                    value={editingStudent.parent_email || ''}
+                    onChange={(e) => setEditingStudent({...editingStudent, parent_email: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      border: '1px solid rgba(148, 163, 184, 0.2)',
+                      borderRadius: '6px',
+                      color: '#e2e8f0',
+                      fontSize: '0.9rem'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                    Parent Gender
+                  </label>
+                  <select
+                    value={editingStudent.parent_gender}
+                    onChange={(e) => setEditingStudent({...editingStudent, parent_gender: e.target.value as 'male' | 'female' | 'other'})}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      border: '1px solid rgba(148, 163, 184, 0.2)',
+                      borderRadius: '6px',
+                      color: '#e2e8f0',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                    Parent Religion
+                  </label>
+                  <input
+                    type="text"
+                    value={editingStudent.parent_religion}
+                    onChange={(e) => setEditingStudent({...editingStudent, parent_religion: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      border: '1px solid rgba(148, 163, 184, 0.2)',
+                      borderRadius: '6px',
+                      color: '#e2e8f0',
+                      fontSize: '0.9rem'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                    Parent Ethnicity
+                  </label>
+                  <input
+                    type="text"
+                    value={editingStudent.parent_ethnicity}
+                    onChange={(e) => setEditingStudent({...editingStudent, parent_ethnicity: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      border: '1px solid rgba(148, 163, 184, 0.2)',
+                      borderRadius: '6px',
+                      color: '#e2e8f0',
+                      fontSize: '0.9rem'
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                    Parent Nationality
+                  </label>
+                  <input
+                    type="text"
+                    value={editingStudent.parent_nationality}
+                    onChange={(e) => setEditingStudent({...editingStudent, parent_nationality: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      border: '1px solid rgba(148, 163, 184, 0.2)',
+                      borderRadius: '6px',
+                      color: '#e2e8f0',
+                      fontSize: '0.9rem'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                  Parent Address
+                </label>
+                <textarea
+                  value={editingStudent.parent_address}
+                  onChange={(e) => setEditingStudent({...editingStudent, parent_address: e.target.value})}
+                  rows={2}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    background: 'rgba(15, 23, 42, 0.6)',
+                    border: '1px solid rgba(148, 163, 184, 0.2)',
+                    borderRadius: '6px',
+                    color: '#e2e8f0',
+                    fontSize: '0.9rem',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
             </div>
             
-            <div style={{ display: 'flex', gap: '15px', marginTop: '30px', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', marginTop: '20px' }}>
               <button
                 onClick={() => {
                   setShowEditModal(false);
                   setEditingStudent(null);
                 }}
                 style={{
-                  padding: '12px 25px',
+                  padding: '10px 20px',
                   background: 'rgba(148, 163, 184, 0.2)',
                   color: '#94a3b8',
                   border: '1px solid rgba(148, 163, 184, 0.3)',
                   borderRadius: '8px',
-                  fontSize: '1rem',
+                  fontSize: '0.9rem',
                   fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
+                  cursor: 'pointer'
                 }}
               >
                 Cancel
@@ -1286,15 +1382,14 @@ const StudentList: React.FC = () => {
               <button
                 onClick={() => handleUpdateStudent(editingStudent)}
                 style={{
-                  padding: '12px 25px',
+                  padding: '10px 20px',
                   background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
-                  fontSize: '1rem',
+                  fontSize: '0.9rem',
                   fontWeight: '600',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease',
                   boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
                 }}
               >
@@ -1305,119 +1400,176 @@ const StudentList: React.FC = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
+      {/* View Student Details Modal */}
+      {showViewModal && viewingStudent && (
         <div style={{
           position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.7)',
+          background: 'rgba(0, 0, 0, 0.8)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: '2000'
+          zIndex: 2000
         }}>
           <div style={{
             background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
             backdropFilter: 'blur(20px)',
-            borderRadius: '24px',
-            padding: '40px',
-            maxWidth: '400px',
+            borderRadius: '20px',
+            padding: '30px',
+            maxWidth: '700px',
             width: '90%',
+            maxHeight: '85vh',
+            overflowY: 'auto',
             border: '1px solid rgba(148, 163, 184, 0.2)',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)',
-            textAlign: 'center'
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)'
           }}>
-            <div style={{
-              width: '80px',
-              height: '80px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 25px',
-              fontSize: '2rem',
-              color: 'white',
-              boxShadow: '0 10px 30px rgba(239, 68, 68, 0.3)'
-            }}>
-              ⚠️
-            </div>
-            
             <h2 style={{
               color: '#f1f5f9',
               fontSize: '1.5rem',
               fontWeight: '700',
-              margin: '0 0 15px 0'
+              margin: '0 0 20px 0',
+              textAlign: 'center'
             }}>
-              Delete Student
+              Student Details
             </h2>
             
-            <p style={{
-              color: '#94a3b8',
-              fontSize: '1rem',
-              margin: '0 0 30px 0',
-              lineHeight: '1.5'
-            }}>
-              Are you sure you want to delete this student? This action cannot be undone.
-            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Student Information */}
+              <div style={{
+                background: 'rgba(99, 102, 241, 0.1)',
+                padding: '20px',
+                borderRadius: '12px',
+                border: '1px solid rgba(99, 102, 241, 0.2)'
+              }}>
+                <h3 style={{
+                  color: '#f1f5f9',
+                  fontSize: '1.2rem',
+                  fontWeight: '600',
+                  margin: '0 0 15px 0'
+                }}>
+                  👤 Personal Information
+                </h3>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Full Name:</strong> {viewingStudent.first_name} {viewingStudent.last_name}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Date of Birth:</strong> {viewingStudent.date_of_birth}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Gender:</strong> {viewingStudent.gender}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Religion:</strong> {viewingStudent.religion}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Ethnicity:</strong> {viewingStudent.ethnicity}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Nationality:</strong> {viewingStudent.nationality}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Address:</strong> {viewingStudent.address}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Registration Number:</strong> {generateRegistrationNumber(viewingStudent)}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Student ID:</strong> #{viewingStudent.id}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Registration Date:</strong> {viewingStudent.created_at ? new Date(viewingStudent.created_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      }) : 'Recently'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Parent/Guardian Information */}
+              <div style={{
+                background: 'rgba(139, 92, 246, 0.1)',
+                padding: '20px',
+                borderRadius: '12px',
+                border: '1px solid rgba(139, 92, 246, 0.2)'
+              }}>
+                <h3 style={{
+                  color: '#f1f5f9',
+                  fontSize: '1.2rem',
+                  fontWeight: '600',
+                  margin: '0 0 15px 0'
+                }}>
+                  👨‍👩‍👧‍👦 Parent/Guardian Information
+                </h3>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Parent Type:</strong> {viewingStudent.parent_type.charAt(0).toUpperCase() + viewingStudent.parent_type.slice(1)}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Parent Name:</strong> {viewingStudent.parent_name}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Parent Phone:</strong> {viewingStudent.parent_phone}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Parent Email:</strong> {viewingStudent.parent_email || 'Not provided'}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Parent Gender:</strong> {viewingStudent.parent_gender}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Parent Religion:</strong> {viewingStudent.parent_religion}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Parent Ethnicity:</strong> {viewingStudent.parent_ethnicity}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Parent Nationality:</strong> {viewingStudent.parent_nationality}
+                    </p>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '5px' }}>
+                      <strong>Parent Address:</strong> {viewingStudent.parent_address}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
             
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px' }}>
               <button
                 onClick={() => {
-                  setShowDeleteModal(false);
-                  setDeletingStudentId(null);
+                  setShowViewModal(false);
+                  setViewingStudent(null);
                 }}
                 style={{
-                  padding: '12px 25px',
-                  background: 'rgba(148, 163, 184, 0.2)',
-                  color: '#94a3b8',
-                  border: '1px solid rgba(148, 163, 184, 0.3)',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                style={{
-                  padding: '12px 25px',
-                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  padding: '15px 30px',
+                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '12px',
                   fontSize: '1rem',
                   fontWeight: '600',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'
+                  boxShadow: '0 8px 25px rgba(99, 102, 241, 0.3)'
                 }}
               >
-                Delete
+                Close
               </button>
             </div>
           </div>
         </div>
       )}
-
-      <style>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
 };
