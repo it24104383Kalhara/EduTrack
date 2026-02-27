@@ -109,7 +109,7 @@ export default function ActivityMembersPage() {
                 <div className="flex justify-end">
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition"
+                        className="flex items-center gap-2 bg-[#1a3b70] text-white px-4 py-2 rounded-lg hover:bg-[#11274a] transition shadow-sm font-medium"
                     >
                         <UserPlusIcon className="h-5 w-5" />
                         Register Student
@@ -118,7 +118,7 @@ export default function ActivityMembersPage() {
             )}
 
             {/* Members List */}
-            <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-lg border border-gray-100 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_2px_4px_-1px_rgba(0,0,0,0.03)] overflow-hidden">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
@@ -144,7 +144,7 @@ export default function ActivityMembersPage() {
                                 <tr key={member.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
-                                            <div className="flex-shrink-0 h-8 w-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
+                                            <div className="flex-shrink-0 h-8 w-8 bg-blue-50 rounded-full flex items-center justify-center text-[#1a3b70]">
                                                 <UserIcon className="h-4 w-4" />
                                             </div>
                                             <div className="ml-4">
@@ -167,7 +167,8 @@ export default function ActivityMembersPage() {
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <button
                                                 onClick={() => handleRemove(member.id)}
-                                                className="text-red-600 hover:text-red-900"
+                                                className="text-[#e11d48] hover:text-red-800 transition-colors"
+                                                title="Remove Student"
                                             >
                                                 <TrashIcon className="h-5 w-5" />
                                             </button>
@@ -189,9 +190,9 @@ export default function ActivityMembersPage() {
             {/* Register Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                            <h2 className="text-lg font-semibold text-gray-900">Register Student</h2>
+                    <div className="bg-white rounded-xl shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-2px_rgba(0,0,0,0.05)] w-full max-w-md overflow-hidden border border-gray-100">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-[#f8fafc] flex justify-between items-center">
+                            <h2 className="text-lg font-bold text-[#1a3b70]">Register Student</h2>
                             <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 ✕
                             </button>
@@ -203,7 +204,7 @@ export default function ActivityMembersPage() {
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Search Student by Name or ID</label>
                                     <input
                                         type="text"
-                                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 border"
+                                        className="w-full rounded-md border border-gray-300 shadow-sm focus:border-[#1a3b70] focus:ring-[#1a3b70] px-3 py-2 outline-none transition-colors"
                                         value={searchQuery}
                                         onChange={e => setSearchQuery(e.target.value)}
                                         placeholder="Type to search..."
@@ -238,18 +239,18 @@ export default function ActivityMembersPage() {
                                     <p className="mt-2 text-xs text-gray-400">Or manually enter below if unable to search:</p>
                                     <input
                                         type="number"
-                                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 border mt-1"
+                                        className="w-full rounded-md border border-gray-300 shadow-sm focus:border-[#1a3b70] focus:ring-[#1a3b70] px-3 py-2 mt-1 outline-none transition-colors"
                                         value={formData.student_id}
                                         onChange={e => setFormData({ ...formData, student_id: e.target.value })}
                                         placeholder="Enter Student ID manually"
                                     />
                                 </div>
                             ) : (
-                                <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-md flex justify-between items-center">
+                                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-md flex justify-between items-center">
                                     <div>
-                                        <div className="text-sm text-indigo-500 font-medium">Selected Student</div>
-                                        <div className="text-lg font-bold text-indigo-900">{selectedStudent.name}</div>
-                                        <div className="text-xs text-indigo-600">ID: {selectedStudent.id} • Grade: {selectedStudent.grade}</div>
+                                        <div className="text-xs text-[#10b981] font-bold uppercase tracking-wider mb-1">Student Selected</div>
+                                        <div className="text-lg font-bold text-gray-900">{selectedStudent.name}</div>
+                                        <div className="text-xs text-gray-600">ID: {selectedStudent.id} • Grade: {selectedStudent.grade}</div>
                                     </div>
                                     <button
                                         type="button"
@@ -257,7 +258,7 @@ export default function ActivityMembersPage() {
                                             setSelectedStudent(null);
                                             setFormData({ ...formData, student_id: '' });
                                         }}
-                                        className="text-xs bg-white px-2 py-1 rounded border border-indigo-200 text-indigo-600 hover:bg-indigo-100"
+                                        className="text-xs bg-white px-3 py-1.5 rounded border border-emerald-200 text-[#10b981] font-medium hover:bg-emerald-100 transition-colors shadow-sm"
                                     >
                                         Change
                                     </button>
@@ -267,7 +268,7 @@ export default function ActivityMembersPage() {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                                 <select
-                                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 border"
+                                    className="w-full rounded-md border border-gray-300 shadow-sm focus:border-[#1a3b70] focus:ring-[#1a3b70] px-3 py-2 outline-none transition-colors"
                                     value={formData.role}
                                     onChange={e => setFormData({ ...formData, role: e.target.value })}
                                 >
@@ -278,20 +279,20 @@ export default function ActivityMembersPage() {
                                 </select>
                             </div>
 
-                            <div className="pt-4 flex gap-3 justify-end">
+                            <div className="pt-4 flex gap-3 justify-end border-t border-gray-100 mt-2">
                                 <button
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                    className="px-4 py-2 mt-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1a3b70] transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={registerMutation.isPending}
-                                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                                    className="px-4 py-2 mt-2 text-sm font-medium text-white bg-[#1a3b70] border border-transparent rounded-md hover:bg-[#11274a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1a3b70] disabled:opacity-50 transition-colors"
                                 >
-                                    {registerMutation.isPending ? 'Registering...' : 'Register'}
+                                    {registerMutation.isPending ? 'Registering...' : 'Complete Registration'}
                                 </button>
                             </div>
                         </form>

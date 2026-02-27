@@ -38,8 +38,8 @@
     - [x] **Activity Management UI** <!-- id: 28 -->
         - [x] List all sports/clubs <!-- id: 41 -->
         - [x] Form to add new sport/club <!-- id: 42 -->
-    - [ ] **Registration UI** <!-- id: 32 -->
-        - [ ] Student Lookup & Assignment <!-- id: 33 -->
+    - [x] **Registration UI** <!-- id: 32 -->
+        - [x] Student Lookup & Assignment <!-- id: 33 -->
     - [ ] **Attendance Interface** <!-- id: 34 -->
         - [ ] Mobile-friendly check-in for coaches <!-- id: 35 -->
     - [ ] **Inventory Management Interface** <!-- id: 36 -->
