@@ -40,16 +40,16 @@
         - [x] Form to add new sport/club <!-- id: 42 -->
     - [x] **Registration UI** <!-- id: 32 -->
         - [x] Student Lookup & Assignment <!-- id: 33 -->
-    - [ ] **Attendance Interface** <!-- id: 34 -->
+    - [x] **Attendance Interface** <!-- id: 34 -->
         - [x] Mobile-friendly check-in for coaches <!-- id: 35 -->
-        - [ ] **Sport Attendance Report Workflow** <!-- id: 50 -->
-            - [ ] Coach: Generate daily sport attendance report <!-- id: 51 -->
-            - [ ] Coach: Submit report to Principal (via API) <!-- id: 52 -->
-            - [ ] Principal Dashboard (Demo): View submitted reports <!-- id: 53 -->
-            - [ ] Principal: Approve/Reject report <!-- id: 54 -->
-            - [ ] Principal: Notify Teacher to adjust class attendance <!-- id: 55 -->
-            - [ ] Teacher: Receive notification & update class attendance <!-- id: 56 -->
-            - [ ] ⚠️ Merge with team member's Student Progress / Principal Dashboard module <!-- id: 57 -->
+        - [x] **Sport Attendance Report Workflow** <!-- id: 50 -->
+            - [x] Coach: Generate daily sport attendance report <!-- id: 51 -->
+            - [x] Coach: Submit report to Principal (via API) <!-- id: 52 -->
+            - [x] Principal Dashboard (Demo): View submitted reports <!-- id: 53 -->
+            - [x] Principal: Approve/Reject report <!-- id: 54 -->
+            - [x] Principal: Notify Teacher to adjust class attendance <!-- id: 55 -->
+            - [x] Teacher: Receive notification & update class attendance <!-- id: 56 -->
+            - [] ⚠️ Merge with team member's Student Progress / Principal Dashboard module <!-- id: 57 -->
     - [ ] **Inventory Management Interface** <!-- id: 36 -->
     - [ ] **Reports & Analytics View** <!-- id: 37 -->
 

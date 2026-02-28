@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 export interface AuthRequest extends Request {
     user?: {
         id: number;
-        role: 'Admin' | 'Coach' | 'Teacher' | 'Student';
+        role: 'Admin' | 'Coach' | 'Teacher' | 'Student' | 'Principal';
         name: string;
     };
 }
@@ -28,18 +28,18 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
     }
 
     // Validate role
-    const validRoles = ['Admin', 'Coach', 'Teacher', 'Student'];
+    const validRoles = ['Admin', 'Coach', 'Teacher', 'Student', 'Principal'];
     if (!validRoles.includes(userRole)) {
         return res.status(401).json({
             error: 'Invalid role',
-            message: 'Role must be one of: Admin, Coach, Teacher, Student'
+            message: 'Role must be one of: Admin, Coach, Teacher, Student, Principal'
         });
     }
 
     // Attach user info to request
     req.user = {
         id: parseInt(userId),
-        role: userRole as 'Admin' | 'Coach' | 'Teacher' | 'Student',
+        role: userRole as 'Admin' | 'Coach' | 'Teacher' | 'Student' | 'Principal',
         name: userName || 'Unknown User'
     };
 
@@ -50,7 +50,7 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
  * Role-based authorization middleware
  * Usage: authorize(['Admin', 'Coach'])
  */
-export const authorize = (allowedRoles: Array<'Admin' | 'Coach' | 'Teacher' | 'Student'>) => {
+export const authorize = (allowedRoles: Array<'Admin' | 'Coach' | 'Teacher' | 'Student' | 'Principal'>) => {
     return (req: AuthRequest, res: Response, next: NextFunction) => {
         if (!req.user) {
             return res.status(401).json({

@@ -11,7 +11,10 @@ import {
     CalendarDaysIcon,
     TrophyIcon,
     CurrencyDollarIcon,
-    ChatBubbleLeftEllipsisIcon
+    ChatBubbleLeftEllipsisIcon,
+    DocumentTextIcon,
+    ShieldCheckIcon,
+    BellAlertIcon,
 } from '@heroicons/react/24/outline';
 
 interface DashboardLayoutProps {
@@ -30,6 +33,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         { name: 'Inventory', path: '/sports/inventory', icon: RectangleStackIcon },
         { name: 'Facilities', path: '/sports/facilities', icon: BuildingOfficeIcon },
         { name: 'Attendance', path: '/sports/attendance', icon: CalendarDaysIcon },
+        { name: 'Submit Report', path: '/sports/attendance/report', icon: DocumentTextIcon },
+        { name: 'Principal View', path: '/sports/principal', icon: ShieldCheckIcon },
+        { name: 'Teacher Alerts', path: '/sports/teacher-notifications', icon: BellAlertIcon },
         { name: 'Achievements', path: '/sports/achievements', icon: TrophyIcon },
     ];
 

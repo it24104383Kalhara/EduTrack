@@ -97,3 +97,33 @@ CREATE TABLE IF NOT EXISTS sports_achievements (
   description TEXT,
   FOREIGN KEY (activity_id) REFERENCES sports_activities(id) ON DELETE CASCADE
 );
+
+-- 10. Attendance Reports (Coach → Principal workflow)
+CREATE TABLE IF NOT EXISTS sports_attendance_reports (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  activity_id INT NOT NULL,
+  coach_id INT NOT NULL,
+  report_date DATE NOT NULL,
+  total_students INT DEFAULT 0,
+  present_count INT DEFAULT 0,
+  absent_count INT DEFAULT 0,
+  late_count INT DEFAULT 0,
+  excused_count INT DEFAULT 0,
+  notes TEXT,
+  status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
+  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  reviewed_at TIMESTAMP NULL,
+  reviewed_by INT NULL,
+  FOREIGN KEY (activity_id) REFERENCES sports_activities(id) ON DELETE CASCADE
+);
+
+-- 11. Teacher Notifications (Principal → Teacher after report approval)
+CREATE TABLE IF NOT EXISTS sports_teacher_notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  report_id INT NOT NULL,
+  teacher_id INT NOT NULL,
+  message TEXT NOT NULL,
+  status ENUM('Unread', 'Read', 'Actioned') DEFAULT 'Unread',
+  sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (report_id) REFERENCES sports_attendance_reports(id) ON DELETE CASCADE
+);

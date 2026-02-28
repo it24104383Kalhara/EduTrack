@@ -53,6 +53,38 @@ export interface AttendanceRecord {
     recorded_at?: string;
 }
 
+export interface AttendanceReport {
+    id: number;
+    activity_id: number;
+    activity_name?: string;
+    coach_id: number;
+    report_date: string;
+    total_students: number;
+    present_count: number;
+    absent_count: number;
+    late_count: number;
+    excused_count: number;
+    notes?: string;
+    status: 'Pending' | 'Approved' | 'Rejected';
+    submitted_at: string;
+    reviewed_at?: string | null;
+    reviewed_by?: number | null;
+}
+
+export interface TeacherNotification {
+    id: number;
+    report_id: number;
+    teacher_id: number;
+    message: string;
+    status: 'Unread' | 'Read' | 'Actioned';
+    sent_at: string;
+    report_date?: string;
+    activity_name?: string;
+    present_count?: number;
+    absent_count?: number;
+    total_students?: number;
+}
+
 export const activityService = {
     getAll: async () => {
         const response = await api.get<Activity[]>('/activities');
@@ -129,6 +161,37 @@ export const attendanceService = {
     },
     mark: async (session_id: number, student_id: number, status: AttendanceStatus) => {
         const response = await api.post('/attendance/mark', { session_id, student_id, status });
+        return response.data;
+    },
+};
+
+export const reportService = {
+    generate: async (data: { activity_id: number; report_date: string; notes?: string }) => {
+        const response = await api.post<AttendanceReport>('/reports', data);
+        return response.data;
+    },
+    getAll: async (params?: { status?: string; coach_id?: number; activity_id?: number }) => {
+        const response = await api.get<AttendanceReport[]>('/reports', { params });
+        return response.data;
+    },
+    getById: async (id: number) => {
+        const response = await api.get<AttendanceReport>(`/reports/${id}`);
+        return response.data;
+    },
+    review: async (id: number, status: 'Approved' | 'Rejected') => {
+        const response = await api.put(`/reports/${id}/review`, { status });
+        return response.data;
+    },
+    notifyTeacher: async (id: number, teacher_id: number, message: string) => {
+        const response = await api.post(`/reports/${id}/notify-teacher`, { teacher_id, message });
+        return response.data;
+    },
+    getMyNotifications: async () => {
+        const response = await api.get<TeacherNotification[]>('/reports/notifications/mine');
+        return response.data;
+    },
+    actionNotification: async (id: number) => {
+        const response = await api.put(`/reports/notifications/${id}/action`);
         return response.data;
     },
 };

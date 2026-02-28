@@ -9,6 +9,7 @@ import attendanceRoutes from './routes/attendanceRoutes';
 import alertRoutes from './routes/alertRoutes';
 import achievementRoutes from './routes/achievementRoutes';
 import studentRoutes from './routes/studentRoutes';
+import attendanceReportRoutes from './routes/attendanceReportRoutes';
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.use('/api/sports/attendance', attendanceRoutes);
 app.use('/api/sports/alerts', alertRoutes);
 app.use('/api/sports/achievements', achievementRoutes);
 app.use('/api/sports/students', studentRoutes);
+app.use('/api/sports/reports', attendanceReportRoutes);
 
 app.get('/', (req, res) => {
     res.send('EduTrack Backend is running!');

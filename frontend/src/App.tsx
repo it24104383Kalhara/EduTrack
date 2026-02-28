@@ -5,6 +5,9 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import ActivitiesPage from "./pages/sports/ActivitiesPage";
 import ActivityMembersPage from "./pages/sports/ActivityMembersPage";
 import AttendancePage from "./pages/sports/AttendancePage";
+import AttendanceReportPage from "./pages/sports/AttendanceReportPage";
+import PrincipalDashboard from "./pages/sports/PrincipalDashboard";
+import TeacherNotificationsPage from "./pages/sports/TeacherNotificationsPage";
 import { ProtectedRoute } from "./utils/auth";
 import { useState } from "react";
 
@@ -51,6 +54,36 @@ function App() {
               <ProtectedRoute>
                 <DashboardLayout>
                   <AttendancePage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sports/attendance/report"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <AttendanceReportPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sports/principal"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <PrincipalDashboard />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sports/teacher-notifications"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <TeacherNotificationsPage />
                 </DashboardLayout>
               </ProtectedRoute>
             }
