@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import gradeRoutes from './routes/grades-simple';
+import gradeRoutes from './routes/grades';
 import studentRoutes from './routes/students';
 import subjectRoutes from './routes/subjects';
 import { testConnection } from './config/database';
@@ -43,11 +43,10 @@ const initializeDatabase = async () => {
     // Create tables
     await StudentModel.createTable();
     await GradeModel.createTable();
-    await GradeModel.createAssignmentsTable();
     await SubjectModel.createTable();
     
     console.log('✅ Database initialized successfully');
-    console.log('📊 Tables: students, grades, student_assignments, subjects');
+    console.log('📊 Tables: students, grades, student_assignment, subjects');
     
   } catch (error) {
     console.error('❌ Database initialization failed:', error);

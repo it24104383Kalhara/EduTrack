@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { gradeApi } from '../services/api';
+import { gradeApi, studentApi } from '../services/api';
 import type { Grade, Student } from '../services/api';
 import jsPDF from 'jspdf';
 
@@ -12,32 +12,35 @@ const GradeManagement: React.FC = () => {
   const [showStudentAssignment, setShowStudentAssignment] = useState(false);
   const [editingGrade, setEditingGrade] = useState<Grade | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showAllAssignments, setShowAllAssignments] = useState(false);
+  const [allAssignments, setAllAssignments] = useState<any[]>([]);
 
   useEffect(() => {
     fetchGrades();
+    fetchStudents();
   }, []);
 
-  // Listen for localStorage changes to refresh students
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'students') {
-        fetchGrades();
-      }
-    };
+  // Fetch students from backend API
+  const fetchStudents = async () => {
+    try {
+      const studentsData = await studentApi.getAll();
+      setStudents(studentsData);
+    } catch (error) {
+      console.error('Failed to fetch students:', error);
+      setStudents([]);
+    }
+  };
 
-    // Also listen for custom events from localStorage updates
-    const handleCustomStorageChange = () => {
-      fetchGrades();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('localStorageUpdated', handleCustomStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('localStorageUpdated', handleCustomStorageChange);
-    };
-  }, []);
+  // Fetch all assignments
+  const fetchAllAssignments = async () => {
+    try {
+      const assignmentsData = await gradeApi.getAllAssignments();
+      setAllAssignments(assignmentsData);
+    } catch (error) {
+      console.error('Failed to fetch assignments:', error);
+      setAllAssignments([]);
+    }
+  };
 
   const fetchGrades = async () => {
     try {
@@ -47,9 +50,8 @@ const GradeManagement: React.FC = () => {
       const gradesData = await gradeApi.getAll();
       setGrades(gradesData);
       
-      // Fetch students from localStorage (registered students)
-      const localStorageStudents = JSON.parse(localStorage.getItem('students') || '[]');
-      setStudents(localStorageStudents);
+      // Always fetch students to ensure we have the latest data
+      await fetchStudents();
       
       // Refresh dashboard counts
       if (window.refreshDashboard) {
@@ -57,7 +59,8 @@ const GradeManagement: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
-      alert('Failed to load data. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load data. Please try again.';
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -75,7 +78,8 @@ const GradeManagement: React.FC = () => {
         await fetchGrades();
       } catch (error) {
         console.error('Failed to create grade:', error);
-        alert('Failed to create grade. Please try again.');
+        const errorMessage = error instanceof Error ? error.message : 'Failed to create grade. Please try again.';
+        alert(errorMessage);
       }
     }
   };
@@ -93,13 +97,10 @@ const GradeManagement: React.FC = () => {
       
       console.log('Found grade:', grade);
       
-      // Get student from localStorage
-      const localStorageStudents = JSON.parse(localStorage.getItem('students') || '[]');
-      console.log('LocalStorage students:', localStorageStudents);
-      
-      const student = localStorageStudents.find((s: Student) => s.id === studentId);
+      // Get student from backend API
+      const student = students.find((s: Student) => s.id === studentId);
       if (!student) {
-        console.error('Student not found in localStorage:', studentId);
+        console.error('Student not found:', studentId);
         alert('Student not found in registered students');
         return;
       }
@@ -113,18 +114,7 @@ const GradeManagement: React.FC = () => {
         // Remove student from grade
         console.log('Removing student from grade...');
         try {
-          const response = await fetch(`http://localhost:5000/api/grades/${gradeId}/remove-student/${studentId}`, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-            }
-          });
-          
-          const result = await response.json();
-          if (!response.ok) {
-            throw new Error(result.message || 'Removal failed');
-          }
-          
+          await gradeApi.removeStudent(gradeId, studentId);
           console.log(`Removed student ${student.first_name} ${student.last_name} from grade ${grade.grade}-${grade.grade_part}`);
         } catch (error) {
           console.error('Removal API error:', error);
@@ -141,33 +131,10 @@ const GradeManagement: React.FC = () => {
           return;
         }
         
-        // Assign student to grade - send student details in request body
+        // Assign student to grade
         console.log('Assigning student to grade...');
         try {
-          const response = await fetch(`http://localhost:5000/api/grades/${gradeId}/assign-student/${studentId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              student: {
-                id: student.id,
-                first_name: student.first_name,
-                last_name: student.last_name,
-                parent_phone: student.parent_phone
-              }
-            })
-          });
-          
-          const result = await response.json();
-          if (!response.ok) {
-            if (result.message && result.message.includes('already assigned')) {
-              alert('This student is already assigned to another grade. A student can only be assigned to one grade at a time.');
-              return;
-            }
-            throw new Error(result.message || 'Assignment failed');
-          }
-          
+          await gradeApi.assignStudent(gradeId, studentId);
           console.log(`Assigned student ${student.first_name} ${student.last_name} to grade ${grade.grade}-${grade.grade_part}`);
         } catch (error) {
           console.error('Assignment API error:', error);
@@ -180,7 +147,8 @@ const GradeManagement: React.FC = () => {
       console.log('Done!');
     } catch (error) {
       console.error('Failed to assign/remove student:', error);
-      alert('Failed to update student assignment. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update student assignment. Please try again.';
+      alert(errorMessage);
     }
   };
 
@@ -305,7 +273,8 @@ const GradeManagement: React.FC = () => {
         setEditingGrade(null);
       } catch (error) {
         console.error('Failed to update grade:', error);
-        alert('Failed to update grade. Please try again.');
+        const errorMessage = error instanceof Error ? error.message : 'Failed to update grade. Please try again.';
+        alert(errorMessage);
       }
     }
   };
@@ -316,9 +285,10 @@ const GradeManagement: React.FC = () => {
         await gradeApi.delete(gradeId);
         await fetchGrades();
       } catch (error) {
-        console.error('Failed to delete grade:', error);
-        alert('Failed to delete grade. Please try again.');
-      }
+            console.error('Failed to delete grade:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Failed to delete grade. Please try again.';
+            alert(errorMessage);
+          }
     }
   };
 
@@ -328,9 +298,10 @@ const GradeManagement: React.FC = () => {
         await gradeApi.clearAll();
         await fetchGrades();
       } catch (error) {
-        console.error('Failed to clear grades:', error);
-        alert('Failed to clear grades. Please try again.');
-      }
+            console.error('Failed to clear grades:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Failed to clear grades. Please try again.';
+            alert(errorMessage);
+          }
     }
   };
 
@@ -400,22 +371,43 @@ const GradeManagement: React.FC = () => {
               Create and manage school grades with student assignments
             </p>
           </div>
-          <button
-            onClick={clearAllGrades}
-            style={{
-              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '10px 20px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'
-            }}
-          >
-            🗑️ Clear All
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => {
+                fetchAllAssignments();
+                setShowAllAssignments(true);
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 20px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)'
+              }}
+            >
+              📋 View All Assignments
+            </button>
+            <button
+              onClick={clearAllGrades}
+              style={{
+                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 20px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'
+              }}
+            >
+              🗑️ Clear All
+            </button>
+          </div>
         </div>
 
         <div style={{
@@ -818,8 +810,9 @@ const GradeManagement: React.FC = () => {
                                   <div style={{
                                     fontSize: '14px',
                                     fontWeight: '600',
-                                    color: '#10b981',
-                                    marginBottom: '2px'
+                                    color: '#ffffff',
+                                    marginBottom: '2px',
+                                    textShadow: '0 1px 2px rgba(0,0,0,0.3)'
                                   }}>
                                     {student.first_name} {student.last_name}
                                   </div>
@@ -911,8 +904,9 @@ const GradeManagement: React.FC = () => {
                                   <div style={{
                                     fontSize: '14px',
                                     fontWeight: '600',
-                                    color: '#6366f1',
-                                    marginBottom: '2px'
+                                    color: '#1e293b',
+                                    marginBottom: '2px',
+                                    textShadow: '0 1px 2px rgba(255,255,255,0.3)'
                                   }}>
                                     {student.first_name} {student.last_name}
                                   </div>
@@ -1097,6 +1091,117 @@ const GradeManagement: React.FC = () => {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* All Assignments Modal */}
+        {showAllAssignments && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #0f766e 0%, #134e4a 100%)',
+              borderRadius: '16px',
+              border: '3px solid #000000',
+              padding: '30px',
+              maxWidth: '900px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              color: '#e2e8f0'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px'
+              }}>
+                <h2 style={{
+                  fontSize: '24px',
+                  fontWeight: '700',
+                  color: '#10b981',
+                  margin: 0
+                }}>
+                  📋 All Student Assignments
+                </h2>
+                <button
+                  onClick={() => setShowAllAssignments(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#e2e8f0',
+                    fontSize: '24px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ❌
+                </button>
+              </div>
+
+              {allAssignments.length > 0 ? (
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '12px',
+                  padding: '20px'
+                }}>
+                  <table style={{
+                    width: '100%',
+                    borderCollapse: 'collapse'
+                  }}>
+                    <thead>
+                      <tr style={{
+                        borderBottom: '2px solid #10b981'
+                      }}>
+                        <th style={{ padding: '10px', textAlign: 'left', color: '#10b981' }}>Student ID</th>
+                        <th style={{ padding: '10px', textAlign: 'left', color: '#10b981' }}>Student Name</th>
+                        <th style={{ padding: '10px', textAlign: 'left', color: '#10b981' }}>Grade</th>
+                        <th style={{ padding: '10px', textAlign: 'left', color: '#10b981' }}>Section</th>
+                        <th style={{ padding: '10px', textAlign: 'left', color: '#10b981' }}>Assigned At</th>
+                        <th style={{ padding: '10px', textAlign: 'left', color: '#10b981' }}>Updated At</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {allAssignments.map((assignment, index) => (
+                        <tr key={index} style={{
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                        }}>
+                          <td style={{ padding: '10px' }}>{assignment.student_id}</td>
+                          <td style={{ padding: '10px' }}>
+                            {assignment.first_name} {assignment.last_name}
+                          </td>
+                          <td style={{ padding: '10px' }}>{assignment.grade}</td>
+                          <td style={{ padding: '10px' }}>{assignment.section}</td>
+                          <td style={{ padding: '10px' }}>
+                            {new Date(assignment.assigned_at).toLocaleString()}
+                          </td>
+                          <td style={{ padding: '10px' }}>
+                            {assignment.updated_at ? new Date(assignment.updated_at).toLocaleString() : 'N/A'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px',
+                  color: '#94a3b8'
+                }}>
+                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>📚</div>
+                  <div>No student assignments found</div>
+                </div>
+              )}
             </div>
           </div>
         )}

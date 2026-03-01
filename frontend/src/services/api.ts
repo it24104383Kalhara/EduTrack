@@ -16,6 +16,7 @@ export interface Grade {
   grade: number;
   grade_part: string;
   created_at?: string;
+  updated_at?: string;
   students?: Student[];
 }
 
@@ -39,7 +40,8 @@ export interface Student {
   parent_ethnicity: string;
   parent_nationality: string;
   created_at?: string;
-  assigned_at?: string;
+  updated_at?: string;
+  assigned_at?: string; // Added for grade assignment tracking
 }
 
 export interface ApiResponse<T> {
@@ -60,6 +62,8 @@ async function apiRequest<T>(
 ): Promise<ApiResponse<T>> {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
+    console.log('🔵 [API_REQUEST]:', { method: options.method, url, endpoint });
+    
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -69,6 +73,7 @@ async function apiRequest<T>(
     });
 
     const data = await response.json();
+    console.log('🟢 [API_RESPONSE]:', { status: response.status, ok: response.ok, data });
 
     if (!response.ok) {
       throw new Error(data.message || `HTTP error! status: ${response.status}`);
@@ -132,7 +137,7 @@ export const gradeApi = {
 
   // Clear all grades
   async clearAll(): Promise<boolean> {
-    await apiRequest('/grades', {
+    await apiRequest('/grades/clear', {
       method: 'DELETE',
     });
     return true;
@@ -152,6 +157,18 @@ export const gradeApi = {
       method: 'DELETE',
     });
     return true;
+  },
+
+  // Get all student assignments with details
+  async getAllAssignments(): Promise<any[]> {
+    const response = await apiRequest<any[]>('/grades/assignments');
+    return response.data;
+  },
+
+  // Get assignments for a specific grade
+  async getAssignmentsByGrade(gradeId: number): Promise<any[]> {
+    const response = await apiRequest<any[]>(`/grades/${gradeId}/assignments`);
+    return response.data;
   },
 };
 

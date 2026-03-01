@@ -7,6 +7,7 @@ export interface Student {
   date_of_birth: string;
   gender: 'male' | 'female' | 'other';
   religion: string;
+  ethnicity: string;
   address: string;
   nationality: string;
   parent_type: 'father' | 'mother' | 'guardian';
@@ -16,6 +17,7 @@ export interface Student {
   parent_gender: 'male' | 'female' | 'other';
   parent_email?: string;
   parent_religion: string;
+  parent_ethnicity: string;
   parent_nationality: string;
   created_at?: Date;
   updated_at?: Date;

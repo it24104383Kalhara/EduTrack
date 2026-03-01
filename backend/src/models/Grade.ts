@@ -74,31 +74,7 @@ export class GradeModel {
     }
   }
 
-  // ============================================================================
-  // CREATE STUDENT ASSIGNMENTS TABLE
-  // ============================================================================
-  static async createAssignmentsTable() {
-    const query = `
-      CREATE TABLE IF NOT EXISTS student_assignments (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        grade_id INT NOT NULL,
-        student_id INT NOT NULL,
-        assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (grade_id) REFERENCES grades(id) ON DELETE CASCADE,
-        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-        UNIQUE KEY unique_assignment (grade_id, student_id)
-      )
-    `;
-    
-    try {
-      await pool.execute(query);
-      console.log('Student assignments table created or already exists');
-    } catch (error) {
-      console.error('Error creating student assignments table:', error);
-      throw error;
-    }
-  }
-
+  
   // ============================================================================
   // FIND ALL GRADES WITH STUDENTS
   // ============================================================================
@@ -110,19 +86,21 @@ export class GradeModel {
         g.grade_part,
         g.created_at,
         g.updated_at,
-        JSON_ARRAYAGG(
-          JSON_OBJECT(
-            'id', s.id,
-            'first_name', s.first_name,
-            'last_name', s.last_name,
-            'parent_phone', s.parent_phone,
-            'assigned_at', sa.assigned_at
+        (
+          SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+              'id', s.id,
+              'first_name', s.first_name,
+              'last_name', s.last_name,
+              'parent_phone', s.parent_phone,
+              'assigned_at', sa.assigned_at
+            )
           )
+          FROM student_assignment sa
+          INNER JOIN students s ON sa.student_id = s.id
+          WHERE sa.grade = g.grade AND sa.section = g.grade_part
         ) as students
       FROM grades g
-      LEFT JOIN student_assignments sa ON g.id = sa.grade_id
-      LEFT JOIN students s ON sa.student_id = s.id
-      GROUP BY g.id, g.grade, g.grade_part, g.created_at, g.updated_at
       ORDER BY g.grade, g.grade_part
     `;
     
@@ -132,7 +110,7 @@ export class GradeModel {
       
       return grades.map(grade => ({
         ...grade,
-        students: grade.students[0]?.id ? grade.students : []
+        students: grade.students && grade.students.length > 0 ? grade.students : []
       }));
     } catch (error) {
       console.error('🔴 [GRADE_FIND_ALL_ERROR]:', error);
@@ -151,20 +129,22 @@ export class GradeModel {
         g.grade_part,
         g.created_at,
         g.updated_at,
-        JSON_ARRAYAGG(
-          JSON_OBJECT(
-            'id', s.id,
-            'first_name', s.first_name,
-            'last_name', s.last_name,
-            'parent_phone', s.parent_phone,
-            'assigned_at', sa.assigned_at
+        (
+          SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+              'id', s.id,
+              'first_name', s.first_name,
+              'last_name', s.last_name,
+              'parent_phone', s.parent_phone,
+              'assigned_at', sa.assigned_at
+            )
           )
+          FROM student_assignment sa
+          INNER JOIN students s ON sa.student_id = s.id
+          WHERE sa.grade = g.grade AND sa.section = g.grade_part
         ) as students
       FROM grades g
-      LEFT JOIN student_assignments sa ON g.id = sa.grade_id
-      LEFT JOIN students s ON sa.student_id = s.id
       WHERE g.id = ?
-      GROUP BY g.id, g.grade, g.grade_part, g.created_at, g.updated_at
     `;
     
     try {
@@ -176,11 +156,68 @@ export class GradeModel {
       const grade = grades[0];
       return {
         ...grade,
-        students: grade.students[0]?.id ? grade.students : []
+        students: grade.students && grade.students.length > 0 ? grade.students : []
       };
     } catch (error) {
       console.error('🔴 [GRADE_FIND_BY_ID_ERROR]:', error);
       throw new Error('Failed to fetch grade by ID');
+    }
+  }
+
+  // ============================================================================
+  // GET ALL STUDENT ASSIGNMENTS WITH DETAILS
+  // ============================================================================
+  static async getAllStudentAssignments(): Promise<any[]> {
+    const query = `
+      SELECT 
+        sa.student_id,
+        s.first_name,
+        s.last_name,
+        CONCAT(s.first_name, ' ', s.last_name) as student_name,
+        sa.grade,
+        sa.section,
+        sa.assigned_at,
+        sa.updated_at
+      FROM student_assignment sa
+      INNER JOIN students s ON sa.student_id = s.id
+      ORDER BY sa.grade, sa.section, s.first_name, s.last_name
+    `;
+    
+    try {
+      const [rows] = await pool.execute(query);
+      return rows as any[];
+    } catch (error) {
+      console.error('🔴 [GET_ALL_ASSIGNMENTS_ERROR]:', error);
+      throw new Error('Failed to fetch student assignments');
+    }
+  }
+
+  // ============================================================================
+  // GET STUDENT ASSIGNMENTS BY GRADE ID
+  // ============================================================================
+  static async getStudentAssignmentsByGrade(gradeId: number): Promise<any[]> {
+    const query = `
+      SELECT 
+        sa.student_id,
+        s.first_name,
+        s.last_name,
+        CONCAT(s.first_name, ' ', s.last_name) as student_name,
+        sa.grade,
+        sa.section,
+        sa.assigned_at,
+        sa.updated_at
+      FROM student_assignment sa
+      INNER JOIN students s ON sa.student_id = s.id
+      WHERE sa.grade = ?
+      ORDER BY s.first_name, s.last_name
+    `;
+    
+    try {
+      const [rows] = await pool.execute(query, [gradeId]);
+      return rows as any[];
+    } catch (error) {
+      console.error('🔴 [GET_ASSIGNMENTS_BY_GRADE_ERROR]:', error);
+      throw new Error('Failed to fetch student assignments for grade');
     }
   }
 
@@ -195,20 +232,22 @@ export class GradeModel {
         g.grade_part,
         g.created_at,
         g.updated_at,
-        JSON_ARRAYAGG(
-          JSON_OBJECT(
-            'id', s.id,
-            'first_name', s.first_name,
-            'last_name', s.last_name,
-            'parent_phone', s.parent_phone,
-            'assigned_at', sa.assigned_at
+        (
+          SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+              'id', s.id,
+              'first_name', s.first_name,
+              'last_name', s.last_name,
+              'parent_phone', s.parent_phone,
+              'assigned_at', sa.assigned_at
+            )
           )
+          FROM student_assignment sa
+          INNER JOIN students s ON sa.student_id = s.id
+          WHERE sa.grade = g.grade AND sa.section = g.grade_part
         ) as students
       FROM grades g
-      LEFT JOIN student_assignments sa ON g.id = sa.grade_id
-      LEFT JOIN students s ON sa.student_id = s.id
       WHERE g.grade = ? AND g.grade_part = ?
-      GROUP BY g.id, g.grade, g.grade_part, g.created_at, g.updated_at
     `;
     
     try {
@@ -220,7 +259,7 @@ export class GradeModel {
       const grade = grades[0];
       return {
         ...grade,
-        students: grade.students[0]?.id ? grade.students : []
+        students: grade.students && grade.students.length > 0 ? grade.students : []
       };
     } catch (error) {
       console.error('🔴 [GRADE_FIND_BY_GRADE_PART_ERROR]:', error);
@@ -259,18 +298,55 @@ export class GradeModel {
     const fields = Object.keys(updateData).filter(key => key !== 'id' && key !== 'created_at' && key !== 'updated_at');
     if (fields.length === 0) return null;
 
-    const setClause = fields.map(field => `${field} = ?`).join(', ');
-    const values = fields.map(field => (updateData as any)[field]);
-    values.push(id);
-
-    const query = `UPDATE grades SET ${setClause} WHERE id = ?`;
-
+    const connection = await pool.getConnection();
+    
     try {
-      await pool.execute(query, values);
+      await connection.beginTransaction();
+      
+      // Get current grade data before update
+      const [currentGradeRows] = await connection.execute('SELECT grade, grade_part FROM grades WHERE id = ?', [id]);
+      const currentGrade = (currentGradeRows as any[])[0];
+      
+      if (!currentGrade) {
+        throw new Error('Grade not found');
+      }
+      
+      // Update grade record
+      const setClause = fields.map(field => `${field} = ?`).join(', ');
+      const values = fields.map(field => (updateData as any)[field]);
+      values.push(id);
+
+      const updateQuery = `UPDATE grades SET ${setClause} WHERE id = ?`;
+      await connection.execute(updateQuery, values);
+      
+      // Check if grade or grade_part is being updated
+      const isGradeUpdated = updateData.grade !== undefined && updateData.grade !== currentGrade.grade;
+      const isSectionUpdated = updateData.grade_part !== undefined && updateData.grade_part !== currentGrade.grade_part;
+      
+      if (isGradeUpdated || isSectionUpdated) {
+        // Update student assignments to reflect new grade/section
+        const newGrade = updateData.grade !== undefined ? updateData.grade : currentGrade.grade;
+        const newSection = updateData.grade_part !== undefined ? updateData.grade_part : currentGrade.grade_part;
+        
+        const updateAssignmentsQuery = `
+          UPDATE student_assignment 
+          SET grade = ?, section = ? 
+          WHERE grade = ? AND section = ?
+        `;
+        await connection.execute(updateAssignmentsQuery, [
+          newGrade, newSection, 
+          currentGrade.grade, currentGrade.grade_part
+        ]);
+      }
+      
+      await connection.commit();
       return await this.findById(id);
     } catch (error) {
+      await connection.rollback();
       console.error('🔴 [GRADE_UPDATE_ERROR]:', error);
       throw new Error('Failed to update grade');
+    } finally {
+      connection.release();
     }
   }
 
@@ -278,14 +354,31 @@ export class GradeModel {
   // DELETE GRADE
   // ============================================================================
   static async delete(id: number): Promise<boolean> {
-    const query = 'DELETE FROM grades WHERE id = ?';
+    const connection = await pool.getConnection();
     
     try {
-      const [result] = await pool.execute(query, [id]);
+      await connection.beginTransaction();
+      
+      // First, remove all student assignments for this grade
+      const deleteAssignmentsQuery = `
+        DELETE sa FROM student_assignment sa
+        JOIN grades g ON sa.grade = g.grade AND sa.section = g.grade_part
+        WHERE g.id = ?
+      `;
+      await connection.execute(deleteAssignmentsQuery, [id]);
+      
+      // Then, delete the grade
+      const deleteGradeQuery = 'DELETE FROM grades WHERE id = ?';
+      const [result] = await connection.execute(deleteGradeQuery, [id]);
+      
+      await connection.commit();
       return (result as any).affectedRows > 0;
     } catch (error) {
+      await connection.rollback();
       console.error('🔴 [GRADE_DELETE_ERROR]:', error);
       throw new Error('Failed to delete grade');
+    } finally {
+      connection.release();
     }
   }
 
@@ -293,14 +386,25 @@ export class GradeModel {
   // CLEAR ALL GRADES
   // ============================================================================
   static async clearAll(): Promise<number> {
-    const query = 'DELETE FROM grades';
+    const connection = await pool.getConnection();
     
     try {
-      const [result] = await pool.execute(query);
+      await connection.beginTransaction();
+      
+      // First, remove all student assignments
+      await connection.execute('DELETE FROM student_assignment');
+      
+      // Then, delete all grades
+      const [result] = await connection.execute('DELETE FROM grades');
+      
+      await connection.commit();
       return (result as any).affectedRows;
     } catch (error) {
+      await connection.rollback();
       console.error('🔴 [GRADE_CLEAR_ALL_ERROR]:', error);
       throw new Error('Failed to clear all grades');
+    } finally {
+      connection.release();
     }
   }
 
@@ -309,11 +413,14 @@ export class GradeModel {
   // ============================================================================
   static async assignStudent(gradeId: number, studentId: number): Promise<boolean> {
     const query = `
-      INSERT INTO student_assignments (grade_id, student_id) VALUES (?, ?)
+      INSERT INTO student_assignment (student_id, student_name, grade, section)
+      SELECT s.id, CONCAT(s.first_name, ' ', s.last_name), g.grade, g.grade_part
+      FROM students s, grades g
+      WHERE s.id = ? AND g.id = ?
     `;
     
     try {
-      await pool.execute(query, [gradeId, studentId]);
+      await pool.execute(query, [studentId, gradeId]);
       return true;
     } catch (error: any) {
       if (error.code === 'ER_DUP_ENTRY') {
@@ -330,7 +437,9 @@ export class GradeModel {
   // ============================================================================
   static async removeStudent(gradeId: number, studentId: number): Promise<boolean> {
     const query = `
-      DELETE FROM student_assignments WHERE grade_id = ? AND student_id = ?
+      DELETE sa FROM student_assignment sa
+      JOIN grades g ON sa.grade = g.grade AND sa.section = g.grade_part
+      WHERE g.id = ? AND sa.student_id = ?
     `;
     
     try {
@@ -347,7 +456,11 @@ export class GradeModel {
   // ============================================================================
   static async isStudentAssigned(studentId: number): Promise<{ assigned: boolean; gradeId?: number }> {
     const query = `
-      SELECT grade_id FROM student_assignments WHERE student_id = ? LIMIT 1
+      SELECT g.id as grade_id 
+      FROM student_assignment sa
+      JOIN grades g ON sa.grade = g.grade AND sa.section = g.grade_part
+      WHERE sa.student_id = ? 
+      LIMIT 1
     `;
     
     try {
@@ -378,7 +491,7 @@ export class GradeModel {
         COUNT(DISTINCT sa.student_id) as totalAssignedStudents,
         COUNT(DISTINCT CASE WHEN sa.student_id IS NOT NULL THEN g.id END) as gradesWithStudents
       FROM grades g
-      LEFT JOIN student_assignments sa ON g.id = sa.grade_id
+      LEFT JOIN student_assignment sa ON g.grade = sa.grade AND g.grade_part = sa.section
     `;
     
     try {

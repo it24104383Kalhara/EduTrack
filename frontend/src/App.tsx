@@ -25,35 +25,25 @@ function App() {
 
   const fetchCounts = async () => {
     try {
+      setLoading(true);
+      
       // Fetch grades from backend API
       const gradesData = await gradeApi.getAll();
       setGradeCount(gradesData.length);
       
-      // Fetch students from both localStorage and backend API
-      let totalStudents = 0;
-      
-      // Get students from localStorage (demo mode)
-      const localStorageStudents = JSON.parse(localStorage.getItem('students') || '[]');
-      totalStudents += localStorageStudents.length;
-      
-      // Get students from backend API
+      // Fetch students from backend API only (no more localStorage)
       try {
         const backendStudents = await studentApi.getAll();
-        totalStudents += backendStudents.length;
+        setStudentCount(backendStudents.length);
       } catch (error) {
-        console.log('Backend API not available, using localStorage only');
+        console.log('Backend API not available');
+        setStudentCount(0);
       }
       
-      setStudentCount(totalStudents);
     } catch (error) {
       console.error('Failed to fetch counts:', error);
-      
-      // Fallback to localStorage only
-      const localStorageStudents = JSON.parse(localStorage.getItem('students') || '[]');
-      const localStorageGrades = JSON.parse(localStorage.getItem('grades') || '[]');
-      
-      setStudentCount(localStorageStudents.length);
-      setGradeCount(localStorageGrades.length);
+      setStudentCount(0);
+      setGradeCount(0);
     } finally {
       setLoading(false);
     }
@@ -658,6 +648,44 @@ function App() {
                     {loading ? '...' : gradeCount}
                   </div>
                 </div>
+
+                {/* Clear Local Storage Button */}
+                <button
+                  onClick={() => {
+                    if (confirm('Are you sure you want to clear all local storage data? This will remove any demo data and force the app to use only the database.')) {
+                      localStorage.clear();
+                      fetchCounts(); // Refresh the counts
+                      alert('Local storage cleared successfully! The app will now use only database data.');
+                    }
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.3) 100%)',
+                    borderRadius: '12px',
+                    padding: '12px 20px',
+                    margin: '15px 0',
+                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 6px 20px rgba(239, 68, 68, 0.3)',
+                    color: '#fff',
+                    fontSize: '0.95rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    width: 'auto',
+                    minWidth: '200px',
+                    textAlign: 'center'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.5) 0%, rgba(220, 38, 38, 0.5) 100%)';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.3) 100%)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  🗑️ Clear Storage
+                </button>
                 
                 <div style={{ 
                   fontSize: '1.3rem', 

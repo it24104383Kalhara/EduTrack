@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { studentApi } from '../services/api';
 
 interface Student {
   id: number;
@@ -34,18 +35,37 @@ const StudentList: React.FC = () => {
     fetchStudents();
   }, []);
 
-  const clearAllStudents = () => {
+  const clearAllStudents = async () => {
     if (confirm('Are you sure you want to delete all students? This action cannot be undone.')) {
-      setStudents([]);
-      localStorage.removeItem('students');
+      try {
+        // Get all students
+        const students = await studentApi.getAll();
+        
+        // Delete all students
+        for (const student of students) {
+          await studentApi.delete(student.id);
+        }
+        
+        // Refresh the list
+        await fetchStudents();
+      } catch (error) {
+        console.error('Failed to clear all students:', error);
+        alert('Failed to clear all students. Please try again.');
+      }
     }
   };
 
-  const fetchStudents = () => {
-    // Get students from localStorage
-    const savedStudents = JSON.parse(localStorage.getItem('students') || '[]');
-    setStudents(savedStudents);
-    setLoading(false);
+  const fetchStudents = async () => {
+    try {
+      setLoading(true);
+      const studentsData = await studentApi.getAll();
+      setStudents(studentsData);
+    } catch (error) {
+      console.error('Failed to fetch students:', error);
+      setStudents([]); // Set empty array if API fails
+    } finally {
+      setLoading(false);
+    }
   };
 
   const generateRegistrationNumber = (student: Student) => {
@@ -62,24 +82,46 @@ const StudentList: React.FC = () => {
     setShowViewModal(true);
   };
 
-  const handleUpdateStudent = (updatedStudent: Student) => {
-    const students = JSON.parse(localStorage.getItem('students') || '[]');
-    const updatedStudents = students.map((s: Student) => 
-      s.id === updatedStudent.id ? updatedStudent : s
-    );
-    localStorage.setItem('students', JSON.stringify(updatedStudents));
-    setStudents(updatedStudents);
-    setShowEditModal(false);
-    setEditingStudent(null);
+  const handleUpdateStudent = async (updatedStudent: Student) => {
+    try {
+      console.log('Updating student:', updatedStudent);
+      
+      // Format the date to yyyy-MM-dd format for backend and remove unwanted fields
+      const { updated_at, ...studentDataForAPI } = updatedStudent as any;
+      const formattedData = {
+        ...studentDataForAPI,
+        date_of_birth: updatedStudent.date_of_birth.split('T')[0] // Convert "2006-09-09T18:30:00.000Z" to "2006-09-09"
+      };
+      
+      console.log('Sending to API:', formattedData);
+      
+      // Update student via API
+      const result = await studentApi.update(updatedStudent.id, formattedData);
+      console.log('Update result:', result);
+      
+      // Refresh the student list from database
+      await fetchStudents();
+      
+      setShowEditModal(false);
+      setEditingStudent(null);
+    } catch (error) {
+      console.error('Failed to update student:', error);
+      alert(`Failed to update student: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
-  const handleDeleteStudent = (studentId: number) => {
-    // TODO: Implement delete confirmation
+  const handleDeleteStudent = async (studentId: number) => {
     if (confirm('Are you sure you want to delete this student?')) {
-      const students = JSON.parse(localStorage.getItem('students') || '[]');
-      const updatedStudents = students.filter((s: Student) => s.id !== studentId);
-      localStorage.setItem('students', JSON.stringify(updatedStudents));
-      setStudents(updatedStudents);
+      try {
+        // Delete student via API
+        await studentApi.delete(studentId);
+        
+        // Refresh the student list from database
+        await fetchStudents();
+      } catch (error) {
+        console.error('Failed to delete student:', error);
+        alert('Failed to delete student. Please try again.');
+      }
     }
   };
 
@@ -1003,7 +1045,7 @@ const StudentList: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  value={editingStudent.first_name}
+                  value={editingStudent.first_name || ''}
                   onChange={(e) => setEditingStudent({...editingStudent, first_name: e.target.value})}
                   style={{
                     width: '100%',
@@ -1023,7 +1065,7 @@ const StudentList: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  value={editingStudent.last_name}
+                  value={editingStudent.last_name || ''}
                   onChange={(e) => setEditingStudent({...editingStudent, last_name: e.target.value})}
                   style={{
                     width: '100%',
@@ -1044,7 +1086,7 @@ const StudentList: React.FC = () => {
                   </label>
                   <input
                     type="date"
-                    value={editingStudent.date_of_birth}
+                    value={editingStudent.date_of_birth?.split('T')[0] || ''}
                     onChange={(e) => setEditingStudent({...editingStudent, date_of_birth: e.target.value})}
                     style={{
                       width: '100%',
@@ -1062,7 +1104,7 @@ const StudentList: React.FC = () => {
                     Gender
                   </label>
                   <select
-                    value={editingStudent.gender}
+                    value={editingStudent.gender || ''}
                     onChange={(e) => setEditingStudent({...editingStudent, gender: e.target.value as 'male' | 'female' | 'other'})}
                     style={{
                       width: '100%',
@@ -1088,7 +1130,7 @@ const StudentList: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={editingStudent.religion}
+                    value={editingStudent.religion || ''}
                     onChange={(e) => setEditingStudent({...editingStudent, religion: e.target.value})}
                     style={{
                       width: '100%',
@@ -1107,7 +1149,7 @@ const StudentList: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={editingStudent.ethnicity}
+                    value={editingStudent.ethnicity || ''}
                     onChange={(e) => setEditingStudent({...editingStudent, ethnicity: e.target.value})}
                     style={{
                       width: '100%',
@@ -1128,7 +1170,7 @@ const StudentList: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  value={editingStudent.nationality}
+                  value={editingStudent.nationality || ''}
                   onChange={(e) => setEditingStudent({...editingStudent, nationality: e.target.value})}
                   style={{
                     width: '100%',
@@ -1147,7 +1189,7 @@ const StudentList: React.FC = () => {
                   Address
                 </label>
                 <textarea
-                  value={editingStudent.address}
+                  value={editingStudent.address || ''}
                   onChange={(e) => setEditingStudent({...editingStudent, address: e.target.value})}
                   rows={2}
                   style={{
@@ -1174,7 +1216,7 @@ const StudentList: React.FC = () => {
                     Parent Type
                   </label>
                   <select
-                    value={editingStudent.parent_type}
+                    value={editingStudent.parent_type || ''}
                     onChange={(e) => setEditingStudent({...editingStudent, parent_type: e.target.value as 'father' | 'mother' | 'guardian'})}
                     style={{
                       width: '100%',
@@ -1197,7 +1239,7 @@ const StudentList: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={editingStudent.parent_name}
+                    value={editingStudent.parent_name || ''}
                     onChange={(e) => setEditingStudent({...editingStudent, parent_name: e.target.value})}
                     style={{
                       width: '100%',
@@ -1219,7 +1261,7 @@ const StudentList: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={editingStudent.parent_phone}
+                    value={editingStudent.parent_phone || ''}
                     onChange={(e) => setEditingStudent({...editingStudent, parent_phone: e.target.value})}
                     style={{
                       width: '100%',
@@ -1259,7 +1301,7 @@ const StudentList: React.FC = () => {
                     Parent Gender
                   </label>
                   <select
-                    value={editingStudent.parent_gender}
+                    value={editingStudent.parent_gender || ''}
                     onChange={(e) => setEditingStudent({...editingStudent, parent_gender: e.target.value as 'male' | 'female' | 'other'})}
                     style={{
                       width: '100%',
@@ -1282,7 +1324,7 @@ const StudentList: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={editingStudent.parent_religion}
+                    value={editingStudent.parent_religion || ''}
                     onChange={(e) => setEditingStudent({...editingStudent, parent_religion: e.target.value})}
                     style={{
                       width: '100%',
@@ -1304,7 +1346,7 @@ const StudentList: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={editingStudent.parent_ethnicity}
+                    value={editingStudent.parent_ethnicity || ''}
                     onChange={(e) => setEditingStudent({...editingStudent, parent_ethnicity: e.target.value})}
                     style={{
                       width: '100%',
@@ -1323,7 +1365,7 @@ const StudentList: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={editingStudent.parent_nationality}
+                    value={editingStudent.parent_nationality || ''}
                     onChange={(e) => setEditingStudent({...editingStudent, parent_nationality: e.target.value})}
                     style={{
                       width: '100%',
@@ -1343,7 +1385,7 @@ const StudentList: React.FC = () => {
                   Parent Address
                 </label>
                 <textarea
-                  value={editingStudent.parent_address}
+                  value={editingStudent.parent_address || ''}
                   onChange={(e) => setEditingStudent({...editingStudent, parent_address: e.target.value})}
                   rows={2}
                   style={{

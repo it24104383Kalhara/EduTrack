@@ -105,6 +105,76 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // ============================================================================
+// ENDPOINT: GET /api/grades/assignments
+// PURPOSE: Get all student assignments with detailed information
+// ============================================================================
+router.get('/assignments', async (req: Request, res: Response) => {
+  try {
+    const assignments = await GradeModel.getAllStudentAssignments();
+    
+    res.json({
+      success: true,
+      message: 'Student assignments retrieved successfully',
+      data: assignments,
+      count: assignments.length,
+      timestamp: new Date().toISOString(),
+      endpoint: '/assignments'
+    });
+    
+  } catch (error) {
+    console.error(' [GET_ASSIGNMENTS_ERROR]:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve student assignments',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString(),
+      endpoint: '/assignments'
+    });
+  }
+});
+
+// ============================================================================
+// ENDPOINT: GET /api/grades/:id/assignments
+// PURPOSE: Get student assignments for a specific grade
+// ============================================================================
+router.get('/:id/assignments', async (req: Request, res: Response) => {
+  try {
+    const gradeIdParam = req.params.id;
+    const gradeId = parseInt(Array.isArray(gradeIdParam) ? gradeIdParam[0] : gradeIdParam);
+    
+    if (isNaN(gradeId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid grade ID',
+        timestamp: new Date().toISOString(),
+        endpoint: `/${req.params.id}/assignments`
+      });
+    }
+    
+    const assignments = await GradeModel.getStudentAssignmentsByGrade(gradeId);
+    
+    res.json({
+      success: true,
+      message: `Student assignments for grade ${gradeId} retrieved successfully`,
+      data: assignments,
+      count: assignments.length,
+      timestamp: new Date().toISOString(),
+      endpoint: `/${gradeId}/assignments`
+    });
+    
+  } catch (error) {
+    console.error('🔴 [GET_ASSIGNMENTS_BY_GRADE_ERROR]:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve student assignments for grade',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString(),
+      endpoint: `/${req.params.id}/assignments`
+    });
+  }
+});
+
+// ============================================================================
 // ENDPOINT: GET /api/grades/:id
 // PURPOSE: Retrieve a specific grade by ID
 // ACCESS: Public
@@ -160,6 +230,136 @@ router.get('/:id', async (req: Request, res: Response) => {
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString(),
       endpoint: `/${req.params.id}`
+    });
+  }
+});
+
+// ============================================================================
+// ENDPOINT: PUT /api/grades/:id
+// PURPOSE: Update an existing grade's information
+// ACCESS: Public (with validation middleware)
+// ============================================================================
+router.put('/:id', async (req: Request, res: Response) => {
+  try {
+    // Extract and validate grade ID
+    const idParam = req.params.id;
+    const gradeId = parseInt(Array.isArray(idParam) ? idParam[0] : idParam);
+    
+    // Validate ID format
+    if (isNaN(gradeId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid grade ID format',
+        error: 'ID must be a valid number',
+        timestamp: new Date().toISOString(),
+        endpoint: `/${idParam}`
+      });
+    }
+    
+    // Basic validation for update data
+    const updateData = req.body;
+    if (!updateData || Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No update data provided',
+        error: 'At least one field must be provided for update',
+        timestamp: new Date().toISOString(),
+        endpoint: `/${idParam}`
+      });
+    }
+    
+    // Check if grade exists
+    const existingGrade = await GradeModel.findById(gradeId);
+    if (!existingGrade) {
+      return res.status(404).json({
+        success: false,
+        message: 'Grade not found',
+        error: `No grade found with ID: ${gradeId}`,
+        timestamp: new Date().toISOString(),
+        endpoint: `/${idParam}`
+      });
+    }
+
+    // Check for duplicate grade if updating grade/part
+    if (updateData.grade !== undefined || updateData.grade_part !== undefined) {
+      const newGrade = updateData.grade !== undefined ? updateData.grade : existingGrade.grade;
+      const newGradePart = updateData.grade_part !== undefined ? updateData.grade_part : existingGrade.grade_part;
+      
+      // Skip duplicate check if updating the same grade to the same values
+      if (newGrade !== existingGrade.grade || newGradePart !== existingGrade.grade_part) {
+        const duplicateGrade = await GradeModel.findByGradeAndPart(newGrade, newGradePart);
+        if (duplicateGrade && duplicateGrade.id !== gradeId) {
+          return res.status(409).json({
+            success: false,
+            message: 'Grade already exists',
+            error: `Grade ${newGrade} Part ${newGradePart} is already registered`,
+            timestamp: new Date().toISOString(),
+            endpoint: `/${idParam}`
+          });
+        }
+      }
+    }
+
+    // Update grade record
+    const updatedGrade = await GradeModel.update(gradeId, updateData);
+    
+    // Return success response with updated data
+    res.status(200).json({
+      success: true,
+      message: 'Grade updated successfully',
+      data: updatedGrade,
+      timestamp: new Date().toISOString(),
+      endpoint: `/${idParam}`
+    });
+    
+  } catch (error) {
+    // Log error for debugging
+    console.error('🔴 [GRADE_UPDATE_ERROR]:', error);
+    
+    // Return error response
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update grade',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString(),
+      endpoint: `/${req.params.id}`
+    });
+  }
+});
+
+// ============================================================================
+// ENDPOINT: DELETE /api/grades/clear
+// PURPOSE: Remove all grades from the database (admin operation)
+// ACCESS: Public (should be protected in production)
+// ============================================================================
+router.delete('/clear', async (req: Request, res: Response) => {
+  try {
+    // Delete all grade records
+    const deletedCount = await GradeModel.clearAll();
+    
+    // Return success response with deletion count
+    res.status(200).json({
+      success: true,
+      message: 'All grades cleared successfully',
+      data: {
+        deleted_count: deletedCount,
+        cleared_at: new Date().toISOString()
+      },
+      timestamp: new Date().toISOString(),
+      endpoint: '/clear'
+    });
+    
+  } catch (error) {
+    // Log error for debugging
+    console.error('🔴 [GRADE_CLEAR_ALL_ERROR]:', error);
+    
+    // Return error response
+    res.status(500).json({
+      success: false,
+      message: 'Failed to clear all grades',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString(),
+      endpoint: '/clear'
     });
   }
 });
@@ -234,43 +434,6 @@ router.delete('/:id', async (req: Request, res: Response) => {
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString(),
       endpoint: `/${req.params.id}`
-    });
-  }
-});
-
-// ============================================================================
-// ENDPOINT: DELETE /api/grades/clear
-// PURPOSE: Remove all grades from the database (admin operation)
-// ACCESS: Public (should be protected in production)
-// ============================================================================
-router.delete('/clear', async (req: Request, res: Response) => {
-  try {
-    // Delete all grade records
-    const deletedCount = await GradeModel.clearAll();
-    
-    // Return success response with deletion count
-    res.status(200).json({
-      success: true,
-      message: 'All grades cleared successfully',
-      data: {
-        deleted_count: deletedCount,
-        cleared_at: new Date().toISOString()
-      },
-      timestamp: new Date().toISOString(),
-      endpoint: '/clear'
-    });
-    
-  } catch (error) {
-    // Log error for debugging
-    console.error('🔴 [GRADE_CLEAR_ALL_ERROR]:', error);
-    
-    // Return error response
-    res.status(500).json({
-      success: false,
-      message: 'Failed to clear all grades',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-      endpoint: '/clear'
     });
   }
 });

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { studentApi } from '../services/api';
 
 interface Student {
   first_name: string;
@@ -59,132 +60,73 @@ const StudentRegistrationForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Demo mode - show registration number without backend
-    const demoId = Date.now(); // Use timestamp as unique ID
-    const demoRegistrationNumber = `EDU-${new Date().getFullYear()}-${String(demoId).toString().slice(-6).padStart(6, '0')}`;
-    const studentName = `${formData.first_name} ${formData.last_name}`;
-    
-    // Create student object for demo
-    const newStudent = {
-      id: demoId,
-      first_name: formData.first_name,
-      last_name: formData.last_name,
-      date_of_birth: formData.date_of_birth,
-      gender: formData.gender as 'male' | 'female' | 'other',
-      religion: formData.religion,
-      ethnicity: formData.ethnicity,
-      address: formData.address,
-      nationality: formData.nationality,
-      parent_type: formData.parent_type as 'father' | 'mother' | 'guardian',
-      parent_name: formData.parent_name,
-      parent_phone: formData.parent_phone,
-      parent_address: formData.parent_address,
-      parent_gender: formData.parent_gender as 'male' | 'female' | 'other',
-      parent_email: formData.parent_email,
-      parent_religion: formData.parent_religion,
-      parent_ethnicity: formData.parent_ethnicity,
-      parent_nationality: formData.parent_nationality,
-      created_at: new Date().toISOString()
-    };
-    
-    // Store in localStorage for demo persistence
-    const existingStudents = JSON.parse(localStorage.getItem('students') || '[]');
-    existingStudents.push(newStudent);
-    localStorage.setItem('students', JSON.stringify(existingStudents));
-    
-    // Dispatch custom event to notify dashboard of changes
-    window.dispatchEvent(new CustomEvent('localStorageUpdated', { 
-      detail: { type: 'students', data: newStudent } 
-    }));
-    
-    // Set registration state for demo
-    setRegistration({
-      success: true,
-      registrationNumber: demoRegistrationNumber,
-      studentName: studentName || 'Demo Student',
-      message: 'Student registered successfully! (Demo Mode)'
-    });
-    
-    // Reset form
-    setFormData({
-      first_name: '',
-      last_name: '',
-      date_of_birth: '',
-      gender: '',
-      religion: '',
-      ethnicity: '',
-      address: '',
-      nationality: '',
-      parent_type: '',
-      parent_name: '',
-      parent_phone: '',
-      parent_address: '',
-      parent_gender: '',
-      parent_email: '',
-      parent_religion: '',
-      parent_ethnicity: '',
-      parent_nationality: ''
-    });
-    
-    /* Uncomment this when backend is running
     try {
-      const response = await fetch('http://localhost:5000/api/students/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+      // Create student object for API
+      const newStudent = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        date_of_birth: formData.date_of_birth,
+        gender: formData.gender as 'male' | 'female' | 'other',
+        religion: formData.religion,
+        ethnicity: formData.ethnicity,
+        address: formData.address,
+        nationality: formData.nationality,
+        parent_type: formData.parent_type as 'father' | 'mother' | 'guardian',
+        parent_name: formData.parent_name,
+        parent_phone: formData.parent_phone,
+        parent_address: formData.parent_address,
+        parent_gender: formData.parent_gender as 'male' | 'female' | 'other',
+        parent_email: formData.parent_email,
+        parent_religion: formData.parent_religion,
+        parent_ethnicity: formData.parent_ethnicity,
+        parent_nationality: formData.parent_nationality
+      };
+      
+      // Send to backend API
+      const createdStudent = await studentApi.create(newStudent);
+      
+      // Generate registration number
+      const registrationNumber = `EDU-${new Date().getFullYear()}-${String(createdStudent.id).toString().padStart(6, '0')}`;
+      const studentName = `${formData.first_name} ${formData.last_name}`;
+      
+      // Set registration state
+      setRegistration({
+        success: true,
+        registrationNumber: registrationNumber,
+        studentName: studentName,
+        message: 'Student registered successfully!'
       });
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        console.log('Student registered successfully:', result.data);
-        
-        // Generate a formatted registration number
-        const registrationNumber = `EDU-${new Date().getFullYear()}-${String(result.data.id).padStart(6, '0')}`;
-        const studentName = `${result.data.first_name} ${result.data.last_name}`;
-        
-        // Set registration state
-        setRegistration({
-          success: true,
-          registrationNumber,
-          studentName,
-          message: 'Student registered successfully!'
-        });
-        
-        // Reset form
-        setFormData({
-          first_name: '',
-          last_name: '',
-          date_of_birth: '',
-          gender: '',
-          religion: '',
-          address: '',
-          nationality: '',
-          parent_type: '',
-          parent_name: '',
-          parent_phone: '',
-          parent_address: '',
-          parent_gender: '',
-          parent_email: '',
-          parent_religion: '',
-          parent_nationality: ''
-        });
-      } else {
-        console.error('Registration failed:', result);
-        if (result.errors && Array.isArray(result.errors)) {
-          const errorMessages = result.errors.map((err: any) => `${err.field}: ${err.message}`).join('\n');
-          alert(`Registration failed:\n${errorMessages}`);
-        } else {
-          alert(`Registration failed: ${result.message || 'Unknown error'}`);
-        }
-      }
+      
+      // Reset form
+      setFormData({
+        first_name: '',
+        last_name: '',
+        date_of_birth: '',
+        gender: '',
+        religion: '',
+        ethnicity: '',
+        address: '',
+        nationality: '',
+        parent_type: '',
+        parent_name: '',
+        parent_phone: '',
+        parent_address: '',
+        parent_gender: '',
+        parent_email: '',
+        parent_religion: '',
+        parent_ethnicity: '',
+        parent_nationality: ''
+      });
+      
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('Error submitting form. Please check if the backend server is running.');
+      setRegistration({
+        success: false,
+        registrationNumber: '',
+        studentName: '',
+        message: 'Error registering student. Please try again.'
+      });
     }
-    */
   };
 
   return (

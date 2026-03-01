@@ -155,7 +155,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 // PURPOSE: Update an existing student's information
 // ACCESS: Public (with validation middleware)
 // ============================================================================
-router.put('/:id', validateStudentRegistration, async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request, res: Response) => {
   try {
     // Extract and validate student ID
     const idParam = req.params.id;
@@ -171,21 +171,33 @@ router.put('/:id', validateStudentRegistration, async (req: Request, res: Respon
         endpoint: `/${idParam}`
       });
     }
-
+    
+    // Basic validation for update data
+    const updateData = req.body;
+    if (!updateData || Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No update data provided',
+        error: 'At least one field must be provided for update',
+        timestamp: new Date().toISOString(),
+        endpoint: `/${idParam}`
+      });
+    }
+    
     // Check if student exists
     const existingStudent = await StudentModel.findById(studentId);
     if (!existingStudent) {
       return res.status(404).json({
         success: false,
         message: 'Student not found',
-        error: `No student with ID ${studentId} exists`,
+        error: `No student found with ID: ${studentId}`,
         timestamp: new Date().toISOString(),
         endpoint: `/${idParam}`
       });
     }
 
     // Update student record
-    const updatedStudent = await StudentModel.update(studentId, req.body);
+    const updatedStudent = await StudentModel.update(studentId, updateData);
     
     // Return success response with updated data
     res.status(200).json({
