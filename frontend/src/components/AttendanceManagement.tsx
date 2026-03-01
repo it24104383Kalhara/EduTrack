@@ -818,21 +818,21 @@ const AttendanceManagement: React.FC = () => {
               }
               .header h1 {
                 color: white !important;
-                font-size: 20px;
-                margin: 0 0 6px 0;
+                font-size: 24px;
+                margin: 0 0 8px 0;
                 font-weight: 700;
-                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-                letter-spacing: 0.3px;
+                text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+                letter-spacing: 0.5px;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
               }
               .header-subtitle {
                 color: rgba(255, 255, 255, 0.95) !important;
-                font-size: 12px;
-                margin: 0 0 6px 0;
+                font-size: 16px;
+                margin: 0 0 8px 0;
                 font-weight: 500;
-                text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
@@ -840,14 +840,14 @@ const AttendanceManagement: React.FC = () => {
               .header-meta {
                 display: flex;
                 justify-content: center;
-                gap: 12px;
-                margin-top: 6px;
+                gap: 15px;
+                margin-top: 8px;
                 flex-wrap: wrap;
               }
               .meta-item {
                 background: rgba(255, 255, 255, 0.15);
-                padding: 3px 8px;
-                border-radius: 10px;
+                padding: 4px 10px;
+                border-radius: 12px;
                 backdrop-filter: blur(10px);
                 border: 1px solid rgba(255, 255, 255, 0.2);
                 -webkit-print-color-adjust: exact !important;
@@ -856,19 +856,19 @@ const AttendanceManagement: React.FC = () => {
               }
               .meta-label {
                 color: rgba(255, 255, 255, 0.8) !important;
-                font-size: 8px;
+                font-size: 10px;
                 font-weight: 500;
                 text-transform: uppercase;
-                letter-spacing: 0.3px;
+                letter-spacing: 0.4px;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
               }
               .meta-value {
                 color: white !important;
-                font-size: 10px;
+                font-size: 13px;
                 font-weight: 700;
-                margin-top: 0;
+                margin-top: 1px;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
@@ -877,12 +877,12 @@ const AttendanceManagement: React.FC = () => {
                 display: inline-block;
                 background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
                 color: white !important;
-                padding: 2px 8px;
-                border-radius: 10px;
-                font-size: 9px;
+                padding: 3px 10px;
+                border-radius: 12px;
+                font-size: 11px;
                 font-weight: 600;
-                margin-top: 6px;
-                box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+                margin-top: 8px;
+                box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
