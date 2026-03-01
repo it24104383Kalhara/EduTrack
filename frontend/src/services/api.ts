@@ -44,6 +44,64 @@ export interface Student {
   assigned_at?: string; // Added for grade assignment tracking
 }
 
+export interface Attendance {
+  id?: number;
+  grade_id: number;
+  grade: number;
+  section: string;
+  student_id: number;
+  student_name: string;
+  date: string;
+  status: 'present' | 'absent' | 'late';
+  marked_by?: string;
+  marked_at?: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AttendanceSummary {
+  grade_id: number;
+  grade: number;
+  section: string;
+  date: string;
+  total_students: number;
+  present_count: number;
+  absent_count: number;
+  late_count: number;
+  not_marked_count: number;
+  attendance_percentage: number;
+}
+
+export interface AttendanceReport {
+  student_id: number;
+  student_name: string;
+  total_days: number;
+  present_days: number;
+  absent_days: number;
+  late_days: number;
+  attendance_percentage: number;
+}
+
+export interface AttendanceMark {
+  id?: number;
+  student_id: number;
+  student_name: string;
+  grade: number;
+  section: string;
+  status: 'present' | 'absent' | 'late';
+  marked_date: string;
+  marked_time: string;
+  updated_date?: string;
+  updated_time?: string;
+  marked_by?: string;
+  created_at?: string;
+  updated_at?: string;
+  first_name?: string;
+  last_name?: string;
+  parent_phone?: string;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -222,4 +280,253 @@ export const studentApi = {
   },
 };
 
-export default { gradeApi, studentApi };
+// ============================================================================
+// ATTENDANCE API SERVICE
+// ============================================================================
+export const attendanceApi = {
+  // Mark attendance for multiple students
+  async markAttendance(data: {
+    grade_id: number;
+    date: string;
+    attendance_data: Array<{
+      student_id: number;
+      student_name: string;
+      status: 'present' | 'absent' | 'late';
+      notes?: string;
+    }>;
+    marked_by?: string;
+  }): Promise<{
+    grade_id: number;
+    date: string;
+    marked_students: number;
+    summary: AttendanceSummary;
+  }> {
+    const response = await apiRequest<any>('/attendance/mark', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  },
+
+  // Get attendance by grade and date
+  async getByGradeAndDate(gradeId: number, date: string): Promise<{
+    grade: {
+      id: number;
+      grade: number;
+      grade_part: string;
+    };
+    date: string;
+    summary: AttendanceSummary;
+    attendance: (Attendance & {
+      first_name: string;
+      last_name: string;
+      parent_phone: string;
+    })[];
+  }> {
+    const response = await apiRequest<any>(`/attendance/grade/${gradeId}/date/${date}`);
+    return response.data;
+  },
+
+  // Get attendance dates for grade
+  async getDates(gradeId: number): Promise<string[]> {
+    const response = await apiRequest<{ grade: any; dates: string[] }>(`/attendance/grade/${gradeId}/dates`);
+    return response.data.dates;
+  },
+
+  // Get student attendance report
+  async getStudentReport(
+    studentId: number,
+    startDate?: string,
+    endDate?: string
+  ): Promise<{
+    student_id: number;
+    date_range: {
+      start_date: string | null;
+      end_date: string | null;
+    };
+    report: AttendanceReport;
+  }> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    
+    const url = `/attendance/student/${studentId}/report${params.toString() ? `?${params.toString()}` : ''}`;
+    const response = await apiRequest<any>(url);
+    return response.data;
+  },
+
+  // Get grade attendance report
+  async getGradeReport(
+    gradeId: number,
+    startDate?: string,
+    endDate?: string
+  ): Promise<{
+    grade: {
+      id: number;
+      grade: number;
+      grade_part: string;
+    };
+    date_range: {
+      start_date: string | null;
+      end_date: string | null;
+    };
+    report: AttendanceReport[];
+  }> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    
+    const url = `/attendance/grade/${gradeId}/report${params.toString() ? `?${params.toString()}` : ''}`;
+    const response = await apiRequest<any>(url);
+    return response.data;
+  },
+
+  // Delete attendance records
+  async deleteAttendance(gradeId: number, date: string): Promise<{
+    grade_id: number;
+    date: string;
+    deleted_at: string;
+  }> {
+    const response = await apiRequest<any>(`/attendance/grade/${gradeId}/date/${date}`, {
+      method: 'DELETE',
+    });
+    return response.data;
+  },
+
+  // Get attendance statistics
+  async getStatistics(): Promise<{
+    totalRecords: number;
+    todayRecords: number;
+    presentToday: number;
+    absentToday: number;
+    lateToday: number;
+    averageAttendance: number;
+  }> {
+    const response = await apiRequest<any>('/attendance/statistics');
+    return response.data;
+  },
+};
+
+// ============================================================================
+// ATTENDANCE MARK API SERVICE
+// ============================================================================
+export const attendanceMarkApi = {
+  // Mark attendance for a student
+  async markAttendance(data: {
+    student_id: number;
+    student_name: string;
+    grade: number;
+    section: string;
+    status: 'present' | 'absent' | 'late';
+    marked_date?: string;
+    marked_time?: string;
+    marked_by?: string;
+  }): Promise<AttendanceMark> {
+    const response = await apiRequest<AttendanceMark>('/attendance-mark/mark', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  },
+
+  // Bulk mark attendance for multiple students
+  async bulkMarkAttendance(data: {
+    attendance_records: Array<{
+      student_id: number;
+      student_name: string;
+      grade: number;
+      section: string;
+      status: 'present' | 'absent' | 'late';
+      marked_date?: string;
+      marked_time?: string;
+      marked_by?: string;
+    }>;
+  }): Promise<{ marked_students: number }> {
+    const response = await apiRequest<{ marked_students: number }>('/attendance-mark/bulk-mark', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  },
+
+  // Get attendance by grade, section, and date
+  async getByGradeSectionDate(grade: number, section: string, date: string): Promise<{
+    grade: number;
+    section: string;
+    date: string;
+    summary: {
+      total_students: number;
+      present_count: number;
+      absent_count: number;
+      late_count: number;
+      attendance_percentage: number;
+    };
+    attendance: AttendanceMark[];
+  }> {
+    const response = await apiRequest<any>(`/attendance-mark/grade/${grade}/section/${section}/date/${date}`);
+    return response.data;
+  },
+
+  // Get student attendance records
+  async getStudentAttendance(studentId: number): Promise<{
+    student_id: number;
+    attendance: AttendanceMark[];
+  }> {
+    const response = await apiRequest<any>(`/attendance-mark/student/${studentId}`);
+    return response.data;
+  },
+
+  // Get all attendance records
+  async getAllAttendance(startDate?: string, endDate?: string): Promise<{
+    date_range: { start_date: string | null; end_date: string | null } | null;
+    attendance: AttendanceMark[];
+  }> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    
+    const url = `/attendance-mark/all${params.toString() ? `?${params.toString()}` : ''}`;
+    const response = await apiRequest<any>(url);
+    return response.data;
+  },
+
+  // Update attendance status
+  async updateAttendanceStatus(
+    studentId: number,
+    date: string,
+    status: 'present' | 'absent' | 'late',
+    markedBy?: string
+  ): Promise<AttendanceMark> {
+    const response = await apiRequest<AttendanceMark>(`/attendance-mark/update/${studentId}/${date}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status, marked_by: markedBy }),
+    });
+    return response.data;
+  },
+
+  // Delete attendance record
+  async deleteAttendance(studentId: number, date: string): Promise<{
+    student_id: number;
+    date: string;
+    deleted_at: string;
+  }> {
+    const response = await apiRequest<any>(`/attendance-mark/${studentId}/${date}`, {
+      method: 'DELETE',
+    });
+    return response.data;
+  },
+
+  // Get attendance statistics
+  async getStatistics(): Promise<{
+    totalRecords: number;
+    todayRecords: number;
+    presentToday: number;
+    absentToday: number;
+    lateToday: number;
+  }> {
+    const response = await apiRequest<any>('/attendance-mark/statistics');
+    return response.data;
+  },
+};
+
+export default { gradeApi, studentApi, attendanceApi, attendanceMarkApi };

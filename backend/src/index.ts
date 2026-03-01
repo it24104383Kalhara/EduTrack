@@ -4,10 +4,14 @@ import dotenv from 'dotenv';
 import gradeRoutes from './routes/grades';
 import studentRoutes from './routes/students';
 import subjectRoutes from './routes/subjects';
+import attendanceRoutes from './routes/attendance';
+import attendanceMarkRoutes from './routes/attendanceMark';
 import { testConnection } from './config/database';
 import { StudentModel } from './models/Student';
 import { GradeModel } from './models/Grade';
 import { SubjectModel } from './models/Subject';
+import { AttendanceModel } from './models/Attendance';
+import { AttendanceMarkModel } from './models/AttendanceMark';
 
 dotenv.config();
 
@@ -30,6 +34,8 @@ app.get('/health', (req, res) => {
 app.use('/api/grades', gradeRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/subjects', subjectRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/attendance-mark', attendanceMarkRoutes);
 
 // Initialize database and start server
 const initializeDatabase = async () => {
@@ -44,9 +50,11 @@ const initializeDatabase = async () => {
     await StudentModel.createTable();
     await GradeModel.createTable();
     await SubjectModel.createTable();
+    await AttendanceModel.createTable();
+    await AttendanceMarkModel.createTable();
     
     console.log('✅ Database initialized successfully');
-    console.log('📊 Tables: students, grades, student_assignment, subjects');
+    console.log('📊 Tables: students, grades, student_assignment, subjects, attendance, attendance_mark');
     
   } catch (error) {
     console.error('❌ Database initialization failed:', error);
@@ -79,6 +87,21 @@ const startServer = async () => {
     console.log('  - PUT  /api/subjects/:id - Update subject');
     console.log('  - DELETE /api/subjects/:id - Delete subject');
     console.log('  - GET  /api/subjects/type/:type - Get subjects by type');
+    console.log('  - POST /api/attendance/mark - Mark attendance for students');
+    console.log('  - GET  /api/attendance/grade/:grade_id/date/:date - Get attendance by grade and date');
+    console.log('  - GET  /api/attendance/grade/:grade_id/dates - Get attendance dates for grade');
+    console.log('  - GET  /api/attendance/student/:student_id/report - Get student attendance report');
+    console.log('  - GET  /api/attendance/grade/:grade_id/report - Get grade attendance report');
+    console.log('  - DELETE /api/attendance/grade/:grade_id/date/:date - Delete attendance records');
+    console.log('  - GET  /api/attendance/statistics - Get attendance statistics');
+    console.log('  - POST /api/attendance-mark/mark - Mark attendance for student');
+    console.log('  - POST /api/attendance-mark/bulk-mark - Mark attendance for multiple students');
+    console.log('  - GET  /api/attendance-mark/grade/:grade/section/:section/date/:date - Get attendance by grade, section, and date');
+    console.log('  - GET  /api/attendance-mark/student/:student_id - Get student attendance records');
+    console.log('  - GET  /api/attendance-mark/all - Get all attendance records');
+    console.log('  - PUT  /api/attendance-mark/update/:student_id/:date - Update attendance status');
+    console.log('  - DELETE /api/attendance-mark/:student_id/:date - Delete attendance record');
+    console.log('  - GET  /api/attendance-mark/statistics - Get attendance statistics');
     console.log('  - GET  /health - Health check');
   });
 };
