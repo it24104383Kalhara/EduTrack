@@ -3,6 +3,8 @@ import StudentList from './components/StudentList';
 import StudentRegistrationForm from './components/StudentRegistrationForm';
 import GradeManagement from './components/GradeManagement';
 import SubjectManagement from './components/SubjectManagement';
+import MarksManagement from './components/MarksManagement';
+import AttendanceManagement from './components/AttendanceManagement';
 import { gradeApi, studentApi } from './services/api';
 import './App.css';
 
@@ -14,7 +16,7 @@ declare global {
 }
 
 function App() {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'register' | 'list' | 'grades' | 'subjects'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'register' | 'list' | 'grades' | 'subjects' | 'marks' | 'attendance'>('dashboard');
   const [studentCount, setStudentCount] = useState(0);
   const [gradeCount, setGradeCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -83,23 +85,32 @@ function App() {
 
   return (
     <div className="App" style={{ minHeight: '100vh', display: 'flex', background: '#0f172a' }}>
-      {/* Sidebar Navigation */}
-      <div style={{
-        width: '320px',
-        background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)',
-        backdropFilter: 'blur(20px)',
-        boxShadow: '4px 0 40px rgba(0, 0, 0, 0.3)',
-        padding: '0',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'fixed',
-        height: '100vh',
-        left: '0',
-        top: '0',
-        zIndex: '1000',
-        borderRight: '1px solid rgba(148, 163, 184, 0.1)',
-        overflow: 'hidden'
-      }}>
+      {/* Scrolling Navigation Bar */}
+      <div 
+        className="nav-scroll"
+        style={{
+          width: '320px',
+          background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)',
+          backdropFilter: 'blur(20px)',
+          boxShadow: '4px 0 40px rgba(0, 0, 0, 0.3)',
+          padding: '0',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'fixed',
+          height: '100vh',
+          left: '0',
+          top: '0',
+          zIndex: '1000',
+          borderRight: '1px solid rgba(148, 163, 184, 0.1)',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'rgba(99, 102, 241, 0.5) transparent'
+        }}
+        onScroll={(e) => {
+          const target = e.target as HTMLElement;
+          target.style.setProperty('--scroll-position', `${target.scrollTop}px`);
+        }}>
         {/* Logo/Brand */}
         <div style={{
           textAlign: 'center',
@@ -155,13 +166,16 @@ function App() {
             onClick={() => setCurrentView('dashboard')}
             style={{
               width: '100%',
-              padding: '12px',
+              padding: '3px',
+              minHeight: '20px',
               background: currentView === 'dashboard' 
                 ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' 
                 : 'rgba(30, 41, 59, 0.5)',
               color: currentView === 'dashboard' ? 'white' : '#e2e8f0',
-              border: currentView === 'dashboard' ? 'none' : '1px solid rgba(148, 163, 184, 0.2)',
-              borderRadius: '12px',
+              border: currentView === 'dashboard' 
+                ? '2px solid #10b981' 
+                : '2px solid rgba(16, 185, 129, 0.3)',
+              borderRadius: '16px',
               fontSize: '1rem',
               fontWeight: '600',
               cursor: 'pointer',
@@ -172,7 +186,11 @@ function App() {
               marginBottom: '8px',
               textAlign: 'left',
               position: 'relative',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              boxShadow: currentView === 'dashboard' 
+                ? '0 4px 20px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)' 
+                : '0 2px 10px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              backdropFilter: 'blur(10px)'
             }}
             onMouseOver={(e) => {
               if (currentView !== 'dashboard') {
@@ -189,20 +207,46 @@ function App() {
               }
             }}
           >
-            <span style={{ fontSize: '1.3rem' }}>📊</span>
-            Dashboard
+            <span style={{ 
+              fontSize: '1.3rem',
+              filter: currentView === 'dashboard' ? 'drop-shadow(0 0 10px rgba(255,255,255,0.5))' : 'none'
+            }}>📊</span>
+            <div>
+              <div style={{ marginBottom: '4px' }}>Dashboard</div>
+              <div style={{
+                fontSize: '0.85rem',
+                opacity: currentView === 'dashboard' ? 0.9 : 0.6,
+                fontWeight: '400'
+              }}>
+                View system overview
+              </div>
+            </div>
+            {currentView === 'dashboard' && (
+              <div style={{
+                position: 'absolute',
+                right: '20px',
+                width: '8px',
+                height: '8px',
+                background: '#10b981',
+                borderRadius: '50%',
+                boxShadow: '0 0 10px #10b981'
+              }} />
+            )}
           </button>
           <button
             onClick={() => setCurrentView('register')}
             style={{
               width: '100%',
-              padding: '12px',
+              padding: '3px',
+              minHeight: '20px',
               background: currentView === 'register' 
                 ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' 
                 : 'rgba(30, 41, 59, 0.5)',
               color: currentView === 'register' ? 'white' : '#e2e8f0',
-              border: currentView === 'register' ? 'none' : '1px solid rgba(148, 163, 184, 0.2)',
-              borderRadius: '12px',
+              border: currentView === 'register' 
+                ? '2px solid #10b981' 
+                : '2px solid rgba(16, 185, 129, 0.3)',
+              borderRadius: '16px',
               fontSize: '1rem',
               fontWeight: '600',
               cursor: 'pointer',
@@ -213,7 +257,11 @@ function App() {
               marginBottom: '8px',
               textAlign: 'left',
               position: 'relative',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              boxShadow: currentView === 'register' 
+                ? '0 4px 20px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)' 
+                : '0 2px 10px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              backdropFilter: 'blur(10px)'
             }}
             onMouseOver={(e) => {
               if (currentView !== 'register') {
@@ -261,13 +309,16 @@ function App() {
             onClick={() => setCurrentView('list')}
             style={{
               width: '100%',
-              padding: '12px',
+              padding: '3px',
+              minHeight: '20px',
               background: currentView === 'list' 
                 ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' 
                 : 'rgba(30, 41, 59, 0.5)',
               color: currentView === 'list' ? 'white' : '#e2e8f0',
-              border: currentView === 'list' ? 'none' : '1px solid rgba(148, 163, 184, 0.2)',
-              borderRadius: '12px',
+              border: currentView === 'list' 
+                ? '2px solid #10b981' 
+                : '2px solid rgba(16, 185, 129, 0.3)',
+              borderRadius: '16px',
               fontSize: '1rem',
               fontWeight: '600',
               cursor: 'pointer',
@@ -278,7 +329,11 @@ function App() {
               marginBottom: '8px',
               textAlign: 'left',
               position: 'relative',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              boxShadow: currentView === 'list' 
+                ? '0 4px 20px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)' 
+                : '0 2px 10px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              backdropFilter: 'blur(10px)'
             }}
             onMouseOver={(e) => {
               if (currentView !== 'list') {
@@ -326,13 +381,16 @@ function App() {
             onClick={() => setCurrentView('grades')}
             style={{
               width: '100%',
-              padding: '12px',
+              padding: '3px',
+              minHeight: '20px',
               background: currentView === 'grades' 
                 ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' 
                 : 'rgba(30, 41, 59, 0.5)',
               color: currentView === 'grades' ? 'white' : '#e2e8f0',
-              border: currentView === 'grades' ? 'none' : '1px solid rgba(148, 163, 184, 0.2)',
-              borderRadius: '12px',
+              border: currentView === 'grades' 
+                ? '2px solid #10b981' 
+                : '2px solid rgba(16, 185, 129, 0.3)',
+              borderRadius: '16px',
               fontSize: '1rem',
               fontWeight: '600',
               cursor: 'pointer',
@@ -343,7 +401,11 @@ function App() {
               marginBottom: '8px',
               textAlign: 'left',
               position: 'relative',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              boxShadow: currentView === 'grades' 
+                ? '0 4px 20px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)' 
+                : '0 2px 10px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              backdropFilter: 'blur(10px)'
             }}
             onMouseOver={(e) => {
               if (currentView !== 'grades') {
@@ -391,13 +453,16 @@ function App() {
             onClick={() => setCurrentView('subjects')}
             style={{
               width: '100%',
-              padding: '12px',
+              padding: '3px',
+              minHeight: '20px',
               background: currentView === 'subjects' 
                 ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' 
                 : 'rgba(30, 41, 59, 0.5)',
               color: currentView === 'subjects' ? 'white' : '#e2e8f0',
-              border: currentView === 'subjects' ? 'none' : '1px solid rgba(148, 163, 184, 0.2)',
-              borderRadius: '12px',
+              border: currentView === 'subjects' 
+                ? '2px solid #10b981' 
+                : '2px solid rgba(16, 185, 129, 0.3)',
+              borderRadius: '16px',
               fontSize: '1rem',
               fontWeight: '600',
               cursor: 'pointer',
@@ -408,7 +473,11 @@ function App() {
               marginBottom: '8px',
               textAlign: 'left',
               position: 'relative',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              boxShadow: currentView === 'subjects' 
+                ? '0 4px 20px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)' 
+                : '0 2px 10px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              backdropFilter: 'blur(10px)'
             }}
             onMouseOver={(e) => {
               if (currentView !== 'subjects') {
@@ -440,6 +509,150 @@ function App() {
               </div>
             </div>
             {currentView === 'subjects' && (
+              <div style={{
+                position: 'absolute',
+                right: '20px',
+                width: '8px',
+                height: '8px',
+                background: '#10b981',
+                borderRadius: '50%',
+                boxShadow: '0 0 10px #10b981'
+              }} />
+            )}
+          </button>
+
+          <button
+            onClick={() => setCurrentView('marks')}
+            style={{
+              width: '100%',
+              padding: '0px',
+              minHeight: '10px',
+              background: currentView === 'marks' 
+                ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' 
+                : 'rgba(30, 41, 59, 0.5)',
+              color: currentView === 'marks' ? 'white' : '#e2e8f0',
+              border: currentView === 'marks' 
+                ? '2px solid #10b981' 
+                : '2px solid rgba(16, 185, 129, 0.3)',
+              borderRadius: '16px',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '15px',
+              marginBottom: '8px',
+              textAlign: 'left',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: currentView === 'marks' 
+                ? '0 4px 20px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)' 
+                : '0 2px 10px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              backdropFilter: 'blur(10px)'
+            }}
+            onMouseOver={(e) => {
+              if (currentView !== 'marks') {
+                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                e.currentTarget.style.transform = 'translateX(5px)';
+                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (currentView !== 'marks') {
+                e.currentTarget.style.background = 'rgba(30, 41, 59, 0.5)';
+                e.currentTarget.style.transform = 'translateX(0)';
+                e.currentTarget.style.borderColor = 'rgba(148, 163, 184, 0.2)';
+              }
+            }}
+          >
+            <span style={{ 
+              fontSize: '1.3rem',
+              filter: currentView === 'marks' ? 'drop-shadow(0 0 10px rgba(255,255,255,0.5))' : 'none'
+            }}>📝</span>
+            <div>
+              <div style={{ marginBottom: '4px' }}>Marks Management</div>
+              <div style={{
+                fontSize: '0.85rem',
+                opacity: currentView === 'marks' ? 0.9 : 0.6,
+                fontWeight: '400'
+              }}>
+                Manage student marks and assessments
+              </div>
+            </div>
+            {currentView === 'marks' && (
+              <div style={{
+                position: 'absolute',
+                right: '20px',
+                width: '8px',
+                height: '8px',
+                background: '#10b981',
+                borderRadius: '50%',
+                boxShadow: '0 0 10px #10b981'
+              }} />
+            )}
+          </button>
+
+          <button
+            onClick={() => setCurrentView('attendance')}
+            style={{
+              width: '100%',
+              padding: '3px',
+              minHeight: '20px',
+              background: currentView === 'attendance' 
+                ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' 
+                : 'rgba(30, 41, 59, 0.5)',
+              color: currentView === 'attendance' ? 'white' : '#e2e8f0',
+              border: currentView === 'attendance' 
+                ? '2px solid #10b981' 
+                : '2px solid rgba(16, 185, 129, 0.3)',
+              borderRadius: '16px',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '15px',
+              marginBottom: '8px',
+              textAlign: 'left',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: currentView === 'attendance' 
+                ? '0 4px 20px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)' 
+                : '0 2px 10px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              backdropFilter: 'blur(10px)'
+            }}
+            onMouseOver={(e) => {
+              if (currentView !== 'attendance') {
+                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                e.currentTarget.style.transform = 'translateX(5px)';
+                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (currentView !== 'attendance') {
+                e.currentTarget.style.background = 'rgba(30, 41, 59, 0.5)';
+                e.currentTarget.style.transform = 'translateX(0)';
+                e.currentTarget.style.borderColor = 'rgba(148, 163, 184, 0.2)';
+              }
+            }}
+          >
+            <span style={{ 
+              fontSize: '1.3rem',
+              filter: currentView === 'attendance' ? 'drop-shadow(0 0 10px rgba(255,255,255,0.5))' : 'none'
+            }}>📅</span>
+            <div>
+              <div style={{ marginBottom: '4px' }}>Attendance Management</div>
+              <div style={{
+                fontSize: '0.85rem',
+                opacity: currentView === 'attendance' ? 0.9 : 0.6,
+                fontWeight: '400'
+              }}>
+                Track student attendance and leave
+              </div>
+            </div>
+            {currentView === 'attendance' && (
               <div style={{
                 position: 'absolute',
                 right: '20px',
@@ -701,7 +914,7 @@ function App() {
             </div>
           ) : currentView === 'register' ? <StudentRegistrationForm /> : currentView === 'grades' ? <GradeManagement /> : currentView === 'subjects' ? (
             <SubjectManagement /> 
-          ) : <StudentList />}
+          ) : currentView === 'marks' ? <MarksManagement /> : currentView === 'attendance' ? <AttendanceManagement /> : <StudentList />}
         </div>
       </div>
     </div>
