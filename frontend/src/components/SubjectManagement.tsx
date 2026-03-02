@@ -1,24 +1,35 @@
-import React, { useState } from 'react';
-
-interface Subject {
-  id: string;
-  name: string;
-  code: string;
-  grades: string[];
-  stream?: string | string[];
-  type: '6-11' | '12-13';
-}
+import React, { useState, useEffect } from 'react';
+import { subjectApi } from '../services/api';
+import type { Subject } from '../services/api';
 
 const SubjectManagement: React.FC = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [streams, setStreams] = useState<string[]>([]);
-  const [nextId, setNextId] = useState(1);
+  const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
     code: '',
-    grades: [] as string[]
+    grades: [] as string[],
+    type: '6-11' as '6-11' | '12-13'
   });
+
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
+
+  const fetchSubjects = async () => {
+    try {
+      setLoading(true);
+      const subjectsData = await subjectApi.getAll();
+      setSubjects(subjectsData);
+    } catch (error) {
+      console.error('Failed to fetch subjects:', error);
+      alert('Failed to load subjects from database. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Form states for Grade 6-11
   const [subject6to11, setSubject6to11] = useState({
@@ -62,11 +73,17 @@ const SubjectManagement: React.FC = () => {
     }));
   };
 
-  const deleteSubject = (id: string) => {
+  const deleteSubject = async (id: string) => {
     const subject = subjects.find(s => s.id === id);
     if (subject && confirm(`Are you sure you want to delete "${subject.name}"?`)) {
-      setSubjects(prev => prev.filter(s => s.id !== id));
-      alert(`Subject "${subject.name}" deleted successfully!`);
+      try {
+        await subjectApi.delete(id);
+        setSubjects(prev => prev.filter(s => s.id !== id));
+        alert(`Subject "${subject.name}" deleted successfully from database!`);
+      } catch (error) {
+        console.error('Failed to delete subject:', error);
+        alert('Failed to delete subject from database. Please try again.');
+      }
     }
   };
 
@@ -76,13 +93,14 @@ const SubjectManagement: React.FC = () => {
       setEditForm({
         name: subject.name,
         code: subject.code,
-        grades: subject.grades
+        grades: Array.isArray(subject.grades) ? subject.grades : [subject.grades],
+        type: subject.type
       });
       setEditingId(id);
     }
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editingId) return;
     
     if (!editForm.name.trim() || !editForm.code.trim()) {
@@ -95,45 +113,32 @@ const SubjectManagement: React.FC = () => {
       return;
     }
 
-    // Check for duplicate subject codes (excluding current subject)
-    const existingCode = subjects.find(s => 
-      s.code.toLowerCase() === editForm.code.toLowerCase() && 
-      s.id !== editingId
-    );
-    
-    if (existingCode) {
-      alert(`Subject code "${editForm.code}" already exists. Please use a different code.`);
-      return;
-    }
+    try {
+      const updatedSubject = await subjectApi.update(editingId, {
+        name: editForm.name.trim(),
+        code: editForm.code.trim(),
+        grades: editForm.grades,
+        type: editForm.type
+      });
 
-    // Check for duplicate subjects in selected grades (excluding current subject)
-    for (const grade of editForm.grades) {
-      const existingSubject = subjects.find(s => 
-        s.name.toLowerCase() === editForm.name.toLowerCase() && 
-        s.grades.includes(grade) &&
-        s.id !== editingId
-      );
+      setSubjects(prev => prev.map(s => 
+        s.id === editingId 
+          ? updatedSubject
+          : s
+      ));
       
-      if (existingSubject) {
-        alert(`Subject "${editForm.name}" is already added to Grade ${grade}`);
-        return;
-      }
+      setEditingId(null);
+      setEditForm({ name: '', code: '', grades: [], type: '6-11' });
+      alert(`Subject updated successfully in database!`);
+    } catch (error) {
+      console.error('Failed to update subject:', error);
+      alert('Failed to update subject in database. Please try again.');
     }
-
-    setSubjects(prev => prev.map(s => 
-      s.id === editingId 
-        ? { ...s, name: editForm.name.trim(), code: editForm.code.trim(), grades: editForm.grades }
-        : s
-    ));
-    
-    setEditingId(null);
-    setEditForm({ name: '', code: '', grades: [] });
-    alert(`Subject updated successfully!`);
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditForm({ name: '', code: '', grades: [] });
+    setEditForm({ name: '', code: '', grades: [], type: '6-11' });
   };
 
   const handleEditGradeChange = (grade: string) => {
@@ -161,7 +166,7 @@ const SubjectManagement: React.FC = () => {
     }
   };
 
-  const addSubject6to11 = () => {
+  const addSubject6to11 = async () => {
     if (!subject6to11.name.trim() || !subject6to11.code.trim()) {
       alert('Please fill in all required fields');
       return;
@@ -172,44 +177,24 @@ const SubjectManagement: React.FC = () => {
       return;
     }
 
-    // Check for duplicate subject codes
-    const existingCode = subjects.find(s => 
-      s.code.toLowerCase() === subject6to11.code.toLowerCase()
-    );
-    
-    if (existingCode) {
-      alert(`Subject code "${subject6to11.code}" already exists. Please use a different code.`);
-      return;
+    try {
+      const newSubject = await subjectApi.create({
+        name: subject6to11.name.trim(),
+        code: subject6to11.code.trim(),
+        grades: subject6to11.grades,
+        type: '6-11'
+      });
+
+      setSubjects(prev => [...prev, newSubject]);
+      setSubject6to11({ name: '', code: '', grades: [] });
+      alert(`Subject "${newSubject.name}" added successfully to database!`);
+    } catch (error) {
+      console.error('Failed to add subject:', error);
+      alert('Failed to add subject to database. Please try again.');
     }
-
-    // Check for duplicate subjects in selected grades
-    for (const grade of subject6to11.grades) {
-      const existingSubject = subjects.find(s => 
-        s.name.toLowerCase() === subject6to11.name.toLowerCase() && 
-        s.grades.includes(grade)
-      );
-      
-      if (existingSubject) {
-        alert(`Subject "${subject6to11.name}" is already added to Grade ${grade}`);
-        return;
-      }
-    }
-
-    const newSubject: Subject = {
-      id: nextId.toString(),
-      name: subject6to11.name.trim(),
-      code: subject6to11.code.trim(),
-      grades: subject6to11.grades,
-      type: '6-11'
-    };
-
-    setSubjects(prev => [...prev, newSubject]);
-    setNextId(prev => prev + 1);
-    setSubject6to11({ name: '', code: '', grades: [] });
-    alert(`Subject "${newSubject.name}" added successfully!`);
   };
 
-  const addSubject12to13 = () => {
+  const addSubject12to13 = async () => {
     if (!subject12to13.name.trim() || !subject12to13.code.trim()) {
       alert('Please fill in all required fields');
       return;
@@ -220,46 +205,22 @@ const SubjectManagement: React.FC = () => {
       return;
     }
 
-    // Check for duplicate subject codes
-    const existingCode = subjects.find(s => 
-      s.code.toLowerCase() === subject12to13.code.toLowerCase()
-    );
-    
-    if (existingCode) {
-      alert(`Subject code "${subject12to13.code}" already exists. Please use a different code.`);
-      return;
+    try {
+      const newSubject = await subjectApi.create({
+        name: subject12to13.name.trim(),
+        code: subject12to13.code.trim(),
+        grades: subject12to13.grades,
+        stream: subject12to13.streams.length > 0 ? subject12to13.streams : undefined,
+        type: '12-13'
+      });
+
+      setSubjects(prev => [...prev, newSubject]);
+      setSubject12to13({ name: '', code: '', grades: [], streams: [] });
+      alert(`Subject "${newSubject.name}" added successfully to ${subject12to13.streams.length || 0} stream(s)!`);
+    } catch (error) {
+      console.error('Failed to add subject:', error);
+      alert('Failed to add subject to database. Please try again.');
     }
-
-    // Check for duplicate subjects in selected grades
-    for (const grade of subject12to13.grades) {
-      for (const stream of subject12to13.streams) {
-        const existingSubject = subjects.find(s => 
-          s.name.toLowerCase() === subject12to13.name.toLowerCase() && 
-          s.grades.includes(grade) &&
-          s.stream === stream
-        );
-        
-        if (existingSubject) {
-          alert(`Subject "${subject12to13.name}" is already added to Grade ${grade} in ${stream} stream`);
-          return;
-        }
-      }
-    }
-
-    // Create a single subject with all streams
-    const newSubject: Subject = {
-      id: nextId.toString(),
-      name: subject12to13.name.trim(),
-      code: subject12to13.code.trim(),
-      grades: subject12to13.grades,
-      stream: subject12to13.streams.length > 0 ? subject12to13.streams : undefined,
-      type: '12-13'
-    };
-
-    setSubjects(prev => [...prev, newSubject]);
-    setNextId(prev => prev + 1);
-    setSubject12to13({ name: '', code: '', grades: [], streams: [] });
-    alert(`Subject "${subject12to13.name}" added successfully to ${subject12to13.streams.length || 0} stream(s)!`);
   };
 
   return (
@@ -696,8 +657,15 @@ const SubjectManagement: React.FC = () => {
           </div>
         </div>
 
-        {/* Display Added Subjects */}
-        {subjects.length > 0 && (
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
+            <div>Loading subjects from database...</div>
+          </div>
+        ) : (
+          <>
+            {/* Display Added Subjects */}
+            {subjects.length > 0 && (
           <div style={{
             marginTop: '30px',
             padding: '25px',
@@ -748,106 +716,137 @@ const SubjectManagement: React.FC = () => {
                 <div 
                   key={subject.id} 
                   style={{
-                    padding: '12px 15px',
+                    padding: '20px 22px',
                     background: `linear-gradient(135deg, 
                       ${subject.type === '6-11' 
-                        ? 'rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%' 
-                        : 'rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%'
+                        ? 'rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0.15) 50%, rgba(16, 185, 129, 0.08) 100%' 
+                        : 'rgba(139, 92, 246, 0.25) 0%, rgba(139, 92, 246, 0.15) 50%, rgba(139, 92, 246, 0.08) 100%'
                     }`,
                     border: `1px solid ${
+                      subject.type === '6-11' 
+                        ? 'rgba(16, 185, 129, 0.6)' 
+                        : 'rgba(139, 92, 246, 0.6)'
+                    }`,
+                    borderRadius: '20px',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    color: '#e2e8f0',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    boxShadow: `0 8px 32px ${
                       subject.type === '6-11' 
                         ? 'rgba(16, 185, 129, 0.3)' 
                         : 'rgba(139, 92, 246, 0.3)'
                     }`,
-                    borderRadius: '12px',
-                    fontSize: '0.85rem',
-                    fontWeight: '500',
-                    color: '#e2e8f0',
-                    transition: 'all 0.3s ease',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    boxShadow: `0 2px 8px ${
-                      subject.type === '6-11' 
-                        ? 'rgba(16, 185, 129, 0.15)' 
-                        : 'rgba(139, 92, 246, 0.15)'
-                    }`
+                    backdropFilter: 'blur(12px)',
+                    transform: 'translateZ(0)'
                   }}
                   onMouseOver={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = `0 4px 15px ${
+                    e.currentTarget.style.transform = 'translateY(-6px) scale(1.02)';
+                    e.currentTarget.style.boxShadow = `0 16px 48px ${
                       subject.type === '6-11' 
-                        ? 'rgba(16, 185, 129, 0.25)' 
-                        : 'rgba(139, 92, 246, 0.25)'
+                        ? 'rgba(16, 185, 129, 0.5)' 
+                        : 'rgba(139, 92, 246, 0.5)'
+                    }`;
+                    e.currentTarget.style.border = `1px solid ${
+                      subject.type === '6-11' 
+                        ? 'rgba(16, 185, 129, 0.8)' 
+                        : 'rgba(139, 92, 246, 0.8)'
                     }`;
                   }}
                   onMouseOut={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = `0 2px 8px ${
+                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                    e.currentTarget.style.boxShadow = `0 8px 32px ${
                       subject.type === '6-11' 
-                        ? 'rgba(16, 185, 129, 0.15)' 
-                        : 'rgba(139, 92, 246, 0.15)'
+                        ? 'rgba(16, 185, 129, 0.3)' 
+                        : 'rgba(139, 92, 246, 0.3)'
+                    }`;
+                    e.currentTarget.style.border = `1px solid ${
+                      subject.type === '6-11' 
+                        ? 'rgba(16, 185, 129, 0.6)' 
+                        : 'rgba(139, 92, 246, 0.6)'
                     }`;
                   }}
                 >
-                  {/* ID Badge - Top Left */}
+                  {/* Header with Subject Info - Top Left */}
                   <div style={{
-                    position: 'absolute',
-                    top: '8px',
-                    left: '8px',
-                    background: subject.type === '6-11' 
-                      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                      : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                    color: 'white',
-                    padding: '3px 8px',
-                    borderRadius: '8px',
-                    fontSize: '0.65rem',
-                    fontWeight: '700',
-                    fontFamily: 'monospace',
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                    zIndex: '1',
-                    whiteSpace: 'nowrap'
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '15px',
+                    marginBottom: '15px',
+                    paddingTop: '10px',
+                    paddingLeft: '10px'
                   }}>
-                    {subject.code}
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        display: 'inline-block',
+                        background: `linear-gradient(135deg, 
+                          ${subject.type === '6-11' 
+                            ? 'rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%' 
+                            : 'rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%'
+                        }`,
+                        border: `1px solid ${
+                          subject.type === '6-11' 
+                            ? 'rgba(16, 185, 129, 0.4)' 
+                            : 'rgba(139, 92, 246, 0.4)'
+                        }`,
+                        borderRadius: '12px',
+                        padding: '8px 16px',
+                        fontSize: '1.1rem',
+                        fontWeight: '700',
+                        color: subject.type === '6-11' ? '#10b981' : '#8b5cf6',
+                        lineHeight: '1.2',
+                        boxShadow: `0 2px 8px ${
+                          subject.type === '6-11' 
+                            ? 'rgba(16, 185, 129, 0.2)' 
+                            : 'rgba(139, 92, 246, 0.2)'
+                        }`,
+                        backdropFilter: 'blur(4px)',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                        e.currentTarget.style.boxShadow = `0 4px 12px ${
+                          subject.type === '6-11' 
+                            ? 'rgba(16, 185, 129, 0.3)' 
+                            : 'rgba(139, 92, 246, 0.3)'
+                        }`;
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = `0 2px 8px ${
+                          subject.type === '6-11' 
+                            ? 'rgba(16, 185, 129, 0.2)' 
+                            : 'rgba(139, 92, 246, 0.2)'
+                        }`;
+                      }}>
+                        {subject.code} - {subject.name}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Subject Type Badge - Top Right */}
                   <div style={{
                     position: 'absolute',
-                    top: '8px',
-                    right: '8px',
+                    top: '12px',
+                    right: '12px',
                     background: subject.type === '6-11' 
                       ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
                       : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
                     color: 'white',
-                    padding: '2px 8px',
-                    borderRadius: '8px',
-                    fontSize: '0.6rem',
-                    fontWeight: '600',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)'
+                    padding: '4px 12px',
+                    borderRadius: '12px',
+                    fontSize: '0.65rem',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    backdropFilter: 'blur(8px)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
                   }}>
                     {subject.type === '6-11' ? '6-11' : '12-13'}
-                  </div>
-
-                  {/* Header with Subject Info */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    marginBottom: '10px',
-                    paddingLeft: '20px'
-                  }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{
-                        fontSize: '1rem',
-                        fontWeight: '700',
-                        color: subject.type === '6-11' ? '#10b981' : '#8b5cf6',
-                        marginBottom: '4px',
-                        lineHeight: '1.2'
-                      }}>
-                        {subject.name}
-                      </div>
-                    </div>
                   </div>
 
                   {/* Grades as Badges */}
@@ -856,38 +855,54 @@ const SubjectManagement: React.FC = () => {
                     flexWrap: 'wrap',
                     gap: '8px',
                     marginBottom: '10px',
-                    alignItems: 'flex-start'
+                    alignItems: 'flex-start',
+                    paddingLeft: '60px'
                   }}>
-                    {subject.grades.map(grade => (
-                      <div
-                        key={grade}
-                        style={{
-                          background: 'rgba(99, 102, 241, 0.15)',
-                          border: '1px solid rgba(99, 102, 241, 0.3)',
-                          padding: '4px 10px',
-                          borderRadius: '14px',
-                          fontSize: '0.7rem',
-                          fontWeight: '600',
-                          color: '#6366f1',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          whiteSpace: 'nowrap',
-                          flexShrink: 0,
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.background = 'rgba(99, 102, 241, 0.25)';
-                          e.currentTarget.style.transform = 'translateY(-1px)';
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.background = 'rgba(99, 102, 241, 0.15)';
-                          e.currentTarget.style.transform = 'translateY(0)';
-                        }}
-                      >
-                        📚 Grade {grade}
-                      </div>
-                    ))}
+                    {(() => {
+                      let gradesArray: string[] = [];
+                      try {
+                        if (Array.isArray(subject.grades)) {
+                          gradesArray = subject.grades;
+                        } else if (typeof subject.grades === 'string') {
+                          gradesArray = JSON.parse(subject.grades);
+                        } else {
+                          gradesArray = [subject.grades].filter(Boolean);
+                        }
+                      } catch (e) {
+                        gradesArray = [];
+                      }
+                      
+                      return gradesArray.filter(Boolean).map(grade => (
+                        <div
+                          key={grade}
+                          style={{
+                            background: 'rgba(99, 102, 241, 0.15)',
+                            border: '1px solid rgba(99, 102, 241, 0.3)',
+                            padding: '4px 10px',
+                            borderRadius: '14px',
+                            fontSize: '0.7rem',
+                            fontWeight: '600',
+                            color: '#6366f1',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.background = 'rgba(99, 102, 241, 0.25)';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.background = 'rgba(99, 102, 241, 0.15)';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
+                        >
+                          📚 Grade {grade}
+                        </div>
+                      ));
+                    })()}
                   </div>
 
                   {/* Streams as Badges (if exists) */}
@@ -897,38 +912,54 @@ const SubjectManagement: React.FC = () => {
                       flexWrap: 'wrap',
                       gap: '6px',
                       marginBottom: '10px',
-                      alignItems: 'flex-start'
+                      alignItems: 'flex-start',
+                      paddingLeft: '60px'
                     }}>
-                      {(Array.isArray(subject.stream) ? subject.stream : [subject.stream]).filter(Boolean).map(stream => (
-                        <div
-                          key={stream}
-                          style={{
-                            background: 'rgba(245, 158, 11, 0.15)',
-                            border: '1px solid rgba(245, 158, 11, 0.3)',
-                            padding: '4px 10px',
-                            borderRadius: '14px',
-                            fontSize: '0.7rem',
-                            fontWeight: '600',
-                            color: '#f59e0b',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            whiteSpace: 'nowrap',
-                            flexShrink: 0,
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseOver={(e) => {
-                            e.currentTarget.style.background = 'rgba(245, 158, 11, 0.25)';
-                            e.currentTarget.style.transform = 'translateY(-1px)';
-                          }}
-                          onMouseOut={(e) => {
-                            e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)';
-                            e.currentTarget.style.transform = 'translateY(0)';
-                          }}
-                        >
-                          🎯 {stream}
-                        </div>
-                      ))}
+                      {(() => {
+                        let streamsArray: string[] = [];
+                        try {
+                          if (Array.isArray(subject.stream)) {
+                            streamsArray = subject.stream;
+                          } else if (typeof subject.stream === 'string') {
+                            streamsArray = JSON.parse(subject.stream);
+                          } else {
+                            streamsArray = [subject.stream].filter(Boolean);
+                          }
+                        } catch (e) {
+                          streamsArray = [];
+                        }
+                        
+                        return streamsArray.filter(Boolean).map(stream => (
+                          <div
+                            key={stream}
+                            style={{
+                              background: 'rgba(245, 158, 11, 0.15)',
+                              border: '1px solid rgba(245, 158, 11, 0.3)',
+                              padding: '4px 10px',
+                              borderRadius: '14px',
+                              fontSize: '0.7rem',
+                              fontWeight: '600',
+                              color: '#f59e0b',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.background = 'rgba(245, 158, 11, 0.25)';
+                              e.currentTarget.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                          >
+                            🎯 {stream}
+                          </div>
+                        ));
+                      })()}
                     </div>
                   )}
 
@@ -1006,9 +1037,9 @@ const SubjectManagement: React.FC = () => {
             </div>
           </div>
         )}
+        </> )}
       </div>
       
-      {/* Edit Modal */}
       {editingId && (
         <div style={{
           position: 'fixed',
@@ -1047,6 +1078,27 @@ const SubjectManagement: React.FC = () => {
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{
+                background: editForm.type === '6-11' 
+                  ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%)'
+                  : 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                border: `1px solid ${
+                  editForm.type === '6-11' 
+                    ? 'rgba(16, 185, 129, 0.4)' 
+                    : 'rgba(139, 92, 246, 0.4)'
+                }`,
+                borderRadius: '8px',
+                padding: '8px 12px',
+                textAlign: 'center',
+                color: editForm.type === '6-11' ? '#10b981' : '#8b5cf6',
+                fontSize: '0.8rem',
+                fontWeight: '600',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                Subject Type: {editForm.type === '6-11' ? 'Grades 6-11' : 'Grades 12-13'}
+              </div>
+              
               <div>
                 <label style={{
                   display: 'block',
@@ -1116,39 +1168,71 @@ const SubjectManagement: React.FC = () => {
                   border: '1px solid rgba(99, 102, 241, 0.2)',
                   borderRadius: '8px',
                   padding: '12px',
-                  maxHeight: '200px',
-                  overflowY: 'auto'
+                  maxHeight: editForm.type === '6-11' ? 'none' : '200px',
+                  overflowY: editForm.type === '6-11' ? 'visible' : 'auto'
                 }}>
-                  {['6', '7', '8', '9', '10', '11', '12', '13'].map(grade => (
-                    <div key={grade} style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      marginBottom: '8px',
-                      cursor: 'pointer'
-                    }}>
-                      <input
-                        type="checkbox"
-                        id={`edit-grade-${grade}`}
-                        value={grade}
-                        checked={editForm.grades.includes(grade)}
-                        onChange={() => handleEditGradeChange(grade)}
-                        style={{
-                          marginRight: '10px',
-                          width: '16px',
-                          height: '16px',
+                  {editForm.type === '6-11' 
+                    ? ['6', '7', '8', '9', '10', '11'].map(grade => (
+                        <div key={grade} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          marginBottom: '8px',
                           cursor: 'pointer'
-                        }}
-                      />
-                      <label htmlFor={`edit-grade-${grade}`} style={{
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem',
-                        cursor: 'pointer',
-                        userSelect: 'none'
-                      }}>
-                        Grade {grade}
-                      </label>
-                    </div>
-                  ))}
+                        }}>
+                          <input
+                            type="checkbox"
+                            id={`edit-grade-${grade}`}
+                            value={grade}
+                            checked={editForm.grades.includes(grade)}
+                            onChange={() => handleEditGradeChange(grade)}
+                            style={{
+                              marginRight: '10px',
+                              width: '16px',
+                              height: '16px',
+                              cursor: 'pointer'
+                            }}
+                          />
+                          <label htmlFor={`edit-grade-${grade}`} style={{
+                            color: '#e2e8f0',
+                            fontSize: '0.9rem',
+                            cursor: 'pointer',
+                            userSelect: 'none'
+                          }}>
+                            Grade {grade}
+                          </label>
+                        </div>
+                      ))
+                    : ['12', '13'].map(grade => (
+                        <div key={grade} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          marginBottom: '8px',
+                          cursor: 'pointer'
+                        }}>
+                          <input
+                            type="checkbox"
+                            id={`edit-grade-${grade}`}
+                            value={grade}
+                            checked={editForm.grades.includes(grade)}
+                            onChange={() => handleEditGradeChange(grade)}
+                            style={{
+                              marginRight: '10px',
+                              width: '16px',
+                              height: '16px',
+                              cursor: 'pointer'
+                            }}
+                          />
+                          <label htmlFor={`edit-grade-${grade}`} style={{
+                            color: '#e2e8f0',
+                            fontSize: '0.9rem',
+                            cursor: 'pointer',
+                            userSelect: 'none'
+                          }}>
+                            Grade {grade}
+                          </label>
+                        </div>
+                      ))
+                  }
                 </div>
               </div>
               
@@ -1214,8 +1298,10 @@ const SubjectManagement: React.FC = () => {
           </div>
         </div>
       )}
+  );
     </div>
   );
+
 };
 
 export default SubjectManagement;

@@ -102,6 +102,17 @@ export interface AttendanceMark {
   parent_phone?: string;
 }
 
+export interface Subject {
+  id: string;
+  name: string;
+  code: string;
+  grades: string | string[];
+  stream?: string | string[];
+  type: '6-11' | '12-13';
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -529,4 +540,60 @@ export const attendanceMarkApi = {
   },
 };
 
-export default { gradeApi, studentApi, attendanceApi, attendanceMarkApi };
+// ============================================================================
+// SUBJECT API SERVICE
+// ============================================================================
+export const subjectApi = {
+  // Get all subjects
+  async getAll(): Promise<Subject[]> {
+    const response = await apiRequest<Subject[]>('/subjects');
+    return response.data;
+  },
+
+  // Get subject by ID
+  async getById(id: string): Promise<Subject | null> {
+    try {
+      const response = await apiRequest<Subject>(`/subjects/${id}`);
+      return response.data;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('not found')) {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  // Create new subject
+  async create(subjectData: Omit<Subject, 'id' | 'created_at' | 'updated_at'>): Promise<Subject> {
+    const response = await apiRequest<Subject>('/subjects', {
+      method: 'POST',
+      body: JSON.stringify(subjectData),
+    });
+    return response.data;
+  },
+
+  // Update subject
+  async update(id: string, subjectData: Partial<Subject>): Promise<Subject> {
+    const response = await apiRequest<Subject>(`/subjects/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(subjectData),
+    });
+    return response.data;
+  },
+
+  // Delete subject
+  async delete(id: string): Promise<boolean> {
+    await apiRequest(`/subjects/${id}`, {
+      method: 'DELETE',
+    });
+    return true;
+  },
+
+  // Get subjects by type
+  async getByType(type: '6-11' | '12-13'): Promise<Subject[]> {
+    const response = await apiRequest<Subject[]>(`/subjects/type/${type}`);
+    return response.data;
+  },
+};
+
+export default { gradeApi, studentApi, subjectApi, attendanceApi, attendanceMarkApi };

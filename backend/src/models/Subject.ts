@@ -266,9 +266,21 @@ export class SubjectModel {
     `;
     
     try {
-      const params = excludeId 
-        ? [name, JSON.stringify([grade]), stream ? JSON.stringify([stream]) : null, excludeId]
-        : [name, JSON.stringify([grade]), stream ? JSON.stringify([stream]) : null];
+      let params: any[];
+      
+      if (excludeId) {
+        if (stream) {
+          params = [name, JSON.stringify([grade]), JSON.stringify([stream]), excludeId];
+        } else {
+          params = [name, JSON.stringify([grade]), excludeId];
+        }
+      } else {
+        if (stream) {
+          params = [name, JSON.stringify([grade]), JSON.stringify([stream])];
+        } else {
+          params = [name, JSON.stringify([grade])];
+        }
+      }
       
       const [rows] = await pool.execute(query, params);
       const subjects = rows as any[];
