@@ -2,14 +2,14 @@ import { Request, Response } from 'express';
 
 // Mock data for students
 const mockStudents = [
-    { id: 101, name: 'John Doe', grade: '10A' },
-    { id: 102, name: 'Jane Smith', grade: '10B' },
-    { id: 103, name: 'Alice Johnson', grade: '11A' },
-    { id: 104, name: 'Bob Brown', grade: '11C' },
-    { id: 105, name: 'Charlie Davis', grade: '12B' },
-    { id: 106, name: 'Diana Evans', grade: '9A' },
-    { id: 107, name: 'Ethan Harris', grade: '9C' },
-    { id: 108, name: 'Fiona Clark', grade: '10C' },
+    { id: 101, name: 'John Doe', grade: '10A', classTeacherName: 'Mr. Perera' },
+    { id: 102, name: 'Jane Smith', grade: '10B', classTeacherName: 'Mrs. Silva' },
+    { id: 103, name: 'Alice Johnson', grade: '11A', classTeacherName: 'Mr. Fernando' },
+    { id: 104, name: 'Bob Brown', grade: '11C', classTeacherName: 'Ms. De Silva' },
+    { id: 105, name: 'Charlie Davis', grade: '12B', classTeacherName: 'Mr. Jayasinghe' },
+    { id: 106, name: 'Diana Evans', grade: '9A', classTeacherName: 'Mrs. Rathnayake' },
+    { id: 107, name: 'Ethan Harris', grade: '9C', classTeacherName: 'Mr. Bandara' },
+    { id: 108, name: 'Fiona Clark', grade: '10C', classTeacherName: 'Ms. Kumari' },
 ];
 
 export const searchStudents = async (req: Request, res: Response): Promise<void> => {

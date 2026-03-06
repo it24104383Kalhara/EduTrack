@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { reportService } from '../../services/api';
 import type { AttendanceReport } from '../../services/api';
+import { useAuth } from '../../utils/auth';
 import clsx from 'clsx';
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
@@ -24,12 +25,12 @@ const MOCK_TEACHERS = [
 
 export default function PrincipalDashboard() {
     const queryClient = useQueryClient();
+    const { user } = useAuth();
 
     const [statusFilter, setStatusFilter] = useState<string>('');
     const [selectedReport, setSelectedReport] = useState<AttendanceReport | null>(null);
-    const [notifyModal, setNotifyModal] = useState(false);
-    const [notifyTeacherId, setNotifyTeacherId] = useState<number>(MOCK_TEACHERS[0].id);
-    const [notifyMessage, setNotifyMessage] = useState('');
+    const [approveModal, setApproveModal] = useState(false);
+    const [teachersToNotify, setTeachersToNotify] = useState<{ id: string, grade: string, teacher: string }[]>([]);
 
     const { data: reports, isLoading } = useQuery({
         queryKey: ['allReports', statusFilter],
@@ -49,15 +50,61 @@ export default function PrincipalDashboard() {
         onError: (err: any) => alert(err.response?.data?.error || err.message),
     });
 
-    const notifyMutation = useMutation({
-        mutationFn: () => reportService.notifyTeacher(selectedReport!.id, notifyTeacherId, notifyMessage),
-        onSuccess: () => {
-            setNotifyModal(false);
-            setNotifyMessage('');
-            alert('Teacher notified successfully!');
-        },
-        onError: (err: any) => alert(err.response?.data?.error || err.message),
-    });
+    const handleOpenApproveModal = () => {
+        let extractedTeachers: { id: string; grade: string; teacher: string; students: any[] }[] = [];
+        if (selectedReport?.report_details) {
+            try {
+                const details = JSON.parse(selectedReport.report_details);
+                const combos = new Map();
+                details.forEach((d: any) => {
+                    const grade = d.grade || 'Unknown';
+                    const teacher = d.class_teacher_name || 'Unknown';
+                    const key = `${grade}-${teacher}`;
+                    if (!combos.has(key)) {
+                        combos.set(key, { id: Math.random().toString(), grade, teacher, students: [] });
+                    }
+                    combos.get(key).students.push(d);
+                });
+                extractedTeachers = Array.from(combos.values());
+            } catch (e) {
+                console.error("Failed parsing report details", e);
+            }
+        }
+        if (extractedTeachers.length === 0) {
+            extractedTeachers = [{ id: Math.random().toString(), grade: 'All', teacher: 'Unknown Teacher', students: [] }];
+        }
+        setTeachersToNotify(extractedTeachers as any);
+        setApproveModal(true);
+    };
+
+    const handleConfirmApprove = async () => {
+        if (!selectedReport) return;
+        try {
+            await reviewMutation.mutateAsync({ id: selectedReport.id, status: 'Approved' });
+
+            const dateStr = new Date(selectedReport.report_date).toLocaleDateString('en-US');
+            for (const t of teachersToNotify as any[]) {
+                const presentStudents = t.students?.filter((s: any) => s.status === 'Present') || [];
+                const studentListStr = presentStudents.length > 0
+                    ? presentStudents.map((s: any) => `• ${s.student_name || `ID: ${s.student_id}`}`).join('\n')
+                    : 'No attendance records';
+
+                const message = `Please update class attendance for Grade ${t.grade} (${t.teacher}).\nActivity: ${selectedReport.activity_name}\nDate: ${dateStr}\n\nPresent Students:\n${studentListStr}`;
+                await reportService.notifyTeacher(selectedReport.id, 1, message); // arbitrary teacher_id
+            }
+
+            alert('Report approved and automatic notifications generated!');
+        } catch (e: any) {
+            console.error(e);
+            alert('An error occurred during approval process.');
+        } finally {
+            setApproveModal(false);
+        }
+    };
+
+    const handleTeacherChange = (id: string, newTeacherName: string) => {
+        setTeachersToNotify(prev => prev.map(t => t.id === id ? { ...t, teacher: newTeacherName } : t));
+    };
 
     const attendanceRate = (r: AttendanceReport) =>
         r.total_students > 0 ? Math.round(((r.present_count + r.late_count) / r.total_students) * 100) : 0;
@@ -199,36 +246,67 @@ export default function PrincipalDashboard() {
                             </p>
 
                             {/* Action Buttons */}
-                            {selectedReport.status === 'Pending' && (
-                                <div className="flex gap-3 pt-2 border-t border-gray-100">
+                            {selectedReport.status === 'Pending' && user?.role === 'Admin' && (
+                                <div className="flex gap-3 pt-4 border-t border-gray-100">
                                     <button
-                                        onClick={() => reviewMutation.mutate({ id: selectedReport.id, status: 'Approved' })}
-                                        disabled={reviewMutation.isPending}
-                                        className="flex-1 flex items-center justify-center gap-2 bg-[#10b981] text-white py-2.5 rounded-lg font-semibold text-sm hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                                        onClick={handleOpenApproveModal}
+                                        className="flex-1 flex items-center justify-center gap-2 bg-[#10b981] text-white py-2.5 rounded-lg font-semibold text-sm hover:bg-emerald-600 transition-colors"
                                     >
-                                        <CheckCircleIcon className="h-4 w-4" /> Approve Report
+                                        <CheckCircleIcon className="h-4 w-4" /> Approve & Notify Teachers
                                     </button>
                                     <button
                                         onClick={() => reviewMutation.mutate({ id: selectedReport.id, status: 'Rejected' })}
                                         disabled={reviewMutation.isPending}
                                         className="flex-1 flex items-center justify-center gap-2 bg-[#e11d48] text-white py-2.5 rounded-lg font-semibold text-sm hover:bg-red-700 transition-colors disabled:opacity-50"
                                     >
-                                        <XCircleIcon className="h-4 w-4" /> Reject
+                                        <XCircleIcon className="h-4 w-4" /> Reject Report
                                     </button>
                                 </div>
                             )}
 
-                            {/* Notify Teacher button — only when approved */}
-                            {selectedReport.status === 'Approved' && (
-                                <div className="pt-2 border-t border-gray-100">
-                                    <button
-                                        onClick={() => { setNotifyModal(true); setNotifyMessage(`Please update class attendance for ${selectedReport.activity_name} on ${new Date(selectedReport.report_date).toLocaleDateString()}. ${selectedReport.present_count} students were present at practice.`); }}
-                                        className="w-full flex items-center justify-center gap-2 bg-[#1a3b70] text-white py-2.5 rounded-lg font-semibold text-sm hover:bg-[#11274a] transition-colors"
-                                    >
-                                        <BellAlertIcon className="h-4 w-4" /> Notify Teacher to Update Class Attendance
-                                    </button>
-                                </div>
-                            )}
+                            {/* Detailed Table */}
+                            <div className="pt-4 border-t border-gray-100">
+                                <h3 className="text-sm font-bold text-gray-800 mb-3">Student Attendance Details</h3>
+                                {selectedReport.report_details ? (
+                                    <div className="max-h-[300px] overflow-y-auto">
+                                        <table className="min-w-full text-sm">
+                                            <thead className="bg-gray-50 text-gray-500 sticky top-0">
+                                                <tr>
+                                                    <th className="py-2 px-3 text-left font-medium">Student Name</th>
+                                                    <th className="py-2 px-3 text-left font-medium">Grade & Teacher</th>
+                                                    <th className="py-2 px-3 text-left font-medium">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {JSON.parse(selectedReport.report_details).map((detail: any, i: number) => (
+                                                    <tr key={i} className="hover:bg-gray-50">
+                                                        <td className="py-2 px-3 font-medium text-gray-900">
+                                                            {detail.student_name || `ID: ${detail.student_id}`}
+                                                        </td>
+                                                        <td className="py-2 px-3 text-gray-500">
+                                                            {detail.grade || '-'} <br />
+                                                            <span className="text-xs">{detail.class_teacher_name || '-'}</span>
+                                                        </td>
+                                                        <td className="py-2 px-3">
+                                                            <span className={clsx(
+                                                                'px-2 py-1 rounded text-xs font-bold',
+                                                                detail.status === 'Present' && 'bg-emerald-100 text-emerald-800',
+                                                                detail.status === 'Absent' && 'bg-red-100 text-red-800',
+                                                                detail.status === 'Late' && 'bg-amber-100 text-amber-800',
+                                                                detail.status === 'Excused' && 'bg-purple-100 text-purple-800'
+                                                            )}>
+                                                                {detail.status}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500 italic">No detailed records available.</p>
+                                )}
+                            </div>
                         </div>
                     ) : (
                         <div className="bg-white rounded-lg border border-gray-100 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] p-16 flex flex-col items-center gap-3 text-center">
@@ -239,50 +317,71 @@ export default function PrincipalDashboard() {
                 </div>
             </div>
 
-            {/* Notify Modal */}
-            {notifyModal && selectedReport && (
+            {/* Approve Confirmation Modal */}
+            {approveModal && selectedReport && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md border border-gray-100">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg border border-gray-100 overflow-hidden">
                         <div className="px-6 py-4 border-b border-gray-100 bg-[#f8fafc] flex justify-between items-center">
                             <h3 className="text-lg font-bold text-[#1a3b70] flex items-center gap-2">
-                                <BellAlertIcon className="h-5 w-5" /> Notify Teacher
+                                <CheckCircleIcon className="h-5 w-5" /> Confirm Approval & Notify
                             </h3>
-                            <button onClick={() => setNotifyModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+                            <button onClick={() => setApproveModal(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">
+                                &times;
+                            </button>
                         </div>
                         <div className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Select Teacher</label>
-                                <select
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#1a3b70] transition-colors"
-                                    value={notifyTeacherId}
-                                    onChange={e => setNotifyTeacherId(parseInt(e.target.value))}
-                                >
-                                    {MOCK_TEACHERS.map(t => (
-                                        <option key={t.id} value={t.id}>{t.name}</option>
-                                    ))}
-                                </select>
+                            <p className="text-sm text-gray-600">
+                                The following teachers will be automatically notified about this attendance report based on the grades of attendees:
+                            </p>
+
+                            <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-md">
+                                <table className="min-w-full text-sm">
+                                    <thead className="bg-gray-50 text-gray-600 text-xs uppercase text-left">
+                                        <tr>
+                                            <th className="py-2 px-3 font-semibold">Grade</th>
+                                            <th className="py-2 px-3 font-semibold">Teacher Name</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {teachersToNotify.map((t) => (
+                                            <tr key={t.id} className="bg-white hover:bg-gray-50">
+                                                <td className="py-2 px-3 font-medium text-gray-800">{t.grade}</td>
+                                                <td className="py-2 px-3">
+                                                    <input
+                                                        type="text"
+                                                        value={t.teacher}
+                                                        onChange={(e) => handleTeacherChange(t.id, e.target.value)}
+                                                        className="w-full border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-[#1a3b70] text-sm bg-transparent border hover:bg-white focus:bg-white transition-colors"
+                                                    />
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Message</label>
-                                <textarea
-                                    rows={4}
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#1a3b70] transition-colors resize-none"
-                                    value={notifyMessage}
-                                    onChange={e => setNotifyMessage(e.target.value)}
-                                />
+
+                            <div className="bg-gray-50 text-xs text-gray-500 p-3 rounded-md whitespace-pre-line">
+                                <strong>Message to be sent:</strong> <br />
+                                Please update class attendance for Grade [Grade] ([Teacher]).
+                                Activity: {selectedReport.activity_name}
+                                Date: {new Date(selectedReport.report_date).toLocaleDateString()}
+
+                                Present Students:
+                                • [Student Name]
                             </div>
+
                             <div className="flex gap-3 pt-2">
-                                <button onClick={() => setNotifyModal(false)}
+                                <button onClick={() => setApproveModal(false)}
                                     className="flex-1 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                                     Cancel
                                 </button>
                                 <button
-                                    onClick={() => notifyMutation.mutate()}
-                                    disabled={notifyMutation.isPending || !notifyMessage}
+                                    onClick={handleConfirmApprove}
+                                    disabled={reviewMutation.isPending}
                                     className="flex-1 py-2.5 rounded-lg bg-[#1a3b70] text-white text-sm font-bold hover:bg-[#11274a] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     <BellAlertIcon className="h-4 w-4" />
-                                    {notifyMutation.isPending ? 'Sending…' : 'Send Notification'}
+                                    {reviewMutation.isPending ? 'Processing…' : 'Approve & Notify'}
                                 </button>
                             </div>
                         </div>

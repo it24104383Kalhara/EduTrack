@@ -17,7 +17,7 @@ export default function ActivityMembersPage() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedStudent, setSelectedStudent] = useState<{ id: number, name: string, grade: string } | null>(null);
+    const [selectedStudent, setSelectedStudent] = useState<{ id: number, name: string, grade: string, classTeacherName?: string } | null>(null);
     const [formData, setFormData] = useState({
         student_id: '',
         role: 'Member'
@@ -74,9 +74,12 @@ export default function ActivityMembersPage() {
         }
         registerMutation.mutate({
             student_id: studentIdToReg,
+            student_name: selectedStudent?.name,
             activity_id: activityId,
-            role: formData.role
-        });
+            role: formData.role,
+            grade: selectedStudent?.grade,
+            class_teacher_name: selectedStudent?.classTeacherName
+        } as any);
     };
 
     const handleRemove = (membershipId: number) => {
@@ -129,6 +132,9 @@ export default function ActivityMembersPage() {
                                 Role
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Grade & Teacher
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Joined Date
                             </th>
                             {(user?.role === 'Admin' || user?.role === 'Coach') && (
@@ -148,7 +154,9 @@ export default function ActivityMembersPage() {
                                                 <UserIcon className="h-4 w-4" />
                                             </div>
                                             <div className="ml-4">
-                                                <div className="text-sm font-medium text-gray-900">Student #{member.student_id}</div>
+                                                <div className="text-sm font-medium text-gray-900">
+                                                    {member.student_name || `Student #${member.student_id}`}
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -159,6 +167,10 @@ export default function ActivityMembersPage() {
                                                     'bg-gray-100 text-gray-800'}`}>
                                             {member.role.replace('_', ' ')}
                                         </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm text-gray-900">{member.grade || '-'}</div>
+                                        <div className="text-xs text-gray-500">{member.class_teacher_name || '-'}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {new Date(member.joined_at).toLocaleDateString()}
@@ -225,7 +237,7 @@ export default function ActivityMembersPage() {
                                                 >
                                                     <div>
                                                         <div className="font-medium text-gray-900">{student.name}</div>
-                                                        <div className="text-xs text-gray-500">ID: {student.id} • Grade: {student.grade}</div>
+                                                        <div className="text-xs text-gray-500">ID: {student.id} • Grade: {student.grade} • Teacher: {student.classTeacherName || 'N/A'}</div>
                                                     </div>
                                                 </div>
                                             ))}

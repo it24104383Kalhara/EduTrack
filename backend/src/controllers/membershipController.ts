@@ -4,7 +4,7 @@ import { AuthRequest } from '../middleware/authMiddleware';
 
 export const registerStudent = async (req: AuthRequest, res: Response) => {
     try {
-        const { student_id, activity_id, role } = req.body;
+        const { student_id, student_name, activity_id, role, grade, class_teacher_name } = req.body;
 
         // Validate required fields
         if (!student_id || !activity_id) {
@@ -13,8 +13,11 @@ export const registerStudent = async (req: AuthRequest, res: Response) => {
 
         const membership = {
             student_id,
+            student_name,
             activity_id,
             role: role || 'Member',
+            grade,
+            class_teacher_name,
             joined_at: new Date().toISOString().split('T')[0] // Current date in YYYY-MM-DD
         };
 

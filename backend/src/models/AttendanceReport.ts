@@ -12,6 +12,7 @@ export interface AttendanceReport {
     late_count: number;
     excused_count: number;
     notes?: string;
+    report_details?: string;
     status?: 'Pending' | 'Approved' | 'Rejected';
     submitted_at?: string;
     reviewed_at?: string | null;
@@ -31,14 +32,14 @@ export interface TeacherNotification {
 
 export const createReport = async (report: AttendanceReport): Promise<number> => {
     const { activity_id, coach_id, report_date, total_students, present_count,
-        absent_count, late_count, excused_count, notes } = report;
+        absent_count, late_count, excused_count, notes, report_details } = report;
     const [result] = await pool.query<OkPacket>(
         `INSERT INTO sports_attendance_reports
          (activity_id, coach_id, report_date, total_students, present_count,
-          absent_count, late_count, excused_count, notes)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          absent_count, late_count, excused_count, notes, report_details)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [activity_id, coach_id, report_date, total_students, present_count,
-            absent_count, late_count, excused_count, notes || null]
+            absent_count, late_count, excused_count, notes || null, report_details || null]
     );
     return result.insertId;
 };
@@ -130,8 +131,9 @@ export const markNotificationActioned = async (id: number): Promise<void> => {
 export const buildReportStats = async (
     activityId: number,
     reportDate: string
-): Promise<{ total: number; present: number; absent: number; late: number; excused: number }> => {
-    const [rows] = await pool.query<RowDataPacket[]>(
+): Promise<{ total: number; present: number; absent: number; late: number; excused: number; details: any[] }> => {
+    // 1. Get stats
+    const [statsRows] = await pool.query<RowDataPacket[]>(
         `SELECT
            COUNT(*) as total,
            SUM(CASE WHEN sa.status = 'Present' THEN 1 ELSE 0 END) as present,
@@ -144,12 +146,30 @@ export const buildReportStats = async (
            AND DATE(ps.start_time) = ?`,
         [activityId, reportDate]
     );
-    const r = rows[0];
+
+    // 2. Get details
+    const [detailRows] = await pool.query<RowDataPacket[]>(
+        `SELECT
+           sa.student_id,
+           sa.status,
+           m.student_name,
+           m.grade,
+           m.class_teacher_name
+         FROM sports_attendance sa
+         INNER JOIN sports_practice_sessions ps ON sa.session_id = ps.id
+         LEFT JOIN sports_memberships m ON sa.student_id = m.student_id AND m.activity_id = ps.activity_id
+         WHERE ps.activity_id = ?
+           AND DATE(ps.start_time) = ?`,
+        [activityId, reportDate]
+    );
+
+    const r = statsRows[0];
     return {
         total: r.total || 0,
         present: r.present || 0,
         absent: r.absent || 0,
         late: r.late || 0,
         excused: r.excused || 0,
+        details: detailRows as any[],
     };
 };

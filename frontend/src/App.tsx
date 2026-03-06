@@ -71,7 +71,7 @@ function App() {
           <Route
             path="/sports/principal"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['Admin']}>
                 <DashboardLayout>
                   <PrincipalDashboard />
                 </DashboardLayout>
@@ -81,7 +81,7 @@ function App() {
           <Route
             path="/sports/teacher-notifications"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['Admin']}>
                 <DashboardLayout>
                   <TeacherNotificationsPage />
                 </DashboardLayout>

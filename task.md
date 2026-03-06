@@ -49,7 +49,11 @@
             - [x] Principal: Approve/Reject report <!-- id: 54 -->
             - [x] Principal: Notify Teacher to adjust class attendance <!-- id: 55 -->
             - [x] Teacher: Receive notification & update class attendance <!-- id: 56 -->
-            - [] ⚠️ Merge with team member's Student Progress / Principal Dashboard module <!-- id: 57 -->
+            - [x] Enhancement: Capture class teacher name and grade during registration
+            - [x] Enhancement: Detailed view with student grades & teacher names in reports
+            - [x] Enhancement: Automated teacher notification targeting based on attendees' grades
+            - [x] Enhancement: Principal confirmation modal prior to approval/notification
+            - [ ] ⚠️ Merge with team member's Student Progress / Principal Dashboard module <!-- id: 57 -->
     - [ ] **Inventory Management Interface** <!-- id: 36 -->
     - [ ] **Reports & Analytics View** <!-- id: 37 -->
 

@@ -25,6 +25,7 @@ export default function AttendanceReportPage() {
     const [reportDate, setReportDate] = useState(today);
     const [notes, setNotes] = useState('');
     const [submitted, setSubmitted] = useState(false);
+    const [selectedReport, setSelectedReport] = useState<any | null>(null);
 
     const { data: activities } = useQuery({
         queryKey: ['activities'],
@@ -155,7 +156,11 @@ export default function AttendanceReportPage() {
                     {myReports && myReports.length > 0 ? (
                         <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
                             {myReports.map(report => (
-                                <div key={report.id} className="rounded-lg border border-gray-100 p-4 hover:border-gray-200 transition-colors">
+                                <div
+                                    key={report.id}
+                                    onClick={() => setSelectedReport(report as any)}
+                                    className="rounded-lg border border-gray-100 p-4 hover:border-gray-300 hover:shadow-md transition-all cursor-pointer bg-white"
+                                >
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
                                             <p className="text-sm font-semibold text-gray-900">
@@ -170,29 +175,9 @@ export default function AttendanceReportPage() {
                                             {report.status}
                                         </span>
                                     </div>
-                                    <div className="grid grid-cols-4 gap-1 text-xs text-center mt-3">
-                                        <div className="bg-emerald-50 rounded p-1.5">
-                                            <p className="font-bold text-[#10b981]">{report.present_count}</p>
-                                            <p className="text-gray-500">Present</p>
-                                        </div>
-                                        <div className="bg-red-50 rounded p-1.5">
-                                            <p className="font-bold text-[#e11d48]">{report.absent_count}</p>
-                                            <p className="text-gray-500">Absent</p>
-                                        </div>
-                                        <div className="bg-amber-50 rounded p-1.5">
-                                            <p className="font-bold text-amber-600">{report.late_count}</p>
-                                            <p className="text-gray-500">Late</p>
-                                        </div>
-                                        <div className="bg-purple-50 rounded p-1.5">
-                                            <p className="font-bold text-[#7e22ce]">{report.excused_count}</p>
-                                            <p className="text-gray-500">Excused</p>
-                                        </div>
+                                    <div className="text-xs text-blue-600 font-medium mt-2 flex items-center gap-1">
+                                        View Details &rarr;
                                     </div>
-                                    {report.notes && (
-                                        <p className="text-xs text-gray-400 italic mt-2 border-t border-gray-50 pt-2">
-                                            "{report.notes}"
-                                        </p>
-                                    )}
                                 </div>
                             ))}
                         </div>
@@ -204,6 +189,96 @@ export default function AttendanceReportPage() {
                     )}
                 </div>
             </div>
+
+            {/* Report Details Modal */}
+            {selectedReport && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden border border-gray-100 max-h-[90vh] flex flex-col">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-[#f8fafc] flex justify-between items-center">
+                            <div>
+                                <h2 className="text-lg font-bold text-[#1a3b70]">
+                                    {selectedReport.activity_name || `Activity #${selectedReport.activity_id}`}
+                                </h2>
+                                <p className="text-sm text-gray-500">
+                                    {new Date(selectedReport.report_date).toLocaleDateString()}
+                                </p>
+                            </div>
+                            <button onClick={() => setSelectedReport(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">
+                                &times;
+                            </button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto">
+                            <div className="grid grid-cols-4 gap-4 text-center mb-6">
+                                <div className="bg-emerald-50 rounded-lg p-3">
+                                    <p className="text-2xl font-bold text-[#10b981]">{selectedReport.present_count}</p>
+                                    <p className="text-xs font-medium text-gray-600 uppercase">Present</p>
+                                </div>
+                                <div className="bg-red-50 rounded-lg p-3">
+                                    <p className="text-2xl font-bold text-[#e11d48]">{selectedReport.absent_count}</p>
+                                    <p className="text-xs font-medium text-gray-600 uppercase">Absent</p>
+                                </div>
+                                <div className="bg-amber-50 rounded-lg p-3">
+                                    <p className="text-2xl font-bold text-amber-600">{selectedReport.late_count}</p>
+                                    <p className="text-xs font-medium text-gray-600 uppercase">Late</p>
+                                </div>
+                                <div className="bg-purple-50 rounded-lg p-3">
+                                    <p className="text-2xl font-bold text-[#7e22ce]">{selectedReport.excused_count}</p>
+                                    <p className="text-xs font-medium text-gray-600 uppercase">Excused</p>
+                                </div>
+                            </div>
+
+                            {selectedReport.notes && (
+                                <div className="mb-6 p-4 rounded-lg bg-gray-50 border border-gray-100">
+                                    <h3 className="text-xs font-bold text-gray-500 uppercase mb-1">Coach Notes</h3>
+                                    <p className="text-sm text-gray-800">{selectedReport.notes}</p>
+                                </div>
+                            )}
+
+                            <div>
+                                <h3 className="text-sm font-bold text-gray-800 mb-3 border-b pb-2">Student Attendance Details</h3>
+                                {selectedReport.report_details ? (
+                                    <table className="min-w-full text-sm">
+                                        <thead className="bg-gray-50 text-gray-500">
+                                            <tr>
+                                                <th className="py-2 px-3 text-left font-medium">Student Name</th>
+                                                <th className="py-2 px-3 text-left font-medium">Grade & Teacher</th>
+                                                <th className="py-2 px-3 text-left font-medium">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {JSON.parse(selectedReport.report_details).map((detail: any, i: number) => (
+                                                <tr key={i} className="hover:bg-gray-50">
+                                                    <td className="py-2 px-3 font-medium text-gray-900">
+                                                        {detail.student_name || `ID: ${detail.student_id}`}
+                                                    </td>
+                                                    <td className="py-2 px-3 text-gray-500">
+                                                        {detail.grade || '-'} <br />
+                                                        <span className="text-xs">{detail.class_teacher_name || '-'}</span>
+                                                    </td>
+                                                    <td className="py-2 px-3">
+                                                        <span className={clsx(
+                                                            'px-2 py-1 rounded text-xs font-bold',
+                                                            detail.status === 'Present' && 'bg-emerald-100 text-emerald-800',
+                                                            detail.status === 'Absent' && 'bg-red-100 text-red-800',
+                                                            detail.status === 'Late' && 'bg-amber-100 text-amber-800',
+                                                            detail.status === 'Excused' && 'bg-purple-100 text-purple-800'
+                                                        )}>
+                                                            {detail.status}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <p className="text-sm text-gray-500 italic">No detailed records available for this report.</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

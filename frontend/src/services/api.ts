@@ -65,6 +65,7 @@ export interface AttendanceReport {
     late_count: number;
     excused_count: number;
     notes?: string;
+    report_details?: string;
     status: 'Pending' | 'Approved' | 'Rejected';
     submitted_at: string;
     reviewed_at?: string | null;
@@ -134,7 +135,7 @@ export const membershipService = {
 
 export const studentService = {
     search: async (query: string) => {
-        const response = await api.get<{ id: number; name: string; grade: string }[]>(`/students/search`, { params: { q: query } });
+        const response = await api.get<{ id: number; name: string; grade: string; classTeacherName?: string }[]>(`/students/search`, { params: { q: query } });
         return response.data;
     }
 };

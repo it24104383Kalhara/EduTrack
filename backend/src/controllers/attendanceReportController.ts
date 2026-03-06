@@ -27,6 +27,7 @@ export const generateReport = async (req: AuthRequest, res: Response): Promise<v
             late_count: stats.late,
             excused_count: stats.excused,
             notes,
+            report_details: JSON.stringify(stats.details),
         });
 
         const report = await ReportModel.getReportById(reportId);

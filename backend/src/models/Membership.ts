@@ -4,17 +4,20 @@ import { RowDataPacket, OkPacket } from 'mysql2';
 export interface Membership {
     id?: number;
     student_id: number;
+    student_name?: string;
     activity_id: number;
     role: 'Member' | 'Captain' | 'Vice-Captain' | 'President' | 'Secretary' | 'Treasurer';
+    grade?: string;
+    class_teacher_name?: string;
     joined_at: string; // Date string in YYYY-MM-DD format
     quit_at?: string | null;
 }
 
 export const registerStudentToActivity = async (membership: Membership): Promise<number> => {
-    const { student_id, activity_id, role, joined_at } = membership;
+    const { student_id, student_name, activity_id, role, grade, class_teacher_name, joined_at } = membership;
     const [result] = await pool.query<OkPacket>(
-        'INSERT INTO sports_memberships (student_id, activity_id, role, joined_at) VALUES (?, ?, ?, ?)',
-        [student_id, activity_id, role, joined_at]
+        'INSERT INTO sports_memberships (student_id, student_name, activity_id, role, grade, class_teacher_name, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [student_id, student_name || null, activity_id, role, grade || null, class_teacher_name || null, joined_at]
     );
     return result.insertId;
 };
