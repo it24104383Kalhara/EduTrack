@@ -12,14 +12,18 @@ import CalendarDaysIcon from '@heroicons/react/24/outline/CalendarDaysIcon';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import UserGroupIcon from '@heroicons/react/24/outline/UserGroupIcon';
+import ChevronDownIcon from '@heroicons/react/24/outline/ChevronDownIcon';
 
-const STATUS_CONFIG: Record<AttendanceStatus, { label: string; icon: React.ElementType; color: string; bg: string; border: string }> = {
-    Present: { label: 'Present', icon: CheckCircleIcon, color: 'text-[#10b981]', bg: 'bg-emerald-50', border: 'border-emerald-200' },
-    Absent: { label: 'Absent', icon: XCircleIcon, color: 'text-[#e11d48]', bg: 'bg-red-50', border: 'border-red-200' },
-    Late: { label: 'Late', icon: ClockIcon, color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-200' },
-    Excused: { label: 'Excused', icon: MinusCircleIcon, color: 'text-[#7e22ce]', bg: 'bg-purple-50', border: 'border-purple-200' },
+const STATUS_CONFIG: Record<AttendanceStatus, { label: string; icon: React.ElementType; color: string; bg: string; border: string; ring: string }> = {
+    Present: { label: 'Present', icon: CheckCircleIcon, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', ring: 'ring-emerald-400' },
+    Absent: { label: 'Absent', icon: XCircleIcon, color: 'text-red-500', bg: 'bg-red-50', border: 'border-red-200', ring: 'ring-red-400' },
+    Late: { label: 'Late', icon: ClockIcon, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', ring: 'ring-amber-400' },
+    Excused: { label: 'Excused', icon: MinusCircleIcon, color: 'text-[#633194]', bg: 'bg-[#F4F0FF]', border: 'border-purple-200', ring: 'ring-purple-400' },
 };
 const STATUS_ORDER: AttendanceStatus[] = ['Present', 'Absent', 'Late', 'Excused'];
+
+// Reusable styled input classes
+const inputCls = "w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all bg-gray-50 focus:bg-white appearance-none";
 
 export default function AttendancePage() {
     const { user } = useAuth();
@@ -35,10 +39,7 @@ export default function AttendancePage() {
     const [saved, setSaved] = useState(false);
 
     // -- Data Fetching --
-    const { data: activities } = useQuery({
-        queryKey: ['activities'],
-        queryFn: activityService.getAll,
-    });
+    const { data: activities } = useQuery({ queryKey: ['activities'], queryFn: activityService.getAll });
 
     const { data: sessions } = useQuery({
         queryKey: ['sessions', selectedActivityId],
@@ -58,7 +59,6 @@ export default function AttendancePage() {
         enabled: !!selectedSessionId,
     });
 
-    // Pre-populate localStatus when existing attendance is loaded
     useEffect(() => {
         if (existingAttendance) {
             const map: Record<number, AttendanceStatus> = {};
@@ -77,7 +77,6 @@ export default function AttendancePage() {
             setSelectedSessionId(session.id);
             setShowNewSession(false);
             setNewSession({ start_time: '', end_time: '' });
-            // Default all members to Absent
             const defaults: Record<number, AttendanceStatus> = {};
             members?.forEach((m) => { defaults[m.student_id] = 'Absent'; });
             setLocalStatus(defaults);
@@ -88,10 +87,7 @@ export default function AttendancePage() {
         mutationFn: () =>
             attendanceService.bulkMark(
                 selectedSessionId!,
-                Object.entries(localStatus).map(([sid, status]) => ({
-                    student_id: parseInt(sid),
-                    status,
-                }))
+                Object.entries(localStatus).map(([sid, status]) => ({ student_id: parseInt(sid), status }))
             ),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['sessionAttendance', selectedSessionId] });
@@ -137,103 +133,123 @@ export default function AttendancePage() {
         });
     };
 
+    const presentCount = Object.values(localStatus).filter(v => v === 'Present').length;
+    const absentCount = Object.values(localStatus).filter(v => v === 'Absent').length;
+    const attendanceRate = members?.length ? Math.round((presentCount / members.length) * 100) : 0;
 
     return (
         <div className="space-y-5">
-            {/* Header */}
+            {/* Page Header */}
             <div>
-                <h1 className="text-2xl font-bold text-[#1a3b70]">Attendance Check-In</h1>
-                <p className="text-sm text-gray-500 mt-1">Select an activity and session to mark attendance.</p>
+                <h1 className="text-2xl font-bold text-gray-800">Attendance Check-In</h1>
+                <p className="text-sm text-gray-500 mt-0.5">Select an activity and session to mark attendance.</p>
             </div>
 
-            {/* Step 1 — Select Activity */}
+            {/* Step Cards Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white rounded-lg border border-gray-100 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] p-4">
-                    <label className="block text-xs font-bold text-[#1a3b70] uppercase tracking-wider mb-2">
-                        1 · Select Activity
-                    </label>
-                    <select
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#1a3b70] transition-colors"
-                        value={selectedActivityId ?? ''}
-                        onChange={(e) => {
-                            setSelectedActivityId(e.target.value ? parseInt(e.target.value) : null);
-                            setSelectedSessionId(null);
-                            setLocalStatus({});
-                        }}
-                    >
-                        <option value="">-- Choose Activity --</option>
-                        {activities?.map((a) => (
-                            <option key={a.id} value={a.id}>{a.name} ({a.type})</option>
-                        ))}
-                    </select>
+                {/* Step 1 – Activity */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                        <span className="h-6 w-6 rounded-full bg-[#633194] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
+                        <label className="text-sm font-bold text-gray-700">Select Activity</label>
+                    </div>
+                    <div className="relative">
+                        <select
+                            className={inputCls}
+                            value={selectedActivityId ?? ''}
+                            onChange={(e) => {
+                                setSelectedActivityId(e.target.value ? parseInt(e.target.value) : null);
+                                setSelectedSessionId(null);
+                                setLocalStatus({});
+                            }}
+                        >
+                            <option value="">— Choose Activity —</option>
+                            {activities?.map((a) => (
+                                <option key={a.id} value={a.id}>{a.name} ({a.type})</option>
+                            ))}
+                        </select>
+                        <ChevronDownIcon className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    </div>
                 </div>
 
-                {/* Step 2 — Select or Create Session */}
-                <div className="bg-white rounded-lg border border-gray-100 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] p-4">
-                    <div className="flex justify-between items-center mb-2">
-                        <label className="text-xs font-bold text-[#1a3b70] uppercase tracking-wider">
-                            2 · Select Session
-                        </label>
+                {/* Step 2 – Session */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <span className="h-6 w-6 rounded-full bg-[#633194] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
+                            <label className="text-sm font-bold text-gray-700">Select Session</label>
+                        </div>
                         {selectedActivityId && isCoach && (
                             <button
                                 onClick={() => setShowNewSession(!showNewSession)}
-                                className="flex items-center gap-1 text-xs font-medium text-[#1a3b70] hover:text-indigo-900 transition-colors"
+                                className="flex items-center gap-1 text-xs font-semibold text-[#633194] bg-[#F4F0FF] px-2.5 py-1 rounded-lg hover:bg-[#633194] hover:text-white transition-all"
                             >
-                                <PlusIcon className="h-4 w-4" /> New
+                                <PlusIcon className="h-3.5 w-3.5" /> New
                             </button>
                         )}
                     </div>
 
+                    {/* New Session Form */}
                     {showNewSession && (
-                        <form onSubmit={handleCreateSession} className="bg-blue-50 border border-blue-100 rounded-md p-3 mb-3 space-y-2">
-                            <p className="text-xs font-semibold text-[#1a3b70]">Create New Session</p>
-                            <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label className="text-xs text-gray-500">Start</label>
-                                    <input type="datetime-local" required
-                                        className="w-full rounded border border-gray-300 px-2 py-1 text-xs focus:outline-none focus:border-[#1a3b70]"
-                                        value={newSession.start_time}
-                                        onChange={(e) => setNewSession({ ...newSession, start_time: e.target.value })}
-                                    />
+                        <div className="bg-[#F4F0FF] border border-purple-200 rounded-xl p-4 mb-3 space-y-3">
+                            <p className="text-xs font-bold text-[#633194]">Create New Session</p>
+                            <form onSubmit={handleCreateSession} className="space-y-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-xs text-gray-600 font-medium block mb-1">Start</label>
+                                        <input
+                                            type="datetime-local" required
+                                            className="w-full rounded-lg border border-purple-200 bg-white px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all"
+                                            value={newSession.start_time}
+                                            onChange={(e) => setNewSession({ ...newSession, start_time: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-600 font-medium block mb-1">End</label>
+                                        <input
+                                            type="datetime-local" required
+                                            className="w-full rounded-lg border border-purple-200 bg-white px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all"
+                                            value={newSession.end_time}
+                                            onChange={(e) => setNewSession({ ...newSession, end_time: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="text-xs text-gray-500">End</label>
-                                    <input type="datetime-local" required
-                                        className="w-full rounded border border-gray-300 px-2 py-1 text-xs focus:outline-none focus:border-[#1a3b70]"
-                                        value={newSession.end_time}
-                                        onChange={(e) => setNewSession({ ...newSession, end_time: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                            <button type="submit"
-                                disabled={createSessionMutation.isPending}
-                                className="w-full bg-[#1a3b70] text-white text-xs font-medium py-1.5 rounded hover:bg-[#11274a] transition-colors disabled:opacity-50"
-                            >
-                                {createSessionMutation.isPending ? 'Creating…' : 'Create & Start Check-In'}
-                            </button>
-                        </form>
+                                <button
+                                    type="submit"
+                                    disabled={createSessionMutation.isPending}
+                                    className="w-full py-2 rounded-lg text-xs font-bold text-white transition-all disabled:opacity-50"
+                                    style={{ background: 'linear-gradient(135deg, #633194 0%, #9b59b6 100%)' }}
+                                >
+                                    {createSessionMutation.isPending ? 'Creating…' : 'Create & Start Check-In'}
+                                </button>
+                            </form>
+                        </div>
                     )}
 
-                    <select
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#1a3b70] transition-colors"
-                        value={selectedSessionId ?? ''}
-                        onChange={(e) => {
-                            setSelectedSessionId(e.target.value ? parseInt(e.target.value) : null);
-                            setLocalStatus({});
-                        }}
-                        disabled={!selectedActivityId}
-                    >
-                        <option value="">-- Choose Session --</option>
-                        {sessions?.map((s) => (
-                            <option key={s.id} value={s.id}>
-                                {new Date(s.start_time).toLocaleString()} → {new Date(s.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </option>
-                        ))}
-                    </select>
+                    <div className="relative">
+                        <select
+                            className={clsx(inputCls, !selectedActivityId && 'opacity-50 cursor-not-allowed')}
+                            value={selectedSessionId ?? ''}
+                            onChange={(e) => {
+                                setSelectedSessionId(e.target.value ? parseInt(e.target.value) : null);
+                                setLocalStatus({});
+                            }}
+                            disabled={!selectedActivityId}
+                        >
+                            <option value="">— Choose Session —</option>
+                            {sessions?.map((s) => (
+                                <option key={s.id} value={s.id}>
+                                    {new Date(s.start_time).toLocaleString()} → {new Date(s.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDownIcon className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    </div>
+
                     {selectedSessionId && isCoach && (
                         <button
                             onClick={() => { if (window.confirm('Delete this session?')) deleteSessionMutation.mutate(selectedSessionId); }}
-                            className="mt-2 flex items-center gap-1 text-xs text-[#e11d48] hover:text-red-700 transition-colors font-medium"
+                            className="mt-2 flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition-colors font-medium"
                         >
                             <TrashIcon className="h-3.5 w-3.5" /> Delete session
                         </button>
@@ -241,32 +257,66 @@ export default function AttendancePage() {
                 </div>
             </div>
 
-            {/* Step 3 — Mark Attendance */}
+            {/* Step 3 – Mark Attendance */}
             {selectedSessionId && members && members.length > 0 && (
                 <>
-                    {/* Stats Summary Row */}
+                    {/* Live Stats */}
                     <div className="grid grid-cols-4 gap-3">
                         {(Object.keys(STATUS_CONFIG) as AttendanceStatus[]).map((s) => {
                             const cfg = STATUS_CONFIG[s];
                             const count = Object.values(localStatus).filter((v) => v === s).length;
                             return (
-                                <div key={s} className={clsx('rounded-lg border p-3 text-center cursor-pointer hover:opacity-80 transition-opacity', cfg.bg, cfg.border)} onClick={() => setAllStatus(s)}>
-                                    <p className={clsx('text-2xl font-bold', cfg.color)}>{count}</p>
-                                    <p className="text-xs text-gray-500 font-medium mt-0.5">{cfg.label}</p>
-                                </div>
+                                <button
+                                    key={s}
+                                    onClick={() => setAllStatus(s)}
+                                    className={clsx(
+                                        'rounded-2xl border p-4 text-center cursor-pointer hover:shadow-md transition-all group',
+                                        cfg.bg, cfg.border
+                                    )}
+                                    title={`Mark all as ${s}`}
+                                >
+                                    <p className={clsx('text-3xl font-bold', cfg.color)}>{count}</p>
+                                    <p className="text-xs text-gray-500 font-medium mt-1">{cfg.label}</p>
+                                </button>
                             );
                         })}
                     </div>
-                    <p className="text-xs text-gray-400 -mt-2 text-right">Tap a stat to mark all students</p>
 
-                    {/* Quick-mark all */}
+                    {/* Progress Bar + Rate */}
+                    <div className="bg-white rounded-2xl border border-gray-100 p-4">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-semibold text-gray-700">Attendance Progress</span>
+                            <div className="flex items-center gap-3 text-xs text-gray-500">
+                                <span className="text-emerald-600 font-bold">{presentCount} present</span>
+                                <span className="text-red-400 font-bold">{absentCount} absent</span>
+                                <span className="text-[#633194] font-bold text-sm">{attendanceRate}%</span>
+                            </div>
+                        </div>
+                        <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{
+                                    width: `${attendanceRate}%`,
+                                    background: 'linear-gradient(90deg, #633194, #9b59b6)',
+                                }}
+                            />
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2 text-right">Click a stat card above to mark all students at once</p>
+                    </div>
+
+                    {/* Quick-mark all buttons */}
                     <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs text-gray-500 font-medium">Quick mark all:</span>
+                        <span className="text-xs text-gray-500 font-semibold">Quick mark all:</span>
                         {STATUS_ORDER.map((s) => {
                             const cfg = STATUS_CONFIG[s];
                             return (
-                                <button key={s} onClick={() => setAllStatus(s)}
-                                    className={clsx('flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all hover:opacity-80', cfg.bg, cfg.color, cfg.border)}
+                                <button
+                                    key={s}
+                                    onClick={() => setAllStatus(s)}
+                                    className={clsx(
+                                        'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all hover:shadow-sm',
+                                        cfg.bg, cfg.color, cfg.border
+                                    )}
                                 >
                                     <cfg.icon className="h-3.5 w-3.5" /> {cfg.label}
                                 </button>
@@ -274,33 +324,44 @@ export default function AttendancePage() {
                         })}
                     </div>
 
-                    {/* Students list — one large tap-friendly card per student */}
+                    {/* Students List */}
                     <div className="space-y-2">
-                        {members.map((member) => {
+                        {members.map((member, idx) => {
                             const status: AttendanceStatus = localStatus[member.student_id] || 'Absent';
                             const cfg = STATUS_CONFIG[status];
                             const Ico = cfg.icon;
+
+                            // Avatar letter fallback from index
+                            const letter = String.fromCharCode(65 + (idx % 26));
+
                             return (
-                                <div key={member.id}
+                                <div
+                                    key={member.id}
                                     onClick={() => cycleStatus(member.student_id)}
                                     className={clsx(
-                                        'flex items-center justify-between px-5 py-4 rounded-lg border cursor-pointer select-none transition-all',
+                                        'flex items-center justify-between px-5 py-3.5 rounded-2xl border cursor-pointer select-none transition-all hover:shadow-sm',
                                         cfg.bg, cfg.border
                                     )}
                                 >
                                     {/* Left: student info */}
                                     <div className="flex items-center gap-3">
-                                        <div className={clsx('h-9 w-9 rounded-full flex items-center justify-center font-bold text-sm', cfg.bg, cfg.color, 'border', cfg.border)}>
-                                            {member.student_id}
+                                        <div className={clsx(
+                                            'h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm border',
+                                            cfg.bg, cfg.color, cfg.border
+                                        )}>
+                                            {letter}
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-900">Student #{member.student_id}</p>
+                                            <p className="text-sm font-semibold text-gray-800">Student #{member.student_id}</p>
                                             <p className="text-xs text-gray-500">{member.role.replace('_', ' ')}</p>
                                         </div>
                                     </div>
 
-                                    {/* Right: status badge */}
-                                    <div className={clsx('flex items-center gap-1.5 px-3 py-1.5 rounded-full border font-semibold text-xs', cfg.color, cfg.bg, cfg.border)}>
+                                    {/* Right: status pill */}
+                                    <div className={clsx(
+                                        'flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold',
+                                        cfg.color, cfg.bg, cfg.border
+                                    )}>
                                         <Ico className="h-4 w-4" />
                                         {cfg.label}
                                     </div>
@@ -309,17 +370,18 @@ export default function AttendancePage() {
                         })}
                     </div>
 
-                    {/* Save Button */}
+                    {/* Sticky Save Button */}
                     <div className="sticky bottom-4">
                         <button
                             onClick={() => bulkMarkMutation.mutate()}
                             disabled={bulkMarkMutation.isPending || Object.keys(localStatus).length === 0}
                             className={clsx(
-                                'w-full py-4 rounded-xl font-bold text-sm shadow-lg transition-all',
+                                'w-full py-4 rounded-2xl font-bold text-sm shadow-lg transition-all',
                                 saved
-                                    ? 'bg-[#10b981] text-white'
-                                    : 'bg-[#1a3b70] text-white hover:bg-[#11274a] disabled:opacity-50'
+                                    ? 'bg-emerald-500 text-white'
+                                    : 'text-white hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed'
                             )}
+                            style={saved ? {} : { background: 'linear-gradient(135deg, #633194 0%, #9b59b6 100%)' }}
                         >
                             {bulkMarkMutation.isPending
                                 ? 'Saving…'
@@ -333,19 +395,21 @@ export default function AttendancePage() {
 
             {/* Empty state — session selected but no members */}
             {selectedSessionId && members && members.length === 0 && (
-                <div className="bg-white rounded-lg border border-gray-100 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] p-10 flex flex-col items-center gap-3 text-center">
-                    <UserGroupIcon className="h-12 w-12 text-gray-300" />
-                    <p className="text-gray-500 font-medium">No members registered for this activity.</p>
+                <div className="bg-white rounded-2xl border border-gray-100 p-16 flex flex-col items-center gap-3 text-center">
+                    <UserGroupIcon className="h-14 w-14 text-gray-200" />
+                    <p className="text-gray-600 font-semibold">No members registered for this activity.</p>
                     <p className="text-xs text-gray-400">Register students first from the Activities page.</p>
                 </div>
             )}
 
-            {/* Empty state — no selection */}
+            {/* Empty state — no selection yet */}
             {!selectedSessionId && !showNewSession && (
-                <div className="bg-white rounded-lg border border-gray-100 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] p-10 flex flex-col items-center gap-3 text-center">
-                    <CalendarDaysIcon className="h-12 w-12 text-gray-300" />
-                    <p className="text-gray-500 font-medium">Select an activity and session to begin.</p>
-                    {isCoach && <p className="text-xs text-gray-400">Or create a new session using the <strong>+ New</strong> button.</p>}
+                <div className="bg-white rounded-2xl border border-gray-100 p-16 flex flex-col items-center gap-3 text-center">
+                    <div className="h-16 w-16 rounded-2xl bg-[#F4F0FF] flex items-center justify-center">
+                        <CalendarDaysIcon className="h-8 w-8 text-[#633194]" />
+                    </div>
+                    <p className="text-gray-700 font-semibold">Select an activity and session to begin.</p>
+                    {isCoach && <p className="text-xs text-gray-400">Or create a new session using the <strong className="text-[#633194]">+ New</strong> button.</p>}
                 </div>
             )}
         </div>

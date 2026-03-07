@@ -7,6 +7,17 @@ import ArrowLeftIcon from '@heroicons/react/24/outline/ArrowLeftIcon';
 import UserPlusIcon from '@heroicons/react/24/outline/UserPlusIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import UserIcon from '@heroicons/react/24/outline/UserIcon';
+import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
+import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
+import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
+import ChevronDownIcon from '@heroicons/react/24/outline/ChevronDownIcon';
+
+const ROLE_CONFIG: Record<string, { bg: string; text: string; border: string }> = {
+    Captain: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+    Vice_Captain: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+    Secretary: { bg: 'bg-[#F4F0FF]', text: 'text-[#633194]', border: 'border-purple-200' },
+    Member: { bg: 'bg-gray-100', text: 'text-gray-600', border: 'border-gray-200' },
+};
 
 export default function ActivityMembersPage() {
     const { id } = useParams<{ id: string }>();
@@ -18,10 +29,7 @@ export default function ActivityMembersPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedStudent, setSelectedStudent] = useState<{ id: number, name: string, grade: string, classTeacherName?: string } | null>(null);
-    const [formData, setFormData] = useState({
-        student_id: '',
-        role: 'Member'
-    });
+    const [formData, setFormData] = useState({ student_id: '', role: 'Member' });
 
     const { data: searchResults, isLoading: isSearchLoading } = useQuery({
         queryKey: ['studentsSearch', searchQuery],
@@ -35,13 +43,13 @@ export default function ActivityMembersPage() {
             const all = await activityService.getAll();
             return all.find(a => a.id === activityId);
         },
-        enabled: !!activityId
+        enabled: !!activityId,
     });
 
     const { data: members, isLoading: isMembersLoading } = useQuery({
         queryKey: ['members', activityId],
         queryFn: () => membershipService.getMembers(activityId),
-        enabled: !!activityId
+        enabled: !!activityId,
     });
 
     const registerMutation = useMutation({
@@ -55,7 +63,7 @@ export default function ActivityMembersPage() {
         },
         onError: (error: any) => {
             alert('Failed to register student: ' + (error.response?.data?.error || error.message));
-        }
+        },
     });
 
     const removeMutation = useMutation({
@@ -68,17 +76,14 @@ export default function ActivityMembersPage() {
     const handleRegister = (e: React.FormEvent) => {
         e.preventDefault();
         const studentIdToReg = selectedStudent ? selectedStudent.id : parseInt(formData.student_id);
-        if (!studentIdToReg) {
-            alert("Please select or enter a student ID");
-            return;
-        }
+        if (!studentIdToReg) { alert('Please select or enter a student ID'); return; }
         registerMutation.mutate({
             student_id: studentIdToReg,
             student_name: selectedStudent?.name,
             activity_id: activityId,
             role: formData.role,
             grade: selectedStudent?.grade,
-            class_teacher_name: selectedStudent?.classTeacherName
+            class_teacher_name: selectedStudent?.classTeacherName,
         } as any);
     };
 
@@ -88,181 +93,259 @@ export default function ActivityMembersPage() {
         }
     };
 
-    if (isActivityLoading || isMembersLoading) return <div className="p-8 text-center text-gray-500">Loading...</div>;
-    if (!activity) return <div className="p-8 text-center text-red-500">Activity not found</div>;
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setSearchQuery('');
+        setSelectedStudent(null);
+        setFormData({ student_id: '', role: 'Member' });
+    };
+
+    if (isActivityLoading || isMembersLoading) return (
+        <div className="flex flex-col items-center justify-center h-64 gap-3">
+            <div className="w-10 h-10 rounded-full border-4 border-[#633194]/20 border-t-[#633194] animate-spin" />
+            <p className="text-sm text-gray-500">Loading members…</p>
+        </div>
+    );
+    if (!activity) return (
+        <div className="flex items-center justify-center h-48">
+            <p className="text-sm text-red-500 bg-red-50 px-4 py-2 rounded-lg border border-red-200">Activity not found</p>
+        </div>
+    );
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4 mb-6">
-                <button
-                    onClick={() => navigate('/sports/activities')}
-                    className="p-2 hover:bg-gray-100 rounded-full text-gray-500"
-                >
-                    <ArrowLeftIcon className="h-5 w-5" />
-                </button>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{activity.name} - Members</h1>
-                    <p className="text-sm text-gray-500">Manage students registered for this activity.</p>
+            {/* Page Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => navigate('/sports/activities')}
+                        className="p-2 rounded-xl hover:bg-[#F4F0FF] text-gray-400 hover:text-[#633194] transition-all"
+                        title="Back to Activities"
+                    >
+                        <ArrowLeftIcon className="h-5 w-5" />
+                    </button>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800">{activity.name}</h1>
+                        <p className="text-sm text-gray-500 mt-0.5">
+                            {members?.length ?? 0} member{members?.length !== 1 ? 's' : ''} registered
+                        </p>
+                    </div>
                 </div>
-            </div>
 
-            {/* Action Bar */}
-            {(user?.role === 'Admin' || user?.role === 'Coach') && (
-                <div className="flex justify-end">
+                {(user?.role === 'Admin' || user?.role === 'Coach') && (
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="flex items-center gap-2 bg-[#1a3b70] text-white px-4 py-2 rounded-lg hover:bg-[#11274a] transition shadow-sm font-medium"
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                        style={{ background: 'linear-gradient(135deg, #633194 0%, #9b59b6 100%)' }}
                     >
-                        <UserPlusIcon className="h-5 w-5" />
+                        <UserPlusIcon className="h-4 w-4" />
                         Register Student
                     </button>
-                </div>
-            )}
-
-            {/* Members List */}
-            <div className="bg-white rounded-lg border border-gray-100 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_2px_4px_-1px_rgba(0,0,0,0.03)] overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Student ID
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Role
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Grade & Teacher
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Joined Date
-                            </th>
-                            {(user?.role === 'Admin' || user?.role === 'Coach') && (
-                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actions
-                                </th>
-                            )}
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {members && members.length > 0 ? (
-                            members.map((member: any) => (
-                                <tr key={member.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <div className="flex-shrink-0 h-8 w-8 bg-blue-50 rounded-full flex items-center justify-center text-[#1a3b70]">
-                                                <UserIcon className="h-4 w-4" />
-                                            </div>
-                                            <div className="ml-4">
-                                                <div className="text-sm font-medium text-gray-900">
-                                                    {member.student_name || `Student #${member.student_id}`}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            ${member.role === 'Captain' ? 'bg-yellow-100 text-yellow-800' :
-                                                member.role === 'Vice_Captain' ? 'bg-blue-100 text-blue-800' :
-                                                    'bg-gray-100 text-gray-800'}`}>
-                                            {member.role.replace('_', ' ')}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900">{member.grade || '-'}</div>
-                                        <div className="text-xs text-gray-500">{member.class_teacher_name || '-'}</div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {new Date(member.joined_at).toLocaleDateString()}
-                                    </td>
-                                    {(user?.role === 'Admin' || user?.role === 'Coach') && (
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button
-                                                onClick={() => handleRemove(member.id)}
-                                                className="text-[#e11d48] hover:text-red-800 transition-colors"
-                                                title="Remove Student"
-                                            >
-                                                <TrashIcon className="h-5 w-5" />
-                                            </button>
-                                        </td>
-                                    )}
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan={4} className="px-6 py-10 text-center text-gray-500">
-                                    No members found for this activity.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                )}
             </div>
 
-            {/* Register Modal */}
+            {/* Members Table */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/60 flex items-center justify-between">
+                    <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Members</h2>
+                    {members && members.length > 0 && (
+                        <span className="text-xs font-bold bg-[#F4F0FF] text-[#633194] px-2.5 py-1 rounded-full">
+                            {members.length} total
+                        </span>
+                    )}
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                        <thead>
+                            <tr className="border-b border-gray-100">
+                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Student</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Grade &amp; Teacher</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Joined</th>
+                                {(user?.role === 'Admin' || user?.role === 'Coach') && (
+                                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                                )}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {members && members.length > 0 ? (
+                                members.map((member: any, idx: number) => {
+                                    const roleCfg = ROLE_CONFIG[member.role] ?? ROLE_CONFIG['Member'];
+                                    const letter = member.student_name?.charAt(0) ?? String.fromCharCode(65 + (idx % 26));
+                                    return (
+                                        <tr key={member.id} className="hover:bg-[#F4F0FF]/30 transition-colors group">
+                                            {/* Student Name + Avatar */}
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#633194] to-[#9b59b6] flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                                        {letter}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-gray-800 group-hover:text-[#633194] transition-colors">
+                                                            {member.student_name || `Student #${member.student_id}`}
+                                                        </p>
+                                                        <p className="text-xs text-gray-400">ID #{member.student_id}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            {/* Role Badge */}
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${roleCfg.bg} ${roleCfg.text} ${roleCfg.border}`}>
+                                                    {member.role.replace('_', ' ')}
+                                                </span>
+                                            </td>
+
+                                            {/* Grade & Teacher */}
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <p className="text-sm font-medium text-gray-700">{member.grade || '—'}</p>
+                                                <p className="text-xs text-gray-400">{member.class_teacher_name || '—'}</p>
+                                            </td>
+
+                                            {/* Joined Date */}
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {new Date(member.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </td>
+
+                                            {/* Remove Action */}
+                                            {(user?.role === 'Admin' || user?.role === 'Coach') && (
+                                                <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                    <button
+                                                        onClick={() => handleRemove(member.id)}
+                                                        className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all"
+                                                        title="Remove student"
+                                                    >
+                                                        <TrashIcon className="h-4 w-4" />
+                                                    </button>
+                                                </td>
+                                            )}
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-16 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="h-14 w-14 rounded-2xl bg-[#F4F0FF] flex items-center justify-center">
+                                                <UserIcon className="h-7 w-7 text-[#633194]" />
+                                            </div>
+                                            <p className="text-gray-600 font-semibold">No members yet</p>
+                                            <p className="text-xs text-gray-400">Use the Register Student button to add students.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* ===== Register Student Modal ===== */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-2px_rgba(0,0,0,0.05)] w-full max-w-md overflow-hidden border border-gray-100">
-                        <div className="px-6 py-4 border-b border-gray-100 bg-[#f8fafc] flex justify-between items-center">
-                            <h2 className="text-lg font-bold text-[#1a3b70]">Register Student</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                                ✕
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100">
+                        {/* Modal Header */}
+                        <div
+                            className="px-6 py-4 flex items-center justify-between"
+                            style={{ background: 'linear-gradient(135deg, #633194 0%, #9b59b6 100%)' }}
+                        >
+                            <div className="flex items-center gap-2">
+                                <UserPlusIcon className="h-5 w-5 text-white" />
+                                <h2 className="text-base font-bold text-white">Register Student</h2>
+                            </div>
+                            <button
+                                onClick={closeModal}
+                                className="p-1 rounded-lg text-white/70 hover:text-white hover:bg-white/20 transition-all"
+                            >
+                                <XMarkIcon className="h-5 w-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleRegister} className="p-6 space-y-4">
+                        <form onSubmit={handleRegister} className="p-6 space-y-5">
+                            {/* Student Search / Selection */}
                             {!selectedStudent ? (
-                                <div className="relative">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Search Student by Name or ID</label>
-                                    <input
-                                        type="text"
-                                        className="w-full rounded-md border border-gray-300 shadow-sm focus:border-[#1a3b70] focus:ring-[#1a3b70] px-3 py-2 outline-none transition-colors"
-                                        value={searchQuery}
-                                        onChange={e => setSearchQuery(e.target.value)}
-                                        placeholder="Type to search..."
-                                    />
-                                    {isSearchLoading && <div className="absolute right-3 top-9 text-xs text-gray-400">Loading...</div>}
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                                        Search Student by Name or ID
+                                    </label>
+                                    <div className="relative">
+                                        <MagnifyingGlassIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                                        {isSearchLoading && (
+                                            <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                                                <div className="w-4 h-4 border-2 border-[#633194]/20 border-t-[#633194] rounded-full animate-spin" />
+                                            </div>
+                                        )}
+                                        <input
+                                            type="text"
+                                            className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all"
+                                            value={searchQuery}
+                                            onChange={e => setSearchQuery(e.target.value)}
+                                            placeholder="Type student name to search…"
+                                            autoFocus
+                                        />
 
-                                    {searchResults && searchResults.length > 0 && searchQuery.length > 0 && (
-                                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
-                                            {searchResults.map(student => (
-                                                <div
-                                                    key={student.id}
-                                                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex justify-between items-center"
-                                                    onClick={() => {
-                                                        setSelectedStudent(student);
-                                                        setFormData({ ...formData, student_id: student.id.toString() });
-                                                        setSearchQuery('');
-                                                    }}
-                                                >
-                                                    <div>
-                                                        <div className="font-medium text-gray-900">{student.name}</div>
-                                                        <div className="text-xs text-gray-500">ID: {student.id} • Grade: {student.grade} • Teacher: {student.classTeacherName || 'N/A'}</div>
+                                        {/* Dropdown Results */}
+                                        {searchResults && searchResults.length > 0 && searchQuery.length > 0 && (
+                                            <div className="absolute z-20 left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-56 overflow-y-auto">
+                                                {searchResults.map(student => (
+                                                    <div
+                                                        key={student.id}
+                                                        onClick={() => {
+                                                            setSelectedStudent(student);
+                                                            setFormData({ ...formData, student_id: student.id.toString() });
+                                                            setSearchQuery('');
+                                                        }}
+                                                        className="px-4 py-3 hover:bg-[#F4F0FF] cursor-pointer flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
+                                                    >
+                                                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#633194] to-[#9b59b6] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                                            {student.name?.charAt(0) ?? '#'}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-semibold text-sm text-gray-800 truncate">{student.name}</p>
+                                                            <p className="text-xs text-gray-500">ID #{student.id} · Grade {student.grade} · {student.classTeacherName || 'N/A'}</p>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                    {searchResults && searchResults.length === 0 && searchQuery.length > 0 && !isSearchLoading && (
-                                        <div className="absolute w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-3 text-center text-sm text-gray-500">
-                                            No students found
-                                        </div>
-                                    )}
-                                    <p className="mt-2 text-xs text-gray-400">Or manually enter below if unable to search:</p>
-                                    <input
-                                        type="number"
-                                        className="w-full rounded-md border border-gray-300 shadow-sm focus:border-[#1a3b70] focus:ring-[#1a3b70] px-3 py-2 mt-1 outline-none transition-colors"
-                                        value={formData.student_id}
-                                        onChange={e => setFormData({ ...formData, student_id: e.target.value })}
-                                        placeholder="Enter Student ID manually"
-                                    />
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {searchResults && searchResults.length === 0 && searchQuery.length > 0 && !isSearchLoading && (
+                                            <div className="absolute z-20 left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-md p-4 text-center text-sm text-gray-500">
+                                                No students found matching "<strong>{searchQuery}</strong>"
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Manual ID fallback */}
+                                    <div className="mt-4">
+                                        <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                                            Or enter Student ID manually
+                                        </label>
+                                        <input
+                                            type="number"
+                                            className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all"
+                                            value={formData.student_id}
+                                            onChange={e => setFormData({ ...formData, student_id: e.target.value })}
+                                            placeholder="e.g. 1042"
+                                        />
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-md flex justify-between items-center">
-                                    <div>
-                                        <div className="text-xs text-[#10b981] font-bold uppercase tracking-wider mb-1">Student Selected</div>
-                                        <div className="text-lg font-bold text-gray-900">{selectedStudent.name}</div>
-                                        <div className="text-xs text-gray-600">ID: {selectedStudent.id} • Grade: {selectedStudent.grade}</div>
+                                /* Selected Student Card */
+                                <div className="bg-[#F4F0FF] border border-purple-200 rounded-xl p-4 flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#633194] to-[#9b59b6] flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                            {selectedStudent.name?.charAt(0) ?? '?'}
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-1.5 mb-0.5">
+                                                <CheckCircleIcon className="h-3.5 w-3.5 text-[#633194]" />
+                                                <span className="text-xs font-bold text-[#633194] uppercase tracking-wider">Selected</span>
+                                            </div>
+                                            <p className="text-sm font-bold text-gray-800">{selectedStudent.name}</p>
+                                            <p className="text-xs text-gray-500">ID #{selectedStudent.id} · Grade {selectedStudent.grade}</p>
+                                        </div>
                                     </div>
                                     <button
                                         type="button"
@@ -270,41 +353,54 @@ export default function ActivityMembersPage() {
                                             setSelectedStudent(null);
                                             setFormData({ ...formData, student_id: '' });
                                         }}
-                                        className="text-xs bg-white px-3 py-1.5 rounded border border-emerald-200 text-[#10b981] font-medium hover:bg-emerald-100 transition-colors shadow-sm"
+                                        className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-purple-200 text-[#633194] hover:bg-[#633194] hover:text-white transition-all"
                                     >
                                         Change
                                     </button>
                                 </div>
                             )}
 
+                            {/* Role Selector */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                                <select
-                                    className="w-full rounded-md border border-gray-300 shadow-sm focus:border-[#1a3b70] focus:ring-[#1a3b70] px-3 py-2 outline-none transition-colors"
-                                    value={formData.role}
-                                    onChange={e => setFormData({ ...formData, role: e.target.value })}
-                                >
-                                    <option value="Member">Member</option>
-                                    <option value="Captain">Captain</option>
-                                    <option value="Vice_Captain">Vice Captain</option>
-                                    <option value="Secretary">Secretary</option>
-                                </select>
+                                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                                    Activity Role
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['Member', 'Captain', 'Vice_Captain', 'Secretary'].map(r => {
+                                        const cfg = ROLE_CONFIG[r] ?? ROLE_CONFIG['Member'];
+                                        return (
+                                            <button
+                                                key={r}
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, role: r })}
+                                                className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all ${formData.role === r
+                                                        ? `${cfg.bg} ${cfg.text} ${cfg.border} shadow-sm`
+                                                        : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                            >
+                                                {r.replace('_', ' ')}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
 
-                            <div className="pt-4 flex gap-3 justify-end border-t border-gray-100 mt-2">
+                            {/* Action Buttons */}
+                            <div className="flex gap-3 pt-2 border-t border-gray-100">
                                 <button
                                     type="button"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="px-4 py-2 mt-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1a3b70] transition-colors"
+                                    onClick={closeModal}
+                                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={registerMutation.isPending}
-                                    className="px-4 py-2 mt-2 text-sm font-medium text-white bg-[#1a3b70] border border-transparent rounded-md hover:bg-[#11274a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1a3b70] disabled:opacity-50 transition-colors"
+                                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50"
+                                    style={{ background: 'linear-gradient(135deg, #633194 0%, #9b59b6 100%)' }}
                                 >
-                                    {registerMutation.isPending ? 'Registering...' : 'Complete Registration'}
+                                    {registerMutation.isPending ? 'Registering…' : 'Complete Registration'}
                                 </button>
                             </div>
                         </form>
