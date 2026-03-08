@@ -16,4 +16,9 @@ router.post('/borrow', authenticate, inventoryController.borrowItem);
 router.put('/return/:logId', authenticate, inventoryController.returnItem);
 router.get('/history', authenticate, inventoryController.getBorrowingHistory);
 
+// Reserved items
+router.get('/reserved/items', authenticate, inventoryController.getReservedItems);
+router.post('/reserved/items', authenticate, inventoryController.reserveItem);
+router.put('/reserved/return/:logId', authenticate, inventoryController.returnReservedItem);
+
 export default router;

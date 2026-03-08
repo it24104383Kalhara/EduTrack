@@ -11,7 +11,6 @@ import {
     BuildingOfficeIcon,
     CalendarDaysIcon,
     TrophyIcon,
-    CurrencyDollarIcon,
     ChatBubbleLeftEllipsisIcon,
     DocumentTextIcon,
     ShieldCheckIcon,

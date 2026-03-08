@@ -105,6 +105,21 @@ export interface InventoryLog {
     status: 'Borrowed' | 'Returned' | 'Lost' | 'Damaged';
 }
 
+export interface InventoryReserved {
+    id?: number;
+    item_id: number;
+    reserve_student_name: string;
+    class_teacher: string;
+    class_grade: string;
+    reserve_start_time: string;
+    reserve_end_time: string;
+    reserved_at?: string;
+    returned_at?: string | null;
+    return_condition?: 'New' | 'Good' | 'Fair' | 'Poor' | 'Broken' | null;
+    status: 'Reserved' | 'Returned' | 'Cancelled';
+    item_name?: string;
+}
+
 export const activityService = {
     getAll: async () => {
         const response = await api.get<Activity[]>('/activities');
@@ -246,6 +261,19 @@ export const inventoryService = {
     },
     getHistory: async (item_id?: number, user_id?: number) => {
         const response = await api.get<InventoryLog[]>('/inventory/history', { params: { item_id, user_id } });
+        return response.data;
+    },
+    // Reserved operations
+    getReservedItems: async () => {
+        const response = await api.get<InventoryReserved[]>('/inventory/reserved/items');
+        return response.data;
+    },
+    reserveItem: async (data: Omit<InventoryReserved, 'id' | 'reserved_at' | 'returned_at' | 'return_condition' | 'status' | 'item_name'>) => {
+        const response = await api.post('/inventory/reserved/items', data);
+        return response.data;
+    },
+    returnReservedItem: async (log_id: number, status: 'Returned' | 'Cancelled', return_condition?: 'New' | 'Good' | 'Fair' | 'Poor' | 'Broken') => {
+        const response = await api.put(`/inventory/reserved/return/${log_id}`, { status, return_condition });
         return response.data;
     }
 };

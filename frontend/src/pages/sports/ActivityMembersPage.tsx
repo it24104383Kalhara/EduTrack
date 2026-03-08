@@ -10,7 +10,6 @@ import UserIcon from '@heroicons/react/24/outline/UserIcon';
 import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
-import ChevronDownIcon from '@heroicons/react/24/outline/ChevronDownIcon';
 
 const ROLE_CONFIG: Record<string, { bg: string; text: string; border: string }> = {
     Captain: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
@@ -374,8 +373,8 @@ export default function ActivityMembersPage() {
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, role: r })}
                                                 className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all ${formData.role === r
-                                                        ? `${cfg.bg} ${cfg.text} ${cfg.border} shadow-sm`
-                                                        : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300'
+                                                    ? `${cfg.bg} ${cfg.text} ${cfg.border} shadow-sm`
+                                                    : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300'
                                                     }`}
                                             >
                                                 {r.replace('_', ' ')}

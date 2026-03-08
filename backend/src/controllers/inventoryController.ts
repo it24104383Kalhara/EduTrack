@@ -112,3 +112,44 @@ export const getBorrowingHistory = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// Reserved Items Logic
+
+export const getReservedItems = async (req: AuthRequest, res: Response) => {
+    try {
+        const items = await InventoryModel.getReservedItems();
+        res.json(items);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+export const reserveItem = async (req: AuthRequest, res: Response) => {
+    try {
+        const reserveData = req.body;
+
+        if (!reserveData.item_id || !reserveData.reserve_student_name || !reserveData.class_teacher || !reserveData.class_grade || !reserveData.reserve_start_time || !reserveData.reserve_end_time) {
+            return res.status(400).json({ error: 'Missing required reservation fields' });
+        }
+
+        const logId = await InventoryModel.reserveItem(reserveData);
+        res.status(201).json({
+            log_id: logId,
+            message: 'Item reserved successfully'
+        });
+    } catch (err: any) {
+        res.status(400).json({ error: err.message });
+    }
+};
+
+export const returnReservedItem = async (req: AuthRequest, res: Response) => {
+    try {
+        const logId = parseInt(req.params.logId as string);
+        const { status, return_condition } = req.body;
+
+        await InventoryModel.returnReservedItem(logId, status || 'Returned', return_condition);
+        res.json({ message: 'Reserved item returned successfully' });
+    } catch (err: any) {
+        res.status(400).json({ error: err.message });
+    }
+};

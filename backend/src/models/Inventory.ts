@@ -20,6 +20,21 @@ export interface InventoryLog {
     status: 'Borrowed' | 'Returned' | 'Lost' | 'Damaged';
 }
 
+export interface InventoryReserved {
+    id?: number;
+    item_id: number;
+    reserve_student_name: string;
+    class_teacher: string;
+    class_grade: string;
+    reserve_start_time: string;
+    reserve_end_time: string;
+    reserved_at?: string;
+    returned_at?: string | null;
+    return_condition?: 'New' | 'Good' | 'Fair' | 'Poor' | 'Broken' | null;
+    status: 'Reserved' | 'Returned' | 'Cancelled';
+    item_name?: string;
+}
+
 // Inventory Item CRUD
 export const getAllInventory = async (): Promise<InventoryItem[]> => {
     const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM sports_inventory');
@@ -135,4 +150,86 @@ export const getBorrowingHistory = async (itemId?: number, userId?: number): Pro
 
     const [rows] = await pool.query<RowDataPacket[]>(query, params);
     return rows as InventoryLog[];
+};
+
+// Reserved Items Logic
+
+export const getReservedItems = async (): Promise<InventoryReserved[]> => {
+    const [rows] = await pool.query<RowDataPacket[]>(
+        `SELECT r.*, i.name as item_name 
+         FROM sports_inventory_reserved r
+         JOIN sports_inventory i ON r.item_id = i.id
+         ORDER BY r.reserved_at DESC`
+    );
+    return rows as InventoryReserved[];
+};
+
+export const reserveItem = async (reservedItem: InventoryReserved): Promise<number> => {
+    // Check if item is available
+    const item = await getInventoryById(reservedItem.item_id);
+    if (!item || item.available_quantity <= 0) {
+        throw new Error('Item not available for reservation');
+    }
+
+    // Decrease available quantity
+    await pool.query(
+        'UPDATE sports_inventory SET available_quantity = available_quantity - 1 WHERE id = ?',
+        [reservedItem.item_id]
+    );
+
+    // Create log entry
+    const [result] = await pool.query<OkPacket>(
+        `INSERT INTO sports_inventory_reserved 
+        (item_id, reserve_student_name, class_teacher, class_grade, reserve_start_time, reserve_end_time, status) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+            reservedItem.item_id,
+            reservedItem.reserve_student_name,
+            reservedItem.class_teacher,
+            reservedItem.class_grade,
+            reservedItem.reserve_start_time,
+            reservedItem.reserve_end_time,
+            reservedItem.status || 'Reserved'
+        ]
+    );
+
+    return result.insertId;
+};
+
+export const returnReservedItem = async (logId: number, status: 'Returned' | 'Cancelled', returnCondition?: 'New' | 'Good' | 'Fair' | 'Poor' | 'Broken'): Promise<void> => {
+    // Get the log entry
+    const [logs] = await pool.query<RowDataPacket[]>(
+        'SELECT * FROM sports_inventory_reserved WHERE id = ?',
+        [logId]
+    );
+
+    if (logs.length === 0) {
+        throw new Error('Reservation record not found');
+    }
+
+    const log = logs[0];
+
+    // Update log status and return time
+    if (status === 'Returned' && returnCondition) {
+        await pool.query(
+            'UPDATE sports_inventory_reserved SET status = ?, returned_at = NOW(), return_condition = ? WHERE id = ?',
+            [status, returnCondition, logId]
+        );
+        // Change condition of inventory if not Good/New but Fair/Poor/Broken
+        await pool.query(
+            'UPDATE sports_inventory SET `condition` = ? WHERE id = ?',
+            [returnCondition, log.item_id]
+        );
+    } else {
+        await pool.query(
+            'UPDATE sports_inventory_reserved SET status = ?, returned_at = NOW() WHERE id = ?',
+            [status, logId]
+        );
+    }
+
+    // Increase available quantity
+    await pool.query(
+        'UPDATE sports_inventory SET available_quantity = available_quantity + 1 WHERE id = ?',
+        [log.item_id]
+    );
 };

@@ -148,11 +148,6 @@ function TimePicker({ selectedDate, initialHour, initialMinute, onConfirm, onBac
 
     const display12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
 
-    const toggle = () => {
-        if (ampm === 'AM') { setAmpm('PM'); setHour(h => h < 12 ? h + 12 : h); }
-        else { setAmpm('AM'); setHour(h => h >= 12 ? h - 12 : h); }
-    };
-
     return (
         <div className="flex flex-col gap-5">
             {/* Date summary bar */}
