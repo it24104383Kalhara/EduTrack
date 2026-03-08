@@ -86,6 +86,25 @@ export interface TeacherNotification {
     total_students?: number;
 }
 
+export interface InventoryItem {
+    id?: number;
+    name: string;
+    category?: string;
+    total_quantity: number;
+    available_quantity: number;
+    condition: 'New' | 'Good' | 'Fair' | 'Poor' | 'Broken';
+    last_updated?: string;
+}
+
+export interface InventoryLog {
+    id?: number;
+    item_id: number;
+    borrowed_by_id: number;
+    borrowed_at?: string;
+    returned_at?: string | null;
+    status: 'Borrowed' | 'Returned' | 'Lost' | 'Damaged';
+}
+
 export const activityService = {
     getAll: async () => {
         const response = await api.get<Activity[]>('/activities');
@@ -195,6 +214,40 @@ export const reportService = {
         const response = await api.put(`/reports/notifications/${id}/action`);
         return response.data;
     },
+};
+
+export const inventoryService = {
+    getAll: async () => {
+        const response = await api.get<InventoryItem[]>('/inventory');
+        return response.data;
+    },
+    getById: async (id: number) => {
+        const response = await api.get<InventoryItem>(`/inventory/${id}`);
+        return response.data;
+    },
+    create: async (data: Omit<InventoryItem, 'id' | 'available_quantity'>) => {
+        const response = await api.post<InventoryItem>('/inventory', data);
+        return response.data;
+    },
+    update: async (id: number, data: Partial<InventoryItem>) => {
+        const response = await api.put(`/inventory/${id}`, data);
+        return response.data;
+    },
+    delete: async (id: number) => {
+        await api.delete(`/inventory/${id}`);
+    },
+    borrow: async (item_id: number, borrowed_by_id: number) => {
+        const response = await api.post('/inventory/borrow', { item_id, borrowed_by_id });
+        return response.data;
+    },
+    returnItem: async (log_id: number, status: 'Returned' | 'Lost' | 'Damaged' = 'Returned') => {
+        const response = await api.put(`/inventory/return/${log_id}`, { status });
+        return response.data;
+    },
+    getHistory: async (item_id?: number, user_id?: number) => {
+        const response = await api.get<InventoryLog[]>('/inventory/history', { params: { item_id, user_id } });
+        return response.data;
+    }
 };
 
 export default api;
