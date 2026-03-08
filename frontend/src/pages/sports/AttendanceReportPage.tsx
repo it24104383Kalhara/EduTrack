@@ -9,8 +9,9 @@ import CalendarDaysIcon from '@heroicons/react/24/outline/CalendarDaysIcon';
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import ClockIcon from '@heroicons/react/24/solid/ClockIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
-import ChevronDownIcon from '@heroicons/react/24/outline/ChevronDownIcon';
 import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
+import DateTimePicker from '../../components/ui/DateTimePicker';
+import CustomSelect from '../../components/ui/CustomSelect';
 
 const statusBadge = (status: string) => {
     if (status === 'Pending') return { cls: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-400' };
@@ -103,43 +104,28 @@ export default function AttendanceReportPage() {
                     <form onSubmit={handleGenerate} className="p-6 space-y-5">
                         {/* Activity Select */}
                         <div>
-                            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
-                                Activity / Sport
-                            </label>
-                            <div className="relative">
-                                <select
-                                    required
-                                    className={inputCls + ' appearance-none'}
-                                    value={selectedActivityId}
-                                    onChange={e => {
-                                        setSelectedActivityId(e.target.value ? parseInt(e.target.value) : '');
-                                        setSubmitted(false);
-                                    }}
-                                >
-                                    <option value="">— Select Activity —</option>
-                                    {activities?.map(a => (
-                                        <option key={a.id} value={a.id}>{a.name} ({a.type})</option>
-                                    ))}
-                                </select>
-                                <ChevronDownIcon className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                            </div>
+                            <CustomSelect
+                                label="Activity / Sport"
+                                required
+                                value={selectedActivityId}
+                                onChange={v => {
+                                    setSelectedActivityId(v ? parseInt(v as string) : '');
+                                    setSubmitted(false);
+                                }}
+                                placeholder="— Select Activity —"
+                                options={(activities ?? []).map(a => ({ value: a.id, label: `${a.name} (${a.type})` }))}
+                            />
                         </div>
 
                         {/* Report Date */}
                         <div>
-                            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
-                                Report Date
-                            </label>
-                            <div className="relative">
-                                <CalendarDaysIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                                <input
-                                    type="date"
-                                    required
-                                    className={inputCls + ' pl-10'}
-                                    value={reportDate}
-                                    onChange={e => { setReportDate(e.target.value); setSubmitted(false); }}
-                                />
-                            </div>
+                            <DateTimePicker
+                                label="Report Date"
+                                mode="date"
+                                required
+                                value={reportDate}
+                                onChange={v => { setReportDate(v); setSubmitted(false); }}
+                            />
                         </div>
 
                         {/* Notes */}

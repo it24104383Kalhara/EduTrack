@@ -12,7 +12,8 @@ import CalendarDaysIcon from '@heroicons/react/24/outline/CalendarDaysIcon';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import UserGroupIcon from '@heroicons/react/24/outline/UserGroupIcon';
-import ChevronDownIcon from '@heroicons/react/24/outline/ChevronDownIcon';
+import DateTimePicker from '../../components/ui/DateTimePicker';
+import CustomSelect from '../../components/ui/CustomSelect';
 
 const STATUS_CONFIG: Record<AttendanceStatus, { label: string; icon: React.ElementType; color: string; bg: string; border: string; ring: string }> = {
     Present: { label: 'Present', icon: CheckCircleIcon, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', ring: 'ring-emerald-400' },
@@ -22,8 +23,7 @@ const STATUS_CONFIG: Record<AttendanceStatus, { label: string; icon: React.Eleme
 };
 const STATUS_ORDER: AttendanceStatus[] = ['Present', 'Absent', 'Late', 'Excused'];
 
-// Reusable styled input classes
-const inputCls = "w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all bg-gray-50 focus:bg-white appearance-none";
+
 
 export default function AttendancePage() {
     const { user } = useAuth();
@@ -153,23 +153,16 @@ export default function AttendancePage() {
                         <span className="h-6 w-6 rounded-full bg-[#633194] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
                         <label className="text-sm font-bold text-gray-700">Select Activity</label>
                     </div>
-                    <div className="relative">
-                        <select
-                            className={inputCls}
-                            value={selectedActivityId ?? ''}
-                            onChange={(e) => {
-                                setSelectedActivityId(e.target.value ? parseInt(e.target.value) : null);
-                                setSelectedSessionId(null);
-                                setLocalStatus({});
-                            }}
-                        >
-                            <option value="">— Choose Activity —</option>
-                            {activities?.map((a) => (
-                                <option key={a.id} value={a.id}>{a.name} ({a.type})</option>
-                            ))}
-                        </select>
-                        <ChevronDownIcon className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                    </div>
+                    <CustomSelect
+                        value={selectedActivityId ?? ''}
+                        onChange={(v) => {
+                            setSelectedActivityId(v ? parseInt(v as string) : null);
+                            setSelectedSessionId(null);
+                            setLocalStatus({});
+                        }}
+                        placeholder="— Choose Activity —"
+                        options={(activities ?? []).map(a => ({ value: a.id, label: `${a.name} (${a.type})` }))}
+                    />
                 </div>
 
                 {/* Step 2 – Session */}
@@ -194,29 +187,25 @@ export default function AttendancePage() {
                         <div className="bg-[#F4F0FF] border border-purple-200 rounded-xl p-4 mb-3 space-y-3">
                             <p className="text-xs font-bold text-[#633194]">Create New Session</p>
                             <form onSubmit={handleCreateSession} className="space-y-3">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="text-xs text-gray-600 font-medium block mb-1">Start</label>
-                                        <input
-                                            type="datetime-local" required
-                                            className="w-full rounded-lg border border-purple-200 bg-white px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all"
-                                            value={newSession.start_time}
-                                            onChange={(e) => setNewSession({ ...newSession, start_time: e.target.value })}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs text-gray-600 font-medium block mb-1">End</label>
-                                        <input
-                                            type="datetime-local" required
-                                            className="w-full rounded-lg border border-purple-200 bg-white px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all"
-                                            value={newSession.end_time}
-                                            onChange={(e) => setNewSession({ ...newSession, end_time: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
+                                <DateTimePicker
+                                    label="Start"
+                                    mode="datetime"
+                                    value={newSession.start_time}
+                                    onChange={(v) => setNewSession(s => ({ ...s, start_time: v }))}
+                                    placeholder="Pick start date & time"
+                                    required
+                                />
+                                <DateTimePicker
+                                    label="End"
+                                    mode="datetime"
+                                    value={newSession.end_time}
+                                    onChange={(v) => setNewSession(s => ({ ...s, end_time: v }))}
+                                    placeholder="Pick end date & time"
+                                    required
+                                />
                                 <button
                                     type="submit"
-                                    disabled={createSessionMutation.isPending}
+                                    disabled={createSessionMutation.isPending || !newSession.start_time || !newSession.end_time}
                                     className="w-full py-2 rounded-lg text-xs font-bold text-white transition-all disabled:opacity-50"
                                     style={{ background: 'linear-gradient(135deg, #633194 0%, #9b59b6 100%)' }}
                                 >
@@ -226,25 +215,19 @@ export default function AttendancePage() {
                         </div>
                     )}
 
-                    <div className="relative">
-                        <select
-                            className={clsx(inputCls, !selectedActivityId && 'opacity-50 cursor-not-allowed')}
-                            value={selectedSessionId ?? ''}
-                            onChange={(e) => {
-                                setSelectedSessionId(e.target.value ? parseInt(e.target.value) : null);
-                                setLocalStatus({});
-                            }}
-                            disabled={!selectedActivityId}
-                        >
-                            <option value="">— Choose Session —</option>
-                            {sessions?.map((s) => (
-                                <option key={s.id} value={s.id}>
-                                    {new Date(s.start_time).toLocaleString()} → {new Date(s.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </option>
-                            ))}
-                        </select>
-                        <ChevronDownIcon className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                    </div>
+                    <CustomSelect
+                        value={selectedSessionId ?? ''}
+                        onChange={(v) => {
+                            setSelectedSessionId(v ? parseInt(v as string) : null);
+                            setLocalStatus({});
+                        }}
+                        placeholder="— Choose Session —"
+                        disabled={!selectedActivityId}
+                        options={(sessions ?? []).map(s => ({
+                            value: s.id,
+                            label: `${new Date(s.start_time).toLocaleString()} → ${new Date(s.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+                        }))}
+                    />
 
                     {selectedSessionId && isCoach && (
                         <button
