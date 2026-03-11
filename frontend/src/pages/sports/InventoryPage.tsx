@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { inventoryService } from '../../services/api';
+import { inventoryService, studentService } from '../../services/api';
 import type { InventoryItem, InventoryReserved } from '../../services/api';
 import { useAuth } from '../../utils/auth';
 import clsx from 'clsx';
@@ -10,6 +10,7 @@ import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import BookmarkIcon from '@heroicons/react/24/outline/BookmarkIcon';
 import ArrowPathRoundedSquareIcon from '@heroicons/react/24/outline/ArrowPathRoundedSquareIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
+import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
 import DateTimePicker from '../../components/ui/DateTimePicker';
 import CustomSelect from '../../components/ui/CustomSelect';
 
@@ -26,35 +27,146 @@ type Condition = typeof CONDITIONS[number];
 
 const conditionOptions = CONDITIONS.map(c => ({ value: c, label: c }));
 
+type StudentHit = { id: number; name: string; grade: string; classTeacherName?: string };
+
+// ─── Student Autocomplete Field ────────────────────────────────────────────────
+interface AutocompleteProps {
+    value: string;
+    onChange: (val: string) => void;
+    onSelectStudent: (s: StudentHit) => void;
+    placeholder?: string;
+}
+function StudentAutocomplete({ value, onChange, onSelectStudent, placeholder }: AutocompleteProps) {
+    const [query,       setQuery]       = useState(value);
+    const [results,     setResults]     = useState<StudentHit[]>([]);
+    const [loading,     setLoading]     = useState(false);
+    const [open,        setOpen]        = useState(false);
+    const [didPick,     setDidPick]     = useState(false);
+    const containerRef                  = useRef<HTMLDivElement>(null);
+    const debounceRef                   = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+    // Sync external value changes (e.g. when modal resets)
+    useEffect(() => { setQuery(value); setDidPick(false); setResults([]); setOpen(false); }, [value]);
+
+    // Close on outside click
+    useEffect(() => {
+        const h = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', h);
+        return () => document.removeEventListener('mousedown', h);
+    }, []);
+
+    const search = useCallback(async (q: string) => {
+        if (q.length < 2) { setResults([]); setOpen(false); return; }
+        setLoading(true);
+        try {
+            const data = await studentService.search(q);
+            setResults(data);
+            setOpen(data.length > 0);
+        } catch {
+            setResults([]);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const v = e.target.value;
+        setQuery(v);
+        onChange(v);
+        setDidPick(false);
+        clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => search(v), 280);
+    };
+
+    const handlePick = (s: StudentHit) => {
+        setQuery(s.name);
+        onChange(s.name);
+        setDidPick(true);
+        setOpen(false);
+        setResults([]);
+        onSelectStudent(s);
+    };
+
+    return (
+        <div className="relative" ref={containerRef}>
+            <div className={clsx(
+                'flex items-center gap-2 w-full rounded-xl border text-sm transition-all px-3.5 py-2.5 bg-gray-50',
+                open || (!didPick && query.length > 0) ? 'border-[#633194] ring-2 ring-[#633194]/15 bg-white' : 'border-gray-200 hover:border-[#633194]/40'
+            )}>
+                {loading
+                    ? <div className="h-4 w-4 rounded-full border-2 border-[#633194]/20 border-t-[#633194] animate-spin flex-shrink-0" />
+                    : <MagnifyingGlassIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                }
+                <input
+                    type="text"
+                    value={query}
+                    onChange={handleChange}
+                    placeholder={placeholder ?? 'Search student name…'}
+                    className="flex-1 bg-transparent outline-none text-gray-800 placeholder-gray-400 min-w-0"
+                    autoComplete="off"
+                />
+                {query && (
+                    <button type="button" onClick={() => { setQuery(''); onChange(''); setResults([]); setOpen(false); setDidPick(false); }}
+                        className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0">
+                        <XMarkIcon className="h-3.5 w-3.5" />
+                    </button>
+                )}
+            </div>
+
+            {/* Suggestions dropdown */}
+            {open && results.length > 0 && (
+                <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden z-[200]"
+                     style={{ animation: 'selectDropDown 0.13s ease-out' }}>
+                    <style>{`@keyframes selectDropDown{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}`}</style>
+                    <div className="py-1.5 max-h-52 overflow-y-auto">
+                        {results.map(s => (
+                            <div
+                                key={s.id}
+                                onClick={() => handlePick(s)}
+                                className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-[#F4F0FF] transition-colors group"
+                            >
+                                <div className="h-7 w-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white"
+                                     style={{ background: 'linear-gradient(135deg,#633194,#9b59b6)' }}>
+                                    {s.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-gray-800 group-hover:text-[#633194] truncate">{s.name}</p>
+                                    <p className="text-xs text-gray-400 truncate">Grade {s.grade}{s.classTeacherName ? ` · ${s.classTeacherName}` : ''}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function InventoryPage() {
     const queryClient = useQueryClient();
     const { user } = useAuth();
 
-    const [isModalOpen,       setIsModalOpen]       = useState(false);
+    const [isModalOpen,        setIsModalOpen]        = useState(false);
     const [isReserveModalOpen, setIsReserveModalOpen] = useState(false);
     const [isReturnModalOpen,  setIsReturnModalOpen]  = useState(false);
 
-    const [editingItem,    setEditingItem]    = useState<InventoryItem | null>(null);
-    const [formData,       setFormData]       = useState<Partial<InventoryItem>>({ name: '', category: '', total_quantity: 1, condition: 'New' });
+    const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+    const [formData,    setFormData]    = useState<Partial<InventoryItem>>({ name: '', category: '', total_quantity: 1, condition: 'New' });
 
-    const [reservingItem,    setReservingItem]    = useState<InventoryItem | null>(null);
-    const [reserveFormData,  setReserveFormData]  = useState<Partial<InventoryReserved>>({
-        reserve_student_name: '', class_teacher: '', class_grade: '', reserve_start_time: '', reserve_end_time: ''
+    const [reservingItem,   setReservingItem]   = useState<InventoryItem | null>(null);
+    const [reserveFormData, setReserveFormData] = useState<Partial<InventoryReserved>>({
+        reserve_student_name: '', class_teacher: '', class_grade: '', reserve_start_time: '', reserve_end_time: '',
     });
 
     const [returningItem,   setReturningItem]   = useState<InventoryReserved | null>(null);
     const [returnCondition, setReturnCondition] = useState<Condition>('Good');
 
     // ─── Queries ───────────────────────────────────────────────────────────────
-    const { data: inventory, isLoading } = useQuery({
-        queryKey: ['inventory'],
-        queryFn: inventoryService.getAll,
-    });
-    const { data: reservedItems, isLoading: isReservedLoading } = useQuery({
-        queryKey: ['inventory-reserved'],
-        queryFn: inventoryService.getReservedItems,
-    });
+    const { data: inventory,     isLoading          } = useQuery({ queryKey: ['inventory'],          queryFn: inventoryService.getAll });
+    const { data: reservedItems, isLoading: isResLoading } = useQuery({ queryKey: ['inventory-reserved'], queryFn: inventoryService.getReservedItems });
 
     // ─── Mutations ─────────────────────────────────────────────────────────────
     const createMutation = useMutation({
@@ -93,11 +205,23 @@ export default function InventoryPage() {
     });
 
     // ─── Handlers ──────────────────────────────────────────────────────────────
-    const openCreateModal = () => { setEditingItem(null); setFormData({ name: '', category: '', total_quantity: 1, condition: 'New' }); setIsModalOpen(true); };
-    const openEditModal   = (item: InventoryItem) => { setEditingItem(item); setFormData({ name: item.name, category: item.category, total_quantity: item.total_quantity, condition: item.condition }); setIsModalOpen(true); };
-    const closeModal      = () => { setIsModalOpen(false); setEditingItem(null); };
+    const openCreateModal = () => {
+        setEditingItem(null);
+        setFormData({ name: '', category: '', total_quantity: 1, condition: 'New' });
+        setIsModalOpen(true);
+    };
+    const openEditModal = (item: InventoryItem) => {
+        setEditingItem(item);
+        setFormData({ name: item.name, category: item.category, total_quantity: item.total_quantity, condition: item.condition });
+        setIsModalOpen(true);
+    };
+    const closeModal = () => { setIsModalOpen(false); setEditingItem(null); };
 
-    const openReserveModal  = (item: InventoryItem) => { setReservingItem(item); setReserveFormData({ reserve_student_name: '', class_teacher: '', class_grade: '', reserve_start_time: '', reserve_end_time: '' }); setIsReserveModalOpen(true); };
+    const openReserveModal  = (item: InventoryItem) => {
+        setReservingItem(item);
+        setReserveFormData({ reserve_student_name: '', class_teacher: '', class_grade: '', reserve_start_time: '', reserve_end_time: '' });
+        setIsReserveModalOpen(true);
+    };
     const closeReserveModal = () => { setIsReserveModalOpen(false); setReservingItem(null); };
 
     const openReturnModal  = (log: InventoryReserved) => { setReturningItem(log); setReturnCondition('Good'); setIsReturnModalOpen(true); };
@@ -108,7 +232,6 @@ export default function InventoryPage() {
         if (!formData.name || !formData.condition || !formData.total_quantity) return;
         if (editingItem?.id) {
             if (editingItem.condition !== formData.condition) {
-                // Condition changed → create as new item
                 createMutation.mutate(formData as Omit<InventoryItem, 'id' | 'available_quantity'>);
             } else {
                 updateMutation.mutate({ id: editingItem.id, data: formData });
@@ -134,12 +257,22 @@ export default function InventoryPage() {
         returnReservedMutation.mutate({ log_id: returningItem.id, status: 'Returned', return_condition: returnCondition });
     };
 
+    // Student selected from autocomplete → auto-fill grade & teacher
+    const handleStudentPicked = (s: StudentHit) => {
+        setReserveFormData(f => ({
+            ...f,
+            reserve_student_name: s.name,
+            class_grade:    s.grade          ?? f.class_grade,
+            class_teacher:  s.classTeacherName ?? f.class_teacher,
+        }));
+    };
+
     // ─── Stats ─────────────────────────────────────────────────────────────────
-    const totalAvail  = inventory?.reduce((s, i) => s + i.total_quantity, 0) || 0;
-    const avail       = inventory?.reduce((s, i) => s + i.available_quantity, 0) || 0;
-    const reserved    = inventory?.reduce((s, i) => s + (i.total_quantity - i.available_quantity), 0) || 0;
-    const broken      = inventory?.filter(i => i.condition === 'Broken' || i.condition === 'Poor').reduce((s, i) => s + i.total_quantity, 0) || 0;
-    const activeRes   = reservedItems?.filter(r => r.status === 'Reserved').length || 0;
+    const totalAvail = inventory?.reduce((s, i) => s + i.total_quantity, 0) || 0;
+    const avail      = inventory?.reduce((s, i) => s + i.available_quantity, 0) || 0;
+    const reserved   = inventory?.reduce((s, i) => s + (i.total_quantity - i.available_quantity), 0) || 0;
+    const broken     = inventory?.filter(i => i.condition === 'Broken' || i.condition === 'Poor').reduce((s, i) => s + i.total_quantity, 0) || 0;
+    const activeRes  = reservedItems?.filter(r => r.status === 'Reserved').length || 0;
 
     return (
         <div className="space-y-6">
@@ -220,7 +353,7 @@ export default function InventoryPage() {
                                     </td>
                                 </tr>
                             ) : inventory?.map(item => {
-                                const cfg = CONDITION_CONFIG[item.condition] ?? CONDITION_CONFIG['Good'];
+                                const cfg   = CONDITION_CONFIG[item.condition] ?? CONDITION_CONFIG['Good'];
                                 const ratio = item.total_quantity > 0 ? item.available_quantity / item.total_quantity : 0;
                                 return (
                                     <tr key={item.id} className="hover:bg-[#F4F0FF]/20 transition-colors group">
@@ -256,29 +389,19 @@ export default function InventoryPage() {
                                         {user?.role !== 'Student' && (
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
-                                                    {/* Reserve */}
-                                                    <button
-                                                        onClick={() => openReserveModal(item)}
-                                                        disabled={item.available_quantity <= 0}
+                                                    <button onClick={() => openReserveModal(item)} disabled={item.available_quantity <= 0}
                                                         className="p-1.5 rounded-lg text-gray-300 hover:text-amber-600 hover:bg-amber-50 transition-all disabled:opacity-30 disabled:pointer-events-none"
-                                                        title="Reserve Item"
-                                                    >
+                                                        title="Reserve Item">
                                                         <BookmarkIcon className="h-4 w-4" />
                                                     </button>
-                                                    {/* Edit */}
-                                                    <button
-                                                        onClick={() => openEditModal(item)}
+                                                    <button onClick={() => openEditModal(item)}
                                                         className="p-1.5 rounded-lg text-gray-300 hover:text-[#633194] hover:bg-[#F4F0FF] transition-all"
-                                                        title="Edit Item"
-                                                    >
+                                                        title="Edit Item">
                                                         <PencilSquareIcon className="h-4 w-4" />
                                                     </button>
-                                                    {/* Delete */}
-                                                    <button
-                                                        onClick={() => item.id && handleDelete(item.id)}
+                                                    <button onClick={() => item.id && handleDelete(item.id)}
                                                         className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all"
-                                                        title="Delete Item"
-                                                    >
+                                                        title="Delete Item">
                                                         <TrashIcon className="h-4 w-4" />
                                                     </button>
                                                 </div>
@@ -317,7 +440,7 @@ export default function InventoryPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {isReservedLoading ? (
+                                {isResLoading ? (
                                     <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-400 text-sm">Loading reservations…</td></tr>
                                 ) : reservedItems?.length === 0 ? (
                                     <tr>
@@ -347,11 +470,9 @@ export default function InventoryPage() {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={clsx(
                                                 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border',
-                                                log.status === 'Reserved'
-                                                    ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                                    : log.status === 'Returned'
-                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                        : 'bg-gray-100 text-gray-600 border-gray-200'
+                                                log.status === 'Reserved' && 'bg-amber-50 text-amber-700 border-amber-200',
+                                                log.status === 'Returned' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                                log.status === 'Cancelled' && 'bg-gray-100 text-gray-600 border-gray-200',
                                             )}>
                                                 {log.status}
                                             </span>
@@ -382,16 +503,13 @@ export default function InventoryPage() {
                 </div>
             </div>
 
-            {/* ════════════════════════════════════════════════════════════════
-                MODALS
-            ════════════════════════════════════════════════════════════════ */}
+            {/*═══════════════ MODALS ══════════════════════════════════════════*/}
 
             {/* ── Create / Edit Modal ───────────────────────────────────────── */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100">
-                        {/* Header */}
-                        <div className="px-6 py-4 flex items-center justify-between"
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-visible border border-gray-100">
+                        <div className="px-6 py-4 flex items-center justify-between rounded-t-2xl"
                              style={{ background: 'linear-gradient(135deg,#633194,#9b59b6)' }}>
                             <h3 className="text-base font-bold text-white">
                                 {editingItem ? '✏️ Edit Equipment' : '➕ Add New Equipment'}
@@ -409,7 +527,6 @@ export default function InventoryPage() {
                         )}
 
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            {/* Name */}
                             <div>
                                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Item Name *</label>
                                 <input
@@ -422,7 +539,6 @@ export default function InventoryPage() {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                {/* Category */}
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Category</label>
                                     <input
@@ -433,7 +549,6 @@ export default function InventoryPage() {
                                         onChange={e => setFormData({ ...formData, category: e.target.value })}
                                     />
                                 </div>
-                                {/* Qty */}
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Quantity *</label>
                                     <input
@@ -445,7 +560,7 @@ export default function InventoryPage() {
                                 </div>
                             </div>
 
-                            {/* Condition */}
+                            {/* Condition — CustomSelect (portal-based, never clipped) */}
                             <CustomSelect
                                 label="Condition *"
                                 required
@@ -474,8 +589,9 @@ export default function InventoryPage() {
             {/* ── Reserve Modal ─────────────────────────────────────────────── */}
             {isReserveModalOpen && reservingItem && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100">
-                        <div className="px-6 py-4 flex items-center justify-between"
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-gray-100"
+                         style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+                        <div className="px-6 py-4 flex items-center justify-between sticky top-0 rounded-t-2xl z-10"
                              style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}>
                             <div>
                                 <h3 className="text-base font-bold text-white flex items-center gap-2">
@@ -489,22 +605,23 @@ export default function InventoryPage() {
                         </div>
 
                         <form onSubmit={handleReserveSubmit} className="p-6 space-y-4">
-                            {/* Student name */}
+                            {/* ── Student Name with Real-time Autocomplete ── */}
                             <div>
                                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
                                     Reserve For (Student Name) *
                                 </label>
-                                <input
-                                    type="text" required
-                                    className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all"
-                                    placeholder="e.g. John Doe (Monitor)"
-                                    value={reserveFormData.reserve_student_name}
-                                    onChange={e => setReserveFormData({ ...reserveFormData, reserve_student_name: e.target.value })}
+                                <StudentAutocomplete
+                                    value={reserveFormData.reserve_student_name ?? ''}
+                                    onChange={v => setReserveFormData(f => ({ ...f, reserve_student_name: v }))}
+                                    onSelectStudent={handleStudentPicked}
+                                    placeholder="Type student name to search…"
                                 />
+                                <p className="text-[10px] text-gray-400 mt-1 pl-1">
+                                    Start typing a name — class & teacher will auto-fill if the student is found.
+                                </p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                {/* Grade */}
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Class / Grade *</label>
                                     <input
@@ -515,7 +632,6 @@ export default function InventoryPage() {
                                         onChange={e => setReserveFormData({ ...reserveFormData, class_grade: e.target.value })}
                                     />
                                 </div>
-                                {/* Teacher */}
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Class Teacher *</label>
                                     <input
@@ -528,7 +644,7 @@ export default function InventoryPage() {
                                 </div>
                             </div>
 
-                            {/* Date pickers */}
+                            {/* Date pickers — portal-based, never clipped by modal */}
                             <DateTimePicker
                                 label="Reservation Start *"
                                 mode="datetime"
@@ -552,7 +668,7 @@ export default function InventoryPage() {
                                     Cancel
                                 </button>
                                 <button type="submit"
-                                    disabled={reserveMutation.isPending || !reserveFormData.reserve_start_time || !reserveFormData.reserve_end_time}
+                                    disabled={reserveMutation.isPending || !reserveFormData.reserve_start_time || !reserveFormData.reserve_end_time || !reserveFormData.reserve_student_name}
                                     className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition-all disabled:opacity-50"
                                     style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}>
                                     {reserveMutation.isPending ? 'Reserving…' : 'Confirm Reservation'}
@@ -581,14 +697,12 @@ export default function InventoryPage() {
                         </div>
 
                         <form onSubmit={handleReturnSubmit} className="p-6 space-y-5">
-                            {/* Return info summary */}
                             <div className="bg-[#F4F0FF] border border-purple-200 rounded-xl p-4 text-xs space-y-1">
                                 <p className="text-gray-600"><span className="font-bold text-[#633194]">Borrower:</span> {returningItem.reserve_student_name}</p>
                                 <p className="text-gray-600"><span className="font-bold text-[#633194]">Class:</span> Grade {returningItem.class_grade} · {returningItem.class_teacher}</p>
                                 <p className="text-gray-600"><span className="font-bold text-[#633194]">Reserved:</span> {new Date(returningItem.reserve_start_time).toLocaleString()}</p>
                             </div>
 
-                            {/* Return condition */}
                             <div>
                                 <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-3">Return Condition *</p>
                                 <div className="grid grid-cols-5 gap-2">
@@ -596,8 +710,7 @@ export default function InventoryPage() {
                                         const cfg = CONDITION_CONFIG[c];
                                         return (
                                             <button
-                                                key={c}
-                                                type="button"
+                                                key={c} type="button"
                                                 onClick={() => setReturnCondition(c)}
                                                 className={clsx(
                                                     'py-2 px-1 rounded-xl text-xs font-bold border transition-all text-center',
