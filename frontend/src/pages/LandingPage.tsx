@@ -117,10 +117,14 @@ const FEATURES = [
 export default function LandingPage() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [showBackToTop, setShowBackToTop] = useState(false);
     const [activeModule, setActiveModule] = useState<string | null>(null);
 
     useEffect(() => {
-        const onScroll = () => setScrolled(window.scrollY > 20);
+        const onScroll = () => {
+            setScrolled(window.scrollY > 20);
+            setShowBackToTop(window.scrollY > 400);
+        };
         window.addEventListener('scroll', onScroll);
         return () => window.removeEventListener('scroll', onScroll);
     }, []);
@@ -586,6 +590,22 @@ export default function LandingPage() {
                     </div>
                 </div>
             </footer>
+            {/* ─── BACK TO TOP ────────────────────────────────────────────── */}
+            <button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                aria-label="Back to top"
+                className="fixed bottom-8 right-8 z-50 h-12 w-12 rounded-2xl text-white flex items-center justify-center shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                style={{
+                    background: 'linear-gradient(135deg,#633194,#9b59b6)',
+                    opacity: showBackToTop ? 1 : 0,
+                    transform: showBackToTop ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.9)',
+                    pointerEvents: showBackToTop ? 'auto' : 'none',
+                }}
+            >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                </svg>
+            </button>
         </div>
     );
 }
