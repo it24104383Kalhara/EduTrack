@@ -160,6 +160,7 @@ export default function InventoryPage() {
     const [reserveFormData, setReserveFormData] = useState<Partial<InventoryReserved>>({
         reserve_student_name: '', class_teacher: '', class_grade: '', reserve_start_time: '', reserve_end_time: '', quantity: 1,
     });
+    const [qtyError, setQtyError] = useState('');
 
     const [returningItem,   setReturningItem]   = useState<InventoryReserved | null>(null);
     const [returnCondition, setReturnCondition] = useState<Condition>('Good');
@@ -220,9 +221,10 @@ export default function InventoryPage() {
     const openReserveModal  = (item: InventoryItem) => {
         setReservingItem(item);
         setReserveFormData({ reserve_student_name: '', class_teacher: '', class_grade: '', reserve_start_time: '', reserve_end_time: '', quantity: 1 });
+        setQtyError('');
         setIsReserveModalOpen(true);
     };
-    const closeReserveModal = () => { setIsReserveModalOpen(false); setReservingItem(null); };
+    const closeReserveModal = () => { setIsReserveModalOpen(false); setReservingItem(null); setQtyError(''); };
 
     const openReturnModal  = (log: InventoryReserved) => { setReturningItem(log); setReturnCondition('Good'); setIsReturnModalOpen(true); };
     const closeReturnModal = () => { setIsReturnModalOpen(false); setReturningItem(null); };
@@ -647,10 +649,33 @@ export default function InventoryPage() {
                                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Qty *</label>
                                         <input
                                             type="number" required min="1" max={reservingItem.available_quantity}
-                                            className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all"
-                                            value={reserveFormData.quantity}
-                                            onChange={e => setReserveFormData({ ...reserveFormData, quantity: parseInt(e.target.value) || 1 })}
+                                            className={clsx(
+                                                "w-full rounded-xl border px-3.5 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 transition-all",
+                                                qtyError ? "border-red-300 focus:border-red-500 focus:ring-red-500/20 text-red-600 bg-red-50/50" : "border-gray-200 focus:border-[#633194] focus:ring-[#633194]/15"
+                                            )}
+                                            value={reserveFormData.quantity ?? ''}
+                                            onChange={e => {
+                                                if (e.target.value === '') {
+                                                    setReserveFormData({ ...reserveFormData, quantity: '' as any });
+                                                    setQtyError('');
+                                                    return;
+                                                }
+                                                let val = parseInt(e.target.value);
+                                                if (isNaN(val)) return;
+
+                                                if (val > reservingItem.available_quantity) {
+                                                    val = reservingItem.available_quantity;
+                                                    setQtyError(`Amount exceeded! Adjusted to maximum available (${val}).`);
+                                                } else if (val < 1) {
+                                                    val = 1;
+                                                    setQtyError('');
+                                                } else {
+                                                    setQtyError('');
+                                                }
+                                                setReserveFormData({ ...reserveFormData, quantity: val });
+                                            }}
                                         />
+                                        {qtyError && <p className="text-[10px] text-red-500 mt-1 font-medium leading-tight">{qtyError}</p>}
                                     </div>
                                 </div>
                             </div>
