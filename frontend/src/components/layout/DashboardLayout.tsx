@@ -21,7 +21,6 @@ import {
     ChevronDownIcon,
     ChevronRightIcon,
     Bars3Icon,
-    XMarkIcon,
 } from '@heroicons/react/24/outline';
 
 interface DashboardLayoutProps {
@@ -83,16 +82,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         return false;
     };
 
-    const getPageTitle = () => {
-        for (const group of navGroups) {
-            if (group.path && location.pathname === group.path) return group.name;
-            if (group.children) {
-                const child = group.children.find(c => c.path === location.pathname);
-                if (child) return child.name;
-            }
-        }
-        return 'Dashboard';
-    };
+
 
     const SidebarContent = () => (
         <div className="flex flex-col h-full">

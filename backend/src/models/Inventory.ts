@@ -33,6 +33,7 @@ export interface InventoryReserved {
     return_condition?: 'New' | 'Good' | 'Fair' | 'Poor' | 'Broken' | null;
     status: 'Reserved' | 'Returned' | 'Cancelled';
     item_name?: string;
+    quantity?: number;
 }
 
 // Inventory Item CRUD
@@ -167,21 +168,22 @@ export const getReservedItems = async (): Promise<InventoryReserved[]> => {
 export const reserveItem = async (reservedItem: InventoryReserved): Promise<number> => {
     // Check if item is available
     const item = await getInventoryById(reservedItem.item_id);
-    if (!item || item.available_quantity <= 0) {
-        throw new Error('Item not available for reservation');
+    const qty = reservedItem.quantity || 1;
+    if (!item || item.available_quantity < qty) {
+        throw new Error('Not enough items available for reservation');
     }
 
     // Decrease available quantity
     await pool.query(
-        'UPDATE sports_inventory SET available_quantity = available_quantity - 1 WHERE id = ?',
-        [reservedItem.item_id]
+        'UPDATE sports_inventory SET available_quantity = available_quantity - ? WHERE id = ?',
+        [qty, reservedItem.item_id]
     );
 
     // Create log entry
     const [result] = await pool.query<OkPacket>(
         `INSERT INTO sports_inventory_reserved 
-        (item_id, reserve_student_name, class_teacher, class_grade, reserve_start_time, reserve_end_time, status) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        (item_id, reserve_student_name, class_teacher, class_grade, reserve_start_time, reserve_end_time, status, quantity) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             reservedItem.item_id,
             reservedItem.reserve_student_name,
@@ -189,7 +191,8 @@ export const reserveItem = async (reservedItem: InventoryReserved): Promise<numb
             reservedItem.class_grade,
             reservedItem.reserve_start_time,
             reservedItem.reserve_end_time,
-            reservedItem.status || 'Reserved'
+            reservedItem.status || 'Reserved',
+            qty
         ]
     );
 
@@ -229,7 +232,7 @@ export const returnReservedItem = async (logId: number, status: 'Returned' | 'Ca
 
     // Increase available quantity
     await pool.query(
-        'UPDATE sports_inventory SET available_quantity = available_quantity + 1 WHERE id = ?',
-        [log.item_id]
+        'UPDATE sports_inventory SET available_quantity = available_quantity + ? WHERE id = ?',
+        [log.quantity || 1, log.item_id]
     );
 };

@@ -118,6 +118,7 @@ export interface InventoryReserved {
     return_condition?: 'New' | 'Good' | 'Fair' | 'Poor' | 'Broken' | null;
     status: 'Reserved' | 'Returned' | 'Cancelled';
     item_name?: string;
+    quantity?: number;
 }
 
 export const activityService = {

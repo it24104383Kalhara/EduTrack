@@ -158,7 +158,7 @@ export default function InventoryPage() {
 
     const [reservingItem,   setReservingItem]   = useState<InventoryItem | null>(null);
     const [reserveFormData, setReserveFormData] = useState<Partial<InventoryReserved>>({
-        reserve_student_name: '', class_teacher: '', class_grade: '', reserve_start_time: '', reserve_end_time: '',
+        reserve_student_name: '', class_teacher: '', class_grade: '', reserve_start_time: '', reserve_end_time: '', quantity: 1,
     });
 
     const [returningItem,   setReturningItem]   = useState<InventoryReserved | null>(null);
@@ -219,7 +219,7 @@ export default function InventoryPage() {
 
     const openReserveModal  = (item: InventoryItem) => {
         setReservingItem(item);
-        setReserveFormData({ reserve_student_name: '', class_teacher: '', class_grade: '', reserve_start_time: '', reserve_end_time: '' });
+        setReserveFormData({ reserve_student_name: '', class_teacher: '', class_grade: '', reserve_start_time: '', reserve_end_time: '', quantity: 1 });
         setIsReserveModalOpen(true);
     };
     const closeReserveModal = () => { setIsReserveModalOpen(false); setReservingItem(null); };
@@ -458,7 +458,7 @@ export default function InventoryPage() {
                                         'transition-colors',
                                         log.status === 'Returned' ? 'opacity-50 bg-gray-50/40' : 'hover:bg-[#F4F0FF]/20'
                                     )}>
-                                        <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-800">{log.item_name}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-800">{log.item_name} <span className="text-gray-400 text-xs font-normal ml-1">x{log.quantity || 1}</span></td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <p className="font-medium text-gray-800">{log.reserve_student_name}</p>
                                             <p className="text-xs text-gray-400">Grade {log.class_grade} · {log.class_teacher}</p>
@@ -632,15 +632,26 @@ export default function InventoryPage() {
                                         onChange={e => setReserveFormData({ ...reserveFormData, class_grade: e.target.value })}
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Class Teacher *</label>
-                                    <input
-                                        type="text" required
-                                        className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all"
-                                        placeholder="e.g. Mr. Smith"
-                                        value={reserveFormData.class_teacher}
-                                        onChange={e => setReserveFormData({ ...reserveFormData, class_teacher: e.target.value })}
-                                    />
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Teacher *</label>
+                                        <input
+                                            type="text" required
+                                            className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all"
+                                            placeholder="Mr. Smith"
+                                            value={reserveFormData.class_teacher}
+                                            onChange={e => setReserveFormData({ ...reserveFormData, class_teacher: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Qty *</label>
+                                        <input
+                                            type="number" required min="1" max={reservingItem.available_quantity}
+                                            className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all"
+                                            value={reserveFormData.quantity}
+                                            onChange={e => setReserveFormData({ ...reserveFormData, quantity: parseInt(e.target.value) || 1 })}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -700,7 +711,7 @@ export default function InventoryPage() {
                             <div className="bg-[#F4F0FF] border border-purple-200 rounded-xl p-4 text-xs space-y-1">
                                 <p className="text-gray-600"><span className="font-bold text-[#633194]">Borrower:</span> {returningItem.reserve_student_name}</p>
                                 <p className="text-gray-600"><span className="font-bold text-[#633194]">Class:</span> Grade {returningItem.class_grade} · {returningItem.class_teacher}</p>
-                                <p className="text-gray-600"><span className="font-bold text-[#633194]">Reserved:</span> {new Date(returningItem.reserve_start_time).toLocaleString()}</p>
+                                <p className="text-gray-600"><span className="font-bold text-[#633194]">Reserved:</span> {new Date(returningItem.reserve_start_time).toLocaleString()} <span className="mx-1">•</span> <span className="font-bold text-[#633194]">Quantity:</span> {returningItem.quantity || 1}</p>
                             </div>
 
                             <div>
