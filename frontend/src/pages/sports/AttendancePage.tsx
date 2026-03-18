@@ -14,6 +14,7 @@ import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import UserGroupIcon from '@heroicons/react/24/outline/UserGroupIcon';
 import DateTimePicker from '../../components/ui/DateTimePicker';
 import CustomSelect from '../../components/ui/CustomSelect';
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
 
 const STATUS_CONFIG: Record<AttendanceStatus, { label: string; icon: React.ElementType; color: string; bg: string; border: string; ring: string }> = {
     Present: { label: 'Present', icon: CheckCircleIcon, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', ring: 'ring-emerald-400' },
@@ -36,6 +37,7 @@ export default function AttendancePage() {
     const [localStatus, setLocalStatus] = useState<Record<number, AttendanceStatus>>({});
     const [showNewSession, setShowNewSession] = useState(false);
     const [newSession, setNewSession] = useState({ start_time: '', end_time: '' });
+    const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, sessionId: number | null, dateStr: string}>({ isOpen: false, sessionId: null, dateStr: '' });
     const [saved, setSaved] = useState(false);
 
     // -- Data Fetching --
@@ -105,6 +107,9 @@ export default function AttendancePage() {
             setSelectedSessionId(null);
             setLocalStatus({});
         },
+        onError: (err: any) => {
+            alert('Failed to delete session: ' + (err.response?.data?.error || err.message));
+        }
     });
 
     // -- Handlers --
@@ -131,6 +136,14 @@ export default function AttendancePage() {
             start_time: newSession.start_time,
             end_time: newSession.end_time,
         });
+    };
+
+    const confirmDeleteSession = () => {
+        if (deleteModal.sessionId) {
+            deleteSessionMutation.mutate(deleteModal.sessionId, {
+                onSuccess: () => setDeleteModal({ ...deleteModal, isOpen: false })
+            });
+        }
     };
 
     const presentCount = Object.values(localStatus).filter(v => v === 'Present').length;
@@ -231,8 +244,14 @@ export default function AttendancePage() {
 
                     {selectedSessionId && isCoach && (
                         <button
-                            onClick={() => { if (window.confirm('Delete this session?')) deleteSessionMutation.mutate(selectedSessionId); }}
-                            className="mt-2 flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition-colors font-medium"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const session = (sessions ?? []).find(s => s.id === selectedSessionId);
+                                const dateStr = session ? `${new Date(session.start_time).toLocaleString()} to ${new Date(session.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : '';
+                                setDeleteModal({ isOpen: true, sessionId: selectedSessionId, dateStr });
+                            }}
+                            className="mt-2 flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition-colors font-medium z-10 relative"
                         >
                             <TrashIcon className="h-3.5 w-3.5" /> Delete session
                         </button>
@@ -395,6 +414,16 @@ export default function AttendancePage() {
                     {isCoach && <p className="text-xs text-gray-400">Or create a new session using the <strong className="text-[#633194]">+ New</strong> button.</p>}
                 </div>
             )}
+            
+            <ConfirmationModal
+                isOpen={deleteModal.isOpen}
+                title="Delete Session"
+                message={`Are you sure you want to delete the session${deleteModal.dateStr ? ` from ${deleteModal.dateStr}` : ''}? All attendance records for this session will be permanently removed.`}
+                confirmText="Delete Session"
+                onConfirm={confirmDeleteSession}
+                onCancel={() => setDeleteModal({ ...deleteModal, isOpen: false })}
+                isLoading={deleteSessionMutation.isPending}
+            />
         </div>
     );
 }

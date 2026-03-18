@@ -10,6 +10,7 @@ import UserIcon from '@heroicons/react/24/outline/UserIcon';
 import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
 
 const ROLE_CONFIG: Record<string, { bg: string; text: string; border: string }> = {
     Captain: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
@@ -26,6 +27,7 @@ export default function ActivityMembersPage() {
     const queryClient = useQueryClient();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, membershipId: number | null, studentName: string}>({ isOpen: false, membershipId: null, studentName: '' });
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedStudent, setSelectedStudent] = useState<{ id: number, name: string, grade: string, classTeacherName?: string } | null>(null);
     const [formData, setFormData] = useState({ student_id: '', role: 'Member' });
@@ -70,6 +72,9 @@ export default function ActivityMembersPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['members', activityId] });
         },
+        onError: (err: any) => {
+            alert('Failed to remove student: ' + (err.response?.data?.error || err.message));
+        }
     });
 
     const handleRegister = (e: React.FormEvent) => {
@@ -86,9 +91,11 @@ export default function ActivityMembersPage() {
         } as any);
     };
 
-    const handleRemove = (membershipId: number) => {
-        if (window.confirm('Are you sure you want to remove this student from the activity?')) {
-            removeMutation.mutate(membershipId);
+    const confirmRemove = () => {
+        if (deleteModal.membershipId) {
+            removeMutation.mutate(deleteModal.membershipId, {
+                onSuccess: () => setDeleteModal({ isOpen: false, membershipId: null, studentName: '' }),
+            });
         }
     };
 
@@ -211,8 +218,8 @@ export default function ActivityMembersPage() {
                                             {(user?.role === 'Admin' || user?.role === 'Coach') && (
                                                 <td className="px-6 py-4 whitespace-nowrap text-right">
                                                     <button
-                                                        onClick={() => handleRemove(member.id)}
-                                                        className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all"
+                                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteModal({ isOpen: true, membershipId: member.id, studentName: member.student_name || `Student #${member.student_id}` }); }}
+                                                        className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all z-10 relative"
                                                         title="Remove student"
                                                     >
                                                         <TrashIcon className="h-4 w-4" />
@@ -406,6 +413,15 @@ export default function ActivityMembersPage() {
                     </div>
                 </div>
             )}
+            <ConfirmationModal
+                isOpen={deleteModal.isOpen}
+                title="Remove Student"
+                message={`Are you sure you want to remove ${deleteModal.studentName} from ${activity?.name || 'this activity'}?`}
+                confirmText="Remove"
+                onConfirm={confirmRemove}
+                onCancel={() => setDeleteModal({ isOpen: false, membershipId: null, studentName: '' })}
+                isLoading={removeMutation.isPending}
+            />
         </div>
     );
 }

@@ -57,6 +57,9 @@ export const getSessionById = async (id: number): Promise<PracticeSession | null
 };
 
 export const deletePracticeSession = async (id: number): Promise<void> => {
+    // Manually delete dependent records
+    await pool.query('DELETE FROM sports_attendance WHERE session_id = ?', [id]);
+    // Delete the session
     await pool.query('DELETE FROM sports_practice_sessions WHERE id = ?', [id]);
 };
 

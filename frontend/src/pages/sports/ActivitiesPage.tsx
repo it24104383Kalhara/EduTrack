@@ -10,6 +10,7 @@ import UserGroupIcon from '@heroicons/react/24/outline/UserGroupIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
 import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
 
 const TYPE_CONFIG: Record<string, { color: string; bg: string; border: string; badgeBg: string; badgeText: string; accent: string }> = {
     Sport: { color: 'text-orange-500', bg: 'bg-[#FFF0E6]', border: 'border-orange-100', badgeBg: 'bg-orange-50', badgeText: 'text-orange-700', accent: 'bg-orange-400' },
@@ -31,6 +32,7 @@ export default function ActivitiesPage() {
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null, name: string}>({ isOpen: false, id: null, name: '' });
     const [search, setSearch] = useState('');
     const [typeFilter, setTypeFilter] = useState<string>('All');
     const [formData, setFormData] = useState({
@@ -59,6 +61,9 @@ export default function ActivitiesPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['activities'] });
         },
+        onError: (err: any) => {
+            alert('Failed to delete activity: ' + (err.response?.data?.error || err.message));
+        }
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -66,9 +71,11 @@ export default function ActivitiesPage() {
         createMutation.mutate(formData as any);
     };
 
-    const handleDelete = (id: number) => {
-        if (window.confirm('Are you sure you want to delete this activity?')) {
-            deleteMutation.mutate(id);
+    const confirmDelete = () => {
+        if (deleteModal.id) {
+            deleteMutation.mutate(deleteModal.id, {
+                onSuccess: () => setDeleteModal({ isOpen: false, id: null, name: '' }),
+            });
         }
     };
 
@@ -194,8 +201,8 @@ export default function ActivitiesPage() {
                                             </a>
                                             {user?.role === 'Admin' && (
                                                 <button
-                                                    onClick={() => handleDelete(activity.id)}
-                                                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteModal({ isOpen: true, id: activity.id, name: activity.name }); }}
+                                                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all z-10 relative"
                                                     title="Delete activity"
                                                 >
                                                     <TrashIcon className="h-4 w-4" />
@@ -302,6 +309,15 @@ export default function ActivitiesPage() {
                     </div>
                 </div>
             )}
+            <ConfirmationModal
+                isOpen={deleteModal.isOpen}
+                title="Delete Activity"
+                message={`Are you sure you want to permanently delete the activity "${deleteModal.name}"? All associated data will be removed.`}
+                confirmText="Delete Activity"
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteModal({ isOpen: false, id: null, name: '' })}
+                isLoading={deleteMutation.isPending}
+            />
         </div>
     );
 }
