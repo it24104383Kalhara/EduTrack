@@ -279,4 +279,69 @@ export const inventoryService = {
     }
 };
 
+export interface Match {
+    id?: number;
+    activity_id: number;
+    date: string;
+    opponent: string;
+    result: 'Won' | 'Lost' | 'Draw' | 'Participation';
+    level: 'School' | 'Zonal' | 'District' | 'Provincial' | 'National';
+    score_team?: number;
+    score_opponent?: number;
+    location?: string;
+    notes?: string;
+}
+
+export interface LeaderboardEntry {
+    student_id: number;
+    student_name: string;
+    activity_name: string;
+    total_points: number;
+    member_role: string;
+}
+
+export interface TimeSeriesPoint {
+    period_label: string;
+    total_points: number;
+    student_count: number;
+}
+
+export const achievementService = {
+    getMatches: async (activityId?: number) => {
+        const response = await api.get<Match[]>('/achievements/matches', { params: { activity_id: activityId } });
+        return response.data;
+    },
+    createMatch: async (data: Omit<Match, 'id'> & { participants: number[] }) => {
+        const response = await api.post('/achievements/matches', data);
+        return response.data;
+    },
+    updateMatch: async (id: number, data: Partial<Match> & { participants?: number[] }) => {
+        const response = await api.put(`/achievements/matches/${id}`, data);
+        return response.data;
+    },
+    deleteMatch: async (id: number) => {
+        await api.delete(`/achievements/matches/${id}`);
+    },
+    getMatchParticipants: async (matchId: number): Promise<number[]> => {
+        const response = await api.get<number[]>(`/achievements/matches/${matchId}/participants`);
+        return response.data;
+    },
+    getLeaderboard: async (activityId?: number) => {
+        const response = await api.get<LeaderboardEntry[]>('/achievements/leaderboard', { params: { activity_id: activityId } });
+        return response.data;
+    },
+    getTimeSeries: async (activityId?: number, period: 'weekly' | 'monthly' | 'yearly' = 'monthly') => {
+        const response = await api.get<TimeSeriesPoint[]>('/achievements/analytics/timeseries', { params: { activity_id: activityId, period } });
+        return response.data;
+    },
+    getStudentCV: async (studentId: number, activityId?: number) => {
+        const response = await api.get(`/achievements/cv/${studentId}`, { params: { activity_id: activityId } });
+        return response.data;
+    },
+    recalcAttendance: async (studentId: number, activityId: number) => {
+        const response = await api.post('/achievements/achievements/recalc-attendance', { student_id: studentId, activity_id: activityId });
+        return response.data;
+    },
+};
+
 export default api;

@@ -5,7 +5,7 @@ import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 interface ConfirmationModalProps {
     isOpen: boolean;
     title: string;
-    message: string;
+    message: React.ReactNode;
     confirmText?: string;
     cancelText?: string;
     onConfirm: () => void;

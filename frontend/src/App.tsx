@@ -10,6 +10,7 @@ import AttendanceReportPage from "./pages/sports/AttendanceReportPage";
 import PrincipalDashboard from "./pages/sports/PrincipalDashboard";
 import TeacherNotificationsPage from "./pages/sports/TeacherNotificationsPage";
 import InventoryPage from "./pages/sports/InventoryPage";
+import AchievementsPage from "./pages/sports/AchievementsPage";
 import { ProtectedRoute } from "./utils/auth";
 import { useState } from "react";
 
@@ -77,6 +78,16 @@ function App() {
               <ProtectedRoute>
                 <DashboardLayout>
                   <InventoryPage />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sports/achievements"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <AchievementsPage />
                 </DashboardLayout>
               </ProtectedRoute>
             }

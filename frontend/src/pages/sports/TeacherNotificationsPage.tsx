@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { reportService } from '../../services/api';
 import clsx from 'clsx';
@@ -5,9 +6,11 @@ import BellIcon from '@heroicons/react/24/solid/BellIcon';
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import InboxIcon from '@heroicons/react/24/outline/InboxIcon';
 import CalendarDaysIcon from '@heroicons/react/24/outline/CalendarDaysIcon';
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
 
 export default function TeacherNotificationsPage() {
     const queryClient = useQueryClient();
+    const [actionModal, setActionModal] = useState<{ isOpen: boolean; notifId: number | null }>({ isOpen: false, notifId: null });
 
     const { data: notifications, isLoading } = useQuery({
         queryKey: ['myNotifications'],
@@ -76,7 +79,7 @@ export default function TeacherNotificationsPage() {
                             <div
                                 key={notif.id}
                                 className={clsx(
-                                    'rounded-2xl border transition-all',
+                                    'rounded-2xl border transition-all overflow-hidden',
                                     isActioned
                                         ? 'bg-gray-50 border-gray-100 opacity-70'
                                         : 'bg-white border-[#633194]/20 shadow-sm hover:shadow-md'
@@ -84,82 +87,78 @@ export default function TeacherNotificationsPage() {
                             >
                                 {/* Top bar: status indicator */}
                                 <div className={clsx(
-                                    'h-1 w-full rounded-t-2xl',
+                                    'h-1.5 w-full',
                                     isActioned ? 'bg-gray-200' : 'bg-gradient-to-r from-[#633194] to-[#9b59b6]'
                                 )} />
 
                                 <div className="p-5">
-                                    <div className="flex items-start justify-between gap-4">
-                                        {/* Left content */}
-                                        <div className="flex-1 min-w-0">
-                                            {/* Status + Activity row */}
-                                            <div className="flex flex-wrap items-center gap-2 mb-3">
-                                                {isActioned ? (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                        <CheckCircleIcon className="h-3.5 w-3.5" /> Actioned
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-600 border border-red-200">
-                                                        <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-                                                        Requires Action
-                                                    </span>
-                                                )}
-
-                                                <span className="text-sm font-bold text-gray-800">
-                                                    {notif.activity_name || `Report #${notif.report_id}`}
+                                    {/* Top Row: Badges & Action Button */}
+                                    <div className="flex items-center justify-between gap-4 mb-4">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            {isActioned ? (
+                                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <CheckCircleIcon className="h-3.5 w-3.5" /> Actioned
                                                 </span>
-
-                                                {notif.report_date && (
-                                                    <span className="flex items-center gap-1 text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100">
-                                                        <CalendarDaysIcon className="h-3.5 w-3.5" />
-                                                        {new Date(notif.report_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            {/* Message Box */}
-                                            <div className={clsx(
-                                                'text-sm text-gray-700 leading-relaxed rounded-xl p-4 border whitespace-pre-line',
-                                                isActioned
-                                                    ? 'bg-gray-50 border-gray-100'
-                                                    : 'bg-[#F4F0FF] border-purple-200'
-                                            )}>
-                                                {notif.message}
-                                            </div>
-
-                                            {/* Quick Stats */}
-                                            {notif.total_students && (
-                                                <div className="flex items-center gap-4 mt-3 text-xs">
-                                                    <span className="flex items-center gap-1 font-semibold text-emerald-600">
-                                                        <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                                                        {notif.present_count} present
-                                                    </span>
-                                                    <span className="flex items-center gap-1 font-semibold text-red-500">
-                                                        <span className="h-2 w-2 rounded-full bg-red-400" />
-                                                        {notif.absent_count} absent
-                                                    </span>
-                                                    <span className="text-gray-400">{notif.total_students} total</span>
-                                                </div>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-500 border border-red-200 shadow-sm">
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                                                    Requires Action
+                                                </span>
                                             )}
 
-                                            {/* Footer */}
-                                            <p className="text-xs text-gray-400 mt-2">
-                                                Sent by Principal · {new Date(notif.sent_at).toLocaleString()}
-                                            </p>
+                                            <span className="text-[15px] font-bold text-gray-900 ml-1">
+                                                {notif.activity_name || `Report #${notif.report_id}`}
+                                            </span>
+
+                                            {notif.report_date && (
+                                                <span className="flex items-center gap-1 text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100 ml-2">
+                                                    <CalendarDaysIcon className="h-3.5 w-3.5" />
+                                                    {new Date(notif.report_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                                </span>
+                                            )}
                                         </div>
 
-                                        {/* Action Button */}
                                         {!isActioned && (
                                             <button
-                                                onClick={() => actionMutation.mutate(notif.id)}
+                                                onClick={() => setActionModal({ isOpen: true, notifId: notif.id })}
                                                 disabled={actionMutation.isPending}
-                                                className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all disabled:opacity-50"
-                                                style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
+                                                className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-[20px] text-xs font-bold text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all disabled:opacity-50"
+                                                style={{ backgroundColor: '#2e9c61' }}
                                             >
                                                 <CheckCircleIcon className="h-4 w-4" />
                                                 Mark Actioned
                                             </button>
                                         )}
+                                    </div>
+
+                                    {/* Message Box */}
+                                    <div className={clsx(
+                                        'text-sm text-gray-700 leading-relaxed rounded-xl p-4 border whitespace-pre-wrap',
+                                        isActioned
+                                            ? 'bg-gray-50 border-gray-100'
+                                            : 'bg-[#F9F7FC] border-[#EAE2F8] text-[#3c2a5c]'
+                                    )}>
+                                        {notif.message}
+                                    </div>
+
+                                    {/* Footer Details */}
+                                    <div className="mt-4 flex flex-col gap-2">
+                                        {notif.total_students && (
+                                            <div className="flex items-center gap-3 text-xs">
+                                                <span className="flex items-center gap-1.5 font-bold text-[#2e9c61]">
+                                                    <span className="h-2 w-2 rounded-full bg-[#2e9c61]" />
+                                                    {notif.present_count} present
+                                                </span>
+                                                <span className="flex items-center gap-1.5 font-bold text-red-500">
+                                                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                                                    {notif.absent_count} absent
+                                                </span>
+                                                <span className="text-gray-400 font-medium ml-1">{notif.total_students} total</span>
+                                            </div>
+                                        )}
+                                        <p className="text-xs text-gray-400 font-medium">
+                                            Sent by Principal · {new Date(notif.sent_at).toLocaleString()}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -180,6 +179,20 @@ export default function TeacherNotificationsPage() {
                     </div>
                 </div>
             ) : null}
+
+            {/* Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={actionModal.isOpen}
+                title="Mark as Actioned"
+                message={<>Are you sure you want to mark this alert as actioned?<br /><br />By confirming, you acknowledge that you have reviewed the principal's notification and successfully updated the corresponding student class attendance records in the system.</>}
+                confirmText="Yes, Mark Actioned"
+                onConfirm={() => {
+                    actionMutation.mutate(actionModal.notifId!);
+                    setActionModal({ isOpen: false, notifId: null });
+                }}
+                onCancel={() => setActionModal({ isOpen: false, notifId: null })}
+                isLoading={actionMutation.isPending}
+            />
         </div>
     );
 }
