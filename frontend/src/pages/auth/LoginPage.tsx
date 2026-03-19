@@ -118,7 +118,7 @@ const LoginPage = () => {
                                     key={r}
                                     type="button"
                                     onClick={() => setRole(r)}
-                                    className={`px-5 py-2.5 rounded-xl text-sm font-bold border transition-all duration-300 ${role === r
+                                    className={`px-5 py-2.5 rounded-xl text-sm font-bold border transition-all placeholder:text-gray-400 shadow-sm duration-300 ${role === r
                                             ? 'bg-[#F4F0FF] text-[#633194] border-[#633194] shadow-sm'
                                             : 'bg-white text-gray-500 border-gray-200 hover:border-[#633194]/30 hover:text-[#633194] hover:bg-gray-50'
                                         }`}

@@ -41,7 +41,7 @@ const MODULES = [
         accent: 'from-[#633194] to-[#9b59b6]',
         desc: 'Track academic performance, achievements, and behavioral records for every student in real time.',
         stats: '1,248 Students',
-        href: '/student-progress',
+        href: '#',
     },
     {
         id: 'hostel',
@@ -53,7 +53,7 @@ const MODULES = [
         accent: 'from-blue-400 to-blue-600',
         desc: 'Oversee room allocation, student check-ins, fees, and hostel facility management with ease.',
         stats: '320 Rooms',
-        href: '/hostel',
+        href: '#',
     },
     {
         id: 'transport',
@@ -65,7 +65,7 @@ const MODULES = [
         accent: 'from-emerald-400 to-emerald-600',
         desc: 'Schedule bus routes, track vehicles in real time, and manage driver assignments and student boarding.',
         stats: '18 Bus Routes',
-        href: '/transport',
+        href: '#',
     },
     {
         id: 'health',
@@ -77,7 +77,7 @@ const MODULES = [
         accent: 'from-rose-400 to-pink-500',
         desc: 'Maintain student health records, medical appointments, vaccinations, and nurse visit logs digitally.',
         stats: '98% Records',
-        href: '/health',
+        href: '#',
     },
     {
         id: 'library',
@@ -89,7 +89,7 @@ const MODULES = [
         accent: 'from-amber-400 to-yellow-500',
         desc: 'Catalog books, manage lending & returns, track overdue items, and send automated reminders.',
         stats: '8,500 Books',
-        href: '/library',
+        href: '#',
     },
 ];
 
