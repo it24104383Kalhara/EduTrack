@@ -29,7 +29,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardLayout>
-                   <DashBoardPage />
+                  <DashBoardPage />
                 </DashboardLayout>
               </ProtectedRoute>
             }
@@ -60,7 +60,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardLayout>
-                  <AttendancePage />
+                  <ProtectedRoute allowedRoles={['Admin', 'Coach']}>
+                    <AttendancePage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               </ProtectedRoute>
             }
@@ -70,7 +72,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardLayout>
-                  <AttendanceReportPage />
+                  <ProtectedRoute allowedRoles={['Admin', 'Coach']}>
+                    <AttendanceReportPage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               </ProtectedRoute>
             }
@@ -80,7 +84,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardLayout>
-                  <InventoryPage />
+                  <ProtectedRoute allowedRoles={['Admin', 'Coach']}>
+                    <InventoryPage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               </ProtectedRoute>
             }
@@ -98,9 +104,11 @@ function App() {
           <Route
             path="/sports/principal"
             element={
-              <ProtectedRoute allowedRoles={['Admin']}>
+              <ProtectedRoute>
                 <DashboardLayout>
-                  <PrincipalDashboard />
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <PrincipalDashboard />
+                  </ProtectedRoute>
                 </DashboardLayout>
               </ProtectedRoute>
             }
@@ -108,9 +116,11 @@ function App() {
           <Route
             path="/sports/teacher-notifications"
             element={
-              <ProtectedRoute allowedRoles={['Admin']}>
+              <ProtectedRoute>
                 <DashboardLayout>
-                  <TeacherNotificationsPage />
+                  <ProtectedRoute allowedRoles={['Admin', 'Teacher']}>
+                    <TeacherNotificationsPage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               </ProtectedRoute>
             }

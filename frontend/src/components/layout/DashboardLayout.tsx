@@ -34,7 +34,8 @@ interface NavGroup {
     name: string;
     icon: React.ElementType;
     path?: string;
-    children?: { name: string; path: string }[];
+    children?: { name: string; path: string; allowedRoles?: string[] }[];
+    allowedRoles?: string[];
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
@@ -55,13 +56,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             icon: UsersIcon,
             children: [
                 { name: 'Activities & Clubs', path: '/sports/activities' },
-                { name: 'Attendance', path: '/sports/attendance' },
-                { name: 'Submit Report', path: '/sports/attendance/report' },
+                { name: 'Attendance', path: '/sports/attendance', allowedRoles: ['Admin', 'Coach', 'Teacher'] },
+                { name: 'Submit Report', path: '/sports/attendance/report', allowedRoles: ['Admin', 'Coach', 'Teacher'] },
             ],
         },
         {
             name: 'Administration',
             icon: ShieldCheckIcon,
+            allowedRoles: ['Admin'],
             children: [
                 { name: 'Principal View', path: '/sports/principal' },
                 { name: 'Teacher Alerts', path: '/sports/teacher-notifications' },
@@ -108,6 +110,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             keywords: [group.name]
         }];
     });
+
+    // Revert filtering - show all groups
+    const finalNavGroups = navGroups;
 
     useEffect(() => {
         if (searchQuery.trim() === "") {
@@ -157,7 +162,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
             {/* Navigation */}
             <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-                {navGroups.map((group) => {
+                {finalNavGroups.map((group) => {
                     const active = isGroupActive(group);
                     const expanded = expandedGroups.includes(group.name);
 

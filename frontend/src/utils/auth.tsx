@@ -22,6 +22,8 @@ export const useAuth = () => {
     return { user, login, logout, isAuthenticated: !!user };
 };
 
+import RestrictedPage from "../pages/error/RestrictedPage";
+
 export const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
     const { user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
@@ -29,10 +31,14 @@ export const ProtectedRoute = ({ children, allowedRoles }: { children: React.Rea
     useEffect(() => {
         if (!isAuthenticated) {
             navigate("/login");
-        } else if (allowedRoles && !allowedRoles.includes(user.role)) {
-            navigate("/unauthorized"); // Or dashboard
         }
-    }, [isAuthenticated, user, navigate, allowedRoles]);
+    }, [isAuthenticated, navigate]);
 
-    return isAuthenticated ? children : null;
+    if (!isAuthenticated) return null;
+
+    if (allowedRoles && !allowedRoles.includes(user.role)) {
+        return <RestrictedPage />;
+    }
+
+    return <>{children}</>;
 };
