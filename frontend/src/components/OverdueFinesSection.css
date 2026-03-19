@@ -1,0 +1,120 @@
+/* OverdueFinesSection.css */
+
+.overdue-section {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 1.8rem 2rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+  border: 1px solid #334155;
+  color: #e2e8f0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.overdue-section h2 {
+  color: #60a5fa;
+  margin: 0 0 1.5rem 0;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  padding-bottom: 0.8rem;
+  border-bottom: 2px solid #334155;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Table */
+.overdue-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #17212f;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.overdue-table th,
+.overdue-table td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid #334155;
+}
+
+.overdue-table th {
+  background: #0f172a;
+  color: #94a3b8;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 0.82rem;
+  letter-spacing: 0.5px;
+}
+
+.overdue-table tbody tr {
+  transition: all 0.16s ease;
+  background-color: rgba(248, 113, 113, 0.06); /* subtle red tint for urgency */
+}
+
+.overdue-table tbody tr:hover {
+  background-color: rgba(248, 113, 113, 0.14);
+  transform: translateY(-1px);
+}
+
+.overdue-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Column styling */
+.overdue-table td:nth-child(5) {  /* Fine column */
+  font-weight: 600;
+  color: #f87171;
+}
+
+.overdue-table td:nth-child(6) {  /* Status column */
+  font-weight: 700;
+  color: #f87171;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* Highlight higher fines (optional visual escalation) */
+.overdue-table td:nth-child(5):not(:contains("Rs. 0")) {
+  background: linear-gradient(90deg, rgba(248, 113, 113, 0.12), transparent);
+}
+
+/* Loading & empty states */
+.overdue-section p {
+  padding: 2.8rem 1rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  font-style: italic;
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 10px;
+  margin: 2rem 0;
+  border: 1px dashed #475569;
+}
+
+/* Error message */
+.overdue-section p[style*="color: red"] {
+  color: #f87171 !important;
+  background: rgba(248, 113, 113, 0.15);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  font-weight: 500;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .overdue-section {
+    padding: 1.4rem 1.2rem;
+  }
+
+  .overdue-table th,
+  .overdue-table td {
+    padding: 12px 10px;
+    font-size: 0.92rem;
+  }
+
+  .overdue-table {
+    font-size: 0.95rem;
+  }
+}

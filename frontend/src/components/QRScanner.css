@@ -1,0 +1,117 @@
+/* QRScanner.css 
+   Dark blue theme + readable scanner styling
+   Feel free to change the values marked with 👇
+*/
+
+/* ────────────────────────────────────────────────
+   Root / Theme variables (easy to change once)
+───────────────────────────────────────────────── */
+:root {
+  --bg-main: #0d1b2a;           /* very dark blue-black */
+  --bg-darker: #1b263b;         /* slightly lighter dark blue */
+  --primary: #778da9;           /* calm steel blue */
+  --primary-dark: #415a77;      /* darker blue for hover/active */
+  --accent: #e0e1dd;            /* light grayish white for text */
+  --danger: #9d4edd;            /* optional - purple/reddish for stop button */
+}
+
+/* ────────────────────────────────────────────────
+   Main container
+───────────────────────────────────────────────── */
+#qr-reader {
+  width: 100%;
+  max-width: 420px;             /* 👈 max scanner width - change if needed */
+  margin: 0 auto 1.5rem;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-darker);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--primary-dark);
+}
+
+/* Video element inside scanner */
+#qr-reader video {
+  width: 100% !important;
+  height: auto !important;
+}
+
+/* Scanner overlay / qrbox border */
+html5-qrcode__scan-region-highlight {
+  border: 3px solid var(--primary) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 0 0 9999px rgba(13, 27, 42, 0.7) !important; /* dark vignette */
+}
+
+/* Message box (permission, error, etc.) */
+#qr-reader > .html5-qrcode-message {
+  color: var(--accent);
+  background: rgba(27, 38, 59, 0.85);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 12px;
+  font-size: 1.05rem;
+}
+
+/* ────────────────────────────────────────────────
+   Buttons
+───────────────────────────────────────────────── */
+button {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 1.1rem;            /* 👈 button text size */
+  font-weight: 600;
+  padding: 0.9rem 2rem;
+  margin: 0.5rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: white;
+}
+
+button {
+  background: var(--primary);
+}
+
+button:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Stop button - more visible */
+button[onclick*="stopScanner"],
+button:contains("Stop") {
+  background: #9d4edd;          /* purple-ish stop color */
+}
+
+button[onclick*="stopScanner"]:hover {
+  background: #7c3aed;
+}
+
+/* ────────────────────────────────────────────────
+   Overall page / wrapper styling
+───────────────────────────────────────────────── */
+div[style*="text-align: center"] {
+  background: var(--bg-main);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  color: var(--accent);
+  font-family: system-ui, sans-serif;
+}
+
+/* Bigger instruction/help text if you add any */
+p, .info-text {
+  font-size: 1.15rem;           /* 👈 general text size */
+  line-height: 1.5;
+  color: #c9d1d9;
+}
+
+/* Optional: make the whole scanner area bigger on desktop */
+@media (min-width: 768px) {
+  #qr-reader {
+    max-width: 500px;           /* 👈 bigger on tablets/desktops */
+  }
+}
