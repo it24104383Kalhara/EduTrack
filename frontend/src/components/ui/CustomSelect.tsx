@@ -47,7 +47,11 @@ export default function CustomSelect({
     // Close on scroll / resize
     useEffect(() => {
         if (!open) return;
-        const close = () => setOpen(false);
+        const close = (e: Event) => {
+            // If scanning / scrolling inside our own panel, don't close
+            if (panelRef.current?.contains(e.target as Node)) return;
+            setOpen(false);
+        };
         window.addEventListener('scroll', close, true);
         window.addEventListener('resize', close);
         return () => { window.removeEventListener('scroll', close, true); window.removeEventListener('resize', close); };
