@@ -265,15 +265,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                             <div className="h-8 w-px bg-gray-100 mx-1" />
 
                             {/* User Profile */}
-                            <div className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded-xl hover:bg-[#F4F0FF] transition-all group">
-                                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#633194] to-[#9b59b6] flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                            <div className="flex items-center gap-3 px-3 py-1.5 rounded-xl bg-[#F4F0FF] border border-white shadow-sm transition-all group">
+                                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#633194] to-[#9b59b6] flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm">
                                     {user?.name?.charAt(0) ?? 'U'}
                                 </div>
                                 <div className="hidden sm:block text-right">
-                                    <p className="text-sm font-semibold text-gray-800 leading-none">{user?.name}</p>
-                                    <p className="text-xs text-gray-500 mt-0.5">{user?.role}</p>
+                                    <p className="text-sm font-bold text-[#633194] leading-none mb-0.5">{user?.name}</p>
+                                    <p className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">{user?.role}</p>
                                 </div>
-                                <ChevronDownIcon className="h-4 w-4 text-gray-400 hidden sm:block" />
                             </div>
                         </div>
                     </div>
