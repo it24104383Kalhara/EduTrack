@@ -106,40 +106,21 @@ const LoginPage = () => {
 
                         {/* Role Field */}
                         <div>
-                            <label htmlFor="role" className="block text-sm font-semibold text-gray-700 mb-1.5">
-                                Role
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Select Your Role
                             </label>
-                            <div className="relative">
-                                <select
-                                    id="role"
-                                    name="role"
-                                    value={role}
-                                    onChange={(e) => setRole(e.target.value)}
-                                    className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all appearance-none shadow-sm cursor-pointer"
-                                >
-                                    <option value="Admin">Admin</option>
-                                    <option value="Coach">Coach</option>
-                                    <option value="Teacher">Teacher</option>
-                                    <option value="Student">Student</option>
-                                </select>
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                                    </svg>
-                                </div>
-                            </div>
                         </div>
 
                         {/* Role Pills */}
-                        <div className="flex gap-2 flex-wrap">
+                        <div className="grid grid-cols-2 gap-3 mb-6">
                             {['Admin', 'Coach', 'Teacher', 'Student'].map(r => (
                                 <button
                                     key={r}
                                     type="button"
                                     onClick={() => setRole(r)}
-                                    className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-all ${role === r
-                                            ? 'bg-[#F4F0FF] text-[#633194] border-[#633194]/30'
-                                            : 'bg-white text-gray-500 border-gray-200 hover:border-[#633194]/30 hover:text-[#633194]'
+                                    className={`px-5 py-2.5 rounded-xl text-sm font-bold border transition-all duration-300 ${role === r
+                                            ? 'bg-[#F4F0FF] text-[#633194] border-[#633194] shadow-sm'
+                                            : 'bg-white text-gray-500 border-gray-200 hover:border-[#633194]/30 hover:text-[#633194] hover:bg-gray-50'
                                         }`}
                                 >
                                     {r}
