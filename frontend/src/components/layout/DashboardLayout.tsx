@@ -21,7 +21,9 @@ import {
     ChevronDownIcon,
     ChevronRightIcon,
     Bars3Icon,
+    ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
+import ConfirmationModal from "../ui/ConfirmationModal";
 
 interface DashboardLayoutProps {
     children?: React.ReactNode;
@@ -39,6 +41,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     const location = useLocation();
     const [expandedGroups, setExpandedGroups] = useState<string[]>(['Sports']);
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     const navGroups: NavGroup[] = [
         {
@@ -195,13 +198,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                         <p className="text-xs text-purple-500 truncate">{user?.role}</p>
                     </div>
                     <button
-                        onClick={logout}
+                        onClick={() => setShowLogoutModal(true)}
                         title="Logout"
-                        className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded"
+                        className="p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-white/50 transition-all"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                        <ArrowRightOnRectangleIcon className="h-5 w-5" />
                     </button>
                 </div>
             </div>
@@ -395,6 +396,16 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                     )}
                 </main>
             </div>
+            {/* Logout Confirmation */}
+            <ConfirmationModal
+                isOpen={showLogoutModal}
+                title="Confirm Logout"
+                message="Are you sure you want to sign out of your account? You will need to login again to access your dashboard."
+                confirmText="Sign Out"
+                onConfirm={logout}
+                onCancel={() => setShowLogoutModal(false)}
+                isDestructive={true}
+            />
         </div>
     );
 };
