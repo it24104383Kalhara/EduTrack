@@ -26,6 +26,7 @@ export default function PrincipalDashboard() {
     const [statusFilter,      setStatusFilter]      = useState('');
     const [selectedReport,    setSelectedReport]    = useState<AttendanceReport | null>(null);
     const [approveModal,      setApproveModal]      = useState(false);
+    const [rejectModal,       setRejectModal]       = useState(false);
     const [teachersToNotify,  setTeachersToNotify]  = useState<{ id: string; grade: string; teacher: string; students: any[] }[]>([]);
 
     const { data: reports, isLoading } = useQuery({
@@ -36,10 +37,10 @@ export default function PrincipalDashboard() {
     const reviewMutation = useMutation({
         mutationFn: ({ id, status }: { id: number; status: 'Approved' | 'Rejected' }) =>
             reportService.review(id, status),
-        onSuccess: () => {
+        onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['allReports'] });
             if (selectedReport) {
-                setSelectedReport(prev => prev ? { ...prev, status: 'Approved' } : null);
+                setSelectedReport(prev => prev ? { ...prev, status: variables.status } : null);
             }
         },
         onError: (err: any) => alert(err.response?.data?.error || err.message),
@@ -114,6 +115,16 @@ export default function PrincipalDashboard() {
         } catch (e: any) {
             console.error(e);
             alert('An error occurred during the approval process: ' + (e.response?.data?.error || e.message));
+        }
+    };
+
+    const handleConfirmReject = async () => {
+        if (!selectedReport || reviewMutation.isPending) return;
+        try {
+            await reviewMutation.mutateAsync({ id: selectedReport.id, status: 'Rejected' });
+            setRejectModal(false);
+        } catch (e: any) {
+            alert('Failed to reject report: ' + (e.response?.data?.error || e.message));
         }
     };
 
@@ -299,7 +310,7 @@ export default function PrincipalDashboard() {
                                                 <CheckCircleIcon className="h-4 w-4" /> Approve & Notify Teachers
                                             </button>
                                             <button
-                                                onClick={() => reviewMutation.mutate({ id: selectedReport.id, status: 'Rejected' })}
+                                                onClick={() => setRejectModal(true)}
                                                 disabled={reviewMutation.isPending}
                                                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50"
                                                 style={{ background: 'linear-gradient(135deg,#e11d48,#be123c)' }}
@@ -446,6 +457,38 @@ export default function PrincipalDashboard() {
                                 >
                                     <BellAlertIcon className="h-4 w-4" />
                                     {reviewMutation.isPending ? 'Processing…' : 'Approve & Notify'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* ── Reject Confirmation Modal ────────────────────────────────────── */}
+            {rejectModal && selectedReport && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-gray-100">
+                        <div className="p-6 text-center space-y-4">
+                            <div className="mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-red-500 mb-2">
+                                <XCircleIcon className="h-10 w-10" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-800">Reject Attendance Report?</h3>
+                                <p className="text-sm text-gray-400 mt-1 px-4">
+                                    Are you sure you want to reject the report for <strong>{selectedReport.activity_name}</strong>? This action will notify the coach to re-submit.
+                                </p>
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button onClick={() => setRejectModal(false)}
+                                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all">
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleConfirmReject}
+                                    disabled={reviewMutation.isPending}
+                                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                    style={{ background: 'linear-gradient(135deg,#e11d48,#be123c)' }}
+                                >
+                                    {reviewMutation.isPending ? 'Processing…' : 'Yes, Reject'}
                                 </button>
                             </div>
                         </div>
