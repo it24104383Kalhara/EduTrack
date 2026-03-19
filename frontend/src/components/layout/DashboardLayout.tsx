@@ -1,7 +1,8 @@
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "../../utils/auth";
 import clsx from "clsx";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     HomeIcon,
     AcademicCapIcon,
@@ -83,6 +84,58 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         if (group.path) return location.pathname === group.path;
         if (group.children) return group.children.some(c => location.pathname === c.path);
         return false;
+    };
+
+    // --- Search Functionality ---
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchResults, setSearchResults] = useState<{name: string, path: string}[]>([]);
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
+
+    // Flattened searchable items
+    const searchableItems = navGroups.flatMap(group => {
+        if (group.children) {
+            return group.children.map(child => ({
+                name: `${group.name} > ${child.name}`,
+                path: child.path,
+                keywords: [child.name, group.name]
+            }));
+        }
+        return [{
+            name: group.name,
+            path: group.path!,
+            keywords: [group.name]
+        }];
+    });
+
+    useEffect(() => {
+        if (searchQuery.trim() === "") {
+            setSearchResults([]);
+            return;
+        }
+        const results = searchableItems.filter(item => 
+            item.keywords.some(k => k.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
+        setSearchResults(results);
+    }, [searchQuery]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setIsSearchFocused(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const handleSearchItemClick = (path: string) => {
+        navigate(path);
+        setSearchQuery("");
+        setSearchResults([]);
+        setIsSearchFocused(false);
+        setMobileSidebarOpen(false);
     };
 
 
@@ -232,7 +285,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden min-w-0">
                 {/* Header */}
-                <header className="bg-white border-b border-gray-100 z-10 flex-shrink-0 shadow-sm">
+                <header className="bg-white border-b border-gray-100 z-40 flex-shrink-0 shadow-sm sticky top-0">
                     <div className="px-4 sm:px-6 py-3 flex items-center gap-4">
                         {/* Mobile menu button */}
                         <button
@@ -243,13 +296,55 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                         </button>
 
                         {/* Search Bar */}
-                        <div className="flex-1 max-w-md relative">
-                            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <div className="flex-1 max-w-md relative" ref={searchRef}>
+                            <MagnifyingGlassIcon className={clsx(
+                                "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors",
+                                isSearchFocused ? "text-[#633194]" : "text-gray-400"
+                            )} />
                             <input
                                 type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => setIsSearchFocused(true)}
                                 placeholder="What do you want to find?"
-                                className="w-full pl-9 pr-4 py-2 text-sm bg-[#F9FAFB] border border-gray-200 rounded-xl focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/10 transition-all placeholder:text-gray-400"
+                                className={clsx(
+                                    "w-full pl-9 pr-4 py-2 text-sm bg-[#F9FAFB] border rounded-xl focus:outline-none transition-all placeholder:text-gray-400",
+                                    isSearchFocused 
+                                        ? "border-[#633194] ring-4 ring-[#633194]/10 bg-white" 
+                                        : "border-gray-200"
+                                )}
                             />
+
+                            {/* Search Results Dropdown */}
+                            {isSearchFocused && searchResults.length > 0 && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[100] animate-in slide-in-from-top-1 duration-200">
+                                    <div className="px-4 py-3 bg-gray-50/50 border-b border-gray-100">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Matched Sections</p>
+                                    </div>
+                                    <div className="max-h-[300px] overflow-y-auto p-2">
+                                        {searchResults.map((result, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => handleSearchItemClick(result.path)}
+                                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[#F4F0FF] transition-all group group-hover:scale-[1.01]"
+                                            >
+                                                <span className="text-sm font-semibold text-gray-700 group-hover:text-[#633194]">{result.name}</span>
+                                                <ChevronRightIcon className="h-4 w-4 text-gray-300 group-hover:text-[#633194] group-hover:translate-x-0.5 transition-all" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {isSearchFocused && searchQuery.trim() !== "" && searchResults.length === 0 && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 p-8 text-center z-[100] animate-in slide-in-from-top-1 duration-200">
+                                    <div className="h-12 w-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <MagnifyingGlassIcon className="h-6 w-6 text-gray-300" />
+                                    </div>
+                                    <p className="text-sm font-bold text-gray-800">No results found</p>
+                                    <p className="text-xs text-gray-500 mt-1">Try a different keyword</p>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex items-center gap-2 ml-auto">
