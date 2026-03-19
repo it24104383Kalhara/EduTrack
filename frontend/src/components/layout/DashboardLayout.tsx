@@ -3,6 +3,8 @@ import { useAuth } from "../../utils/auth";
 import clsx from "clsx";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { reportService } from "../../services/api";
 import {
     HomeIcon,
     AcademicCapIcon,
@@ -45,6 +47,30 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     const [expandedGroups, setExpandedGroups] = useState<string[]>(['Sports']);
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [notificationsOpen, setNotificationsOpen] = useState(false);
+    const notificationsRef = useRef<HTMLDivElement>(null);
+
+    // Fetch real-time notification data
+    const isTeacher = user?.role === 'Teacher';
+    const isPrincipalOrAdmin = user?.role === 'Principal' || user?.role === 'Admin';
+
+    const { data: teacherNotifications } = useQuery({
+        queryKey: ['myNotifications'],
+        queryFn: reportService.getMyNotifications,
+        enabled: isTeacher,
+        refetchInterval: 30_000,
+    });
+
+    const { data: principalReports } = useQuery({
+        queryKey: ['allReports', 'Pending'],
+        queryFn: () => reportService.getAll({ status: 'Pending' }),
+        enabled: isPrincipalOrAdmin,
+        refetchInterval: 30_000,
+    });
+
+    const teacherAlertCount = teacherNotifications?.filter(n => n.status !== 'Actioned').length ?? 0;
+    const principalPendingCount = principalReports?.length ?? 0;
+    const totalNotifications = isTeacher ? teacherAlertCount : (isPrincipalOrAdmin ? principalPendingCount : 0);
 
     const navGroups: NavGroup[] = [
         {
@@ -130,6 +156,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         const handleClickOutside = (event: MouseEvent) => {
             if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
                 setIsSearchFocused(false);
+            }
+            if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+                setNotificationsOpen(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -358,12 +387,110 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                             )}
                         </div>
 
-                        <div className="flex items-center gap-2 ml-auto">
+                         <div className="flex items-center gap-2 ml-auto">
                             {/* Notification Icons */}
-                            <button className="relative p-2 rounded-xl hover:bg-[#F4F0FF] text-gray-500 hover:text-[#633194] transition-all group">
-                                <BellIcon className="h-5 w-5" />
-                                <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-[#633194] rounded-full ring-2 ring-white" />
-                            </button>
+                            <div className="relative" ref={notificationsRef}>
+                                <button 
+                                    onClick={() => setNotificationsOpen(!notificationsOpen)}
+                                    className="relative p-2 rounded-xl hover:bg-[#F4F0FF] text-gray-500 hover:text-[#633194] transition-all group"
+                                >
+                                    <motion.div
+                                        animate={['Admin', 'Teacher', 'Principal'].includes(user?.role ?? '') ? {
+                                            rotate: [0, -10, 10, -10, 10, 0],
+                                        } : {}}
+                                        transition={{
+                                            duration: 0.5,
+                                            repeat: Infinity,
+                                            repeatDelay: 5
+                                        }}
+                                    >
+                                        <BellIcon className="h-5 w-5" />
+                                    </motion.div>
+                                    
+                                    {totalNotifications > 0 && (
+                                        <>
+                                            {/* Water Bubbling Effect */}
+                                            <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-[#633194] rounded-full ring-2 ring-white z-10" />
+                                            {[0, 0.4, 0.8].map((delay) => (
+                                                <motion.span 
+                                                    key={delay}
+                                                    initial={{ scale: 0.6, opacity: 0.6 }}
+                                                    animate={{ scale: 2.5, opacity: 0 }}
+                                                    transition={{
+                                                        duration: 2,
+                                                        repeat: Infinity,
+                                                        delay: delay,
+                                                        ease: "easeOut"
+                                                    }}
+                                                    className="absolute top-1.5 right-1.5 h-2 w-2 bg-[#633194] rounded-full ring-2 ring-white"
+                                                />
+                                            ))}
+                                        </>
+                                    )}
+                                </button>
+
+                                {/* Notification Window */}
+                                {notificationsOpen && ['Admin', 'Teacher', 'Principal'].includes(user?.role ?? '') && (
+                                    <motion.div 
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[110]"
+                                    >
+                                        <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Active Notifications</p>
+                                        </div>
+                                        <div className="p-4">
+                                            {isTeacher && (
+                                                <div className="space-y-4">
+                                                    <div className="flex gap-3">
+                                                        <div className="h-10 w-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 flex-shrink-0">
+                                                            <BellAlertIcon className="h-5 w-5" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-gray-800">Action Required</p>
+                                                            <p className="text-xs text-gray-500 leading-relaxed">{teacherAlertCount} student activities have pending attendance alerts.</p>
+                                                        </div>
+                                                    </div>
+                                                    <Link 
+                                                        to="/sports/teacher-notifications" 
+                                                        onClick={() => setNotificationsOpen(false)}
+                                                        className="block w-full text-center py-2 bg-orange-600 text-white text-xs font-bold rounded-lg hover:bg-orange-700 transition-colors"
+                                                    >
+                                                        View Teacher Alerts
+                                                    </Link>
+                                                </div>
+                                            )}
+
+                                            {isPrincipalOrAdmin && (
+                                                <div className="space-y-4">
+                                                    <div className="flex gap-3">
+                                                        <div className="h-10 w-10 rounded-xl bg-purple-100 flex items-center justify-center text-[#633194] flex-shrink-0">
+                                                            <DocumentTextIcon className="h-5 w-5" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-gray-800">Pending Approvals</p>
+                                                            <p className="text-xs text-gray-500 leading-relaxed">{principalPendingCount} sports attendance reports are waiting for your signature.</p>
+                                                        </div>
+                                                    </div>
+                                                    <Link 
+                                                        to="/sports/principal" 
+                                                        onClick={() => setNotificationsOpen(false)}
+                                                        className="block w-full text-center py-2 bg-[#633194] text-white text-xs font-bold rounded-lg hover:bg-[#4a2370] transition-colors"
+                                                    >
+                                                        Review All Reports
+                                                    </Link>
+                                                </div>
+                                            )}
+
+                                            {totalNotifications === 0 && (isTeacher || isPrincipalOrAdmin) && (
+                                                <div className="py-4 text-center">
+                                                    <p className="text-sm text-gray-500 italic">All caught up! No pending tasks.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </div>
                             <button className="p-2 rounded-xl hover:bg-[#F4F0FF] text-gray-500 hover:text-[#633194] transition-all">
                                 <ChatBubbleOvalLeftIcon className="h-5 w-5" />
                             </button>

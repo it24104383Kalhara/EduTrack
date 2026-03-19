@@ -134,7 +134,7 @@ function InventoryAnalytics() {
     );
 }
 
-// ─── Main Dashboard Page ───────────────────────────────────────────────────
+// ─── Inventory Analytics Component ──────────────────────────────────────────
 
 export default function DashBoardPage() {
     const { user } = useAuth();
@@ -143,7 +143,7 @@ export default function DashBoardPage() {
         <div className="space-y-6">
             {/* Page Title */}
             <div>
-                <h1 className="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
+                <h1 className="text-2xl font-bold text-gray-800">{user?.role} Dashboard</h1>
                 <p className="text-sm text-gray-500 mt-1">Welcome back, {user?.name}!</p>
             </div>
 
