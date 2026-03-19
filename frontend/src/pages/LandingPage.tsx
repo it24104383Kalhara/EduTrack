@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 // ─── SVG Icons ───────────────────────────────────────────────────────────────
 const Icon = {
@@ -148,39 +149,50 @@ export default function LandingPage() {
 
                     {/* Desktop Module Links */}
                     <nav className="hidden lg:flex items-center gap-1">
-                        {MODULES.map(m => (
-                            <a
+                        {MODULES.map((m, idx) => (
+                            <motion.div
                                 key={m.id}
-                                href={m.href}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-[#633194] hover:bg-[#F4F0FF] transition-all"
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 * idx }}
                             >
-                                <span className={`${m.color}`} style={{ display: 'flex' }}>
-                                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                        {m.id === 'sports' && <><path strokeLinecap="round" strokeLinejoin="round" d="M8 21h8m-4-4v4m-7-9a7 7 0 0114 0v1H3v-1z" /><path strokeLinecap="round" strokeLinejoin="round" d="M6 8V5H3m15 3V5h3" /></>}
-                                        {m.id === 'progress' && <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />}
-                                        {m.id === 'hostel' && <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />}
-                                        {m.id === 'transport' && <><path strokeLinecap="round" strokeLinejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 .001M13 16H9m4 0h5l1-5H13V7" /></>}
-                                        {m.id === 'health' && <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />}
-                                        {m.id === 'library' && <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />}
-                                    </svg>
-                                </span>
-                                {m.label}
-                            </a>
+                                <Link
+                                    to={m.href}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-[#633194] hover:bg-[#F4F0FF] transition-all"
+                                >
+                                    <span className={`${m.color}`} style={{ display: 'flex' }}>
+                                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                            {m.id === 'sports' && <><path strokeLinecap="round" strokeLinejoin="round" d="M8 21h8m-4-4v4m-7-9a7 7 0 0114 0v1H3v-1z" /><path strokeLinecap="round" strokeLinejoin="round" d="M6 8V5H3m15 3V5h3" /></>}
+                                            {m.id === 'progress' && <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />}
+                                            {m.id === 'hostel' && <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />}
+                                            {m.id === 'transport' && <><path strokeLinecap="round" strokeLinejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 .001M13 16H9m4 0h5l1-5H13V7" /></>}
+                                            {m.id === 'health' && <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />}
+                                            {m.id === 'library' && <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />}
+                                        </svg>
+                                    </span>
+                                    {m.label}
+                                </Link>
+                            </motion.div>
                         ))}
                     </nav>
 
                     {/* CTA buttons */}
                     <div className="flex items-center gap-2 flex-shrink-0">
-                        <a href="/login" className="hidden sm:block px-4 py-2 rounded-xl text-sm font-semibold text-[#633194] hover:bg-[#F4F0FF] transition-all">
+                        <Link to="/login" className="hidden sm:block px-4 py-2 rounded-xl text-sm font-semibold text-[#633194] hover:bg-[#F4F0FF] transition-all">
                             Login
-                        </a>
-                        <a
-                            href="/dashboard"
-                            className="px-4 py-2 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
-                            style={{ background: 'linear-gradient(135deg,#633194,#9b59b6)' }}
+                        </Link>
+                        <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                         >
-                            Get Started
-                        </a>
+                            <Link
+                                to="/dashboard"
+                                className="px-4 py-2 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-lg transition-all flex items-center"
+                                style={{ background: 'linear-gradient(135deg,#633194,#9b59b6)' }}
+                            >
+                                Get Started
+                            </Link>
+                        </motion.div>
                         {/* Mobile hamburger */}
                         <button className="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-500" onClick={() => setMenuOpen(!menuOpen)}>
                             {menuOpen ? Icon.close : Icon.menu}
@@ -242,22 +254,31 @@ export default function LandingPage() {
                                 ))}
                             </ul>
 
-                            {/* CTA Buttons */}
-                            <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
-                                <a
-                                    href="/dashboard"
-                                    className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-bold text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
-                                    style={{ background: 'linear-gradient(135deg,#633194,#9b59b6)' }}
-                                >
-                                    Enter Dashboard {Icon.arrow}
-                                </a>
-                                <a
-                                    href="#modules"
-                                    className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-bold text-[#633194] bg-white border-2 border-[#633194]/20 hover:border-[#633194] hover:bg-[#F4F0FF] transition-all"
-                                >
-                                    Explore Modules
-                                </a>
-                            </div>
+                            <motion.div 
+                                className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.6 }}
+                            >
+                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                    <Link
+                                        to="/dashboard"
+                                        className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-bold text-white shadow-lg hover:shadow-xl transition-all"
+                                        style={{ background: 'linear-gradient(135deg,#633194,#9b59b6)' }}
+                                    >
+                                        <span>Get Started Now</span>
+                                        {Icon.arrow}
+                                    </Link>
+                                </motion.div>
+                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                    <a
+                                        href="#modules"
+                                        className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-bold text-[#633194] bg-white border-2 border-[#633194]/20 hover:border-[#633194] hover:bg-[#F4F0FF] transition-all"
+                                    >
+                                        Explore Modules
+                                    </a>
+                                </motion.div>
+                            </motion.div>
                         </div>
 
                         {/* RIGHT — Visual hero */}
@@ -350,37 +371,44 @@ export default function LandingPage() {
 
                     {/* Module Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {MODULES.map(m => (
-                            <a
+                        {MODULES.map((m, idx) => (
+                            <motion.div
                                 key={m.id}
-                                href={m.href}
-                                onMouseEnter={() => setActiveModule(m.id)}
-                                onMouseLeave={() => setActiveModule(null)}
-                                className={`group relative bg-white rounded-3xl border ${m.border} p-6 flex flex-col gap-4 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden`}
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.1 * idx }}
                             >
-                                {/* Accent gradient on hover */}
-                                <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${m.accent} transition-all duration-300 ${activeModule === m.id ? 'h-1.5' : ''}`} />
+                                <Link
+                                    to={m.href}
+                                    onMouseEnter={() => setActiveModule(m.id)}
+                                    onMouseLeave={() => setActiveModule(null)}
+                                    className={`group relative h-full bg-white rounded-3xl border ${m.border} p-6 flex flex-col gap-4 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden`}
+                                >
+                                    {/* Accent gradient on hover */}
+                                    <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${m.accent} transition-all duration-300 ${activeModule === m.id ? 'h-1.5' : ''}`} />
 
-                                {/* Icon */}
-                                <div className={`h-13 w-13 rounded-2xl ${m.bg} flex items-center justify-center ${m.color} transition-transform group-hover:scale-110`} style={{ height: 52, width: 52 }}>
-                                    {m.icon}
-                                </div>
-
-                                {/* Content */}
-                                <div className="flex-1">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h3 className={`text-base font-bold text-gray-800 group-hover:${m.color} transition-colors`}>{m.label}</h3>
-                                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${m.bg} ${m.color} border ${m.border}`}>{m.stats}</span>
+                                    {/* Icon */}
+                                    <div className={`h-13 w-13 rounded-2xl ${m.bg} flex items-center justify-center ${m.color} transition-transform group-hover:scale-110`} style={{ height: 52, width: 52 }}>
+                                        {m.icon}
                                     </div>
-                                    <p className="text-sm text-gray-500 leading-relaxed">{m.desc}</p>
-                                </div>
 
-                                {/* Arrow link */}
-                                <div className={`flex items-center gap-1.5 text-xs font-bold ${m.color} transition-all group-hover:gap-2.5`}>
-                                    Open Module
-                                    <span className="group-hover:translate-x-1 transition-transform">{Icon.arrow}</span>
-                                </div>
-                            </a>
+                                    {/* Content */}
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h3 className={`text-base font-bold text-gray-800 group-hover:${m.color} transition-colors`}>{m.label}</h3>
+                                            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${m.bg} ${m.color} border ${m.border}`}>{m.stats}</span>
+                                        </div>
+                                        <p className="text-sm text-gray-500 leading-relaxed">{m.desc}</p>
+                                    </div>
+
+                                    {/* Arrow link */}
+                                    <div className={`flex items-center gap-1.5 text-xs font-bold ${m.color} transition-all group-hover:gap-2.5`}>
+                                        Open Module
+                                        <span className="group-hover:translate-x-1 transition-transform">{Icon.arrow}</span>
+                                    </div>
+                                </Link>
+                            </motion.div>
                         ))}
                     </div>
                 </div>

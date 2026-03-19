@@ -25,6 +25,7 @@ import {
     ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import ConfirmationModal from "../ui/ConfirmationModal";
+import { motion } from "framer-motion";
 
 interface DashboardLayoutProps {
     children?: React.ReactNode;
@@ -268,7 +269,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     );
 
     return (
-        <div className="flex h-screen bg-[#F9FAFB] font-sans">
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="flex h-screen bg-[#F9FAFB] font-sans"
+        >
             {/* Desktop Sidebar */}
             <aside className="hidden md:flex w-64 bg-white shadow-sm flex-col flex-shrink-0 border-r border-gray-100 z-10">
                 <SidebarContent />
@@ -506,7 +512,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 onCancel={() => setShowLogoutModal(false)}
                 isDestructive={true}
             />
-        </div>
+        </motion.div>
     );
 };
 

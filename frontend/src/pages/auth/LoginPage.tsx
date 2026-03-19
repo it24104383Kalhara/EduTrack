@@ -1,6 +1,7 @@
 import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../../utils/auth";
+import { motion } from "framer-motion";
 
 const LoginPage = () => {
     const [role, setRole] = useState("Coach");
@@ -15,7 +16,12 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex font-sans">
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="min-h-screen flex font-sans"
+        >
             {/* Left Panel – Branding */}
             <div
                 className="hidden lg:flex flex-col justify-between w-1/2 p-12 relative overflow-hidden"
@@ -143,7 +149,7 @@ const LoginPage = () => {
                     </form>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 

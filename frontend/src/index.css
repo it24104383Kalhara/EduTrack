@@ -10,6 +10,10 @@
     --color-brand-green: #E8F5E9;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     font-family: var(--font-sans);
     background-color: #F9FAFB;
