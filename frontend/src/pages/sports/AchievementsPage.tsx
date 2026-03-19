@@ -13,6 +13,7 @@ import ChartBarIcon from '@heroicons/react/24/outline/ChartBarIcon';
 import StarIcon from '@heroicons/react/24/solid/StarIcon';
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import DateTimePicker from '../../components/ui/DateTimePicker';
+import CustomSelect from '../../components/ui/CustomSelect';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -237,7 +238,8 @@ export default function AchievementsPage() {
 
     // Filters
     const [selectedActivityId, setSelectedActivityId] = useState<number | null>(null);
-    const [chartPeriod, setChartPeriod] = useState<'weekly' | 'monthly' | 'yearly'>('monthly');
+    const [chartPeriod, setChartPeriod] = useState<'weekly' | 'monthly' | 'yearly'>('weekly');
+    const [chartActivityId, setChartActivityId] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState<'matches' | 'leaderboard' | 'analytics'>('matches');
 
     // Match form
@@ -268,8 +270,8 @@ export default function AchievementsPage() {
         queryFn: () => achievementService.getLeaderboard(selectedActivityId ?? undefined),
     });
     const { data: timeSeries } = useQuery({
-        queryKey: ['timeseries', selectedActivityId, chartPeriod],
-        queryFn: () => achievementService.getTimeSeries(selectedActivityId ?? undefined, chartPeriod),
+        queryKey: ['timeseries', chartActivityId, chartPeriod],
+        queryFn: () => achievementService.getTimeSeries(chartActivityId ?? undefined, chartPeriod),
     });
 
     // Mutations
@@ -531,18 +533,34 @@ export default function AchievementsPage() {
                     </div>
 
                     {/* Chart card */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                        <div className="flex items-center justify-between mb-4">
+                    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                             <div>
-                                <h3 className="text-sm font-bold text-gray-700">Merit Points Over Time</h3>
-                                <p className="text-xs text-gray-400 mt-0.5">Cumulative points awarded across all students</p>
+                                <h3 className="text-base font-bold text-gray-800">Merit Points Over Time</h3>
+                                <p className="text-xs text-gray-400 mt-1">Cumulative points awarded across all students</p>
                             </div>
-                            <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
-                                {(['weekly', 'monthly', 'yearly'] as const).map(p => (
-                                    <button key={p} onClick={() => setChartPeriod(p)}
-                                        className={`px-3 py-1 rounded-md text-xs font-semibold transition-all capitalize ${chartPeriod === p ? 'bg-white text-[#633194] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                                    >{p}</button>
-                                ))}
+                            <div className="flex flex-col sm:flex-row items-center gap-3">
+                                {/* Activity Selection for Graph */}
+                                <div className="w-full sm:w-48">
+                                    <CustomSelect
+                                        value={chartActivityId ?? ''}
+                                        onChange={(v) => setChartActivityId(v ? parseInt(v as string) : null)}
+                                        placeholder="All Activities"
+                                        options={(activities ?? []).map(a => ({ value: a.id!, label: a.name }))}
+                                    />
+                                </div>
+                                {/* Period Selection for Graph */}
+                                <div className="w-full sm:w-36">
+                                    <CustomSelect
+                                        value={chartPeriod}
+                                        onChange={(v) => setChartPeriod(v as 'weekly' | 'monthly' | 'yearly')}
+                                        options={[
+                                            { value: 'weekly', label: 'Weekly' },
+                                            { value: 'monthly', label: 'Monthly' },
+                                            { value: 'yearly', label: 'Yearly' },
+                                        ]}
+                                    />
+                                </div>
                             </div>
                         </div>
                         <LineChart data={timeSeries ?? []} period={chartPeriod} />
