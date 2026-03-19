@@ -24,6 +24,8 @@ const STATUS_CONFIG: Record<AttendanceStatus, { label: string; icon: React.Eleme
 };
 const STATUS_ORDER: AttendanceStatus[] = ['Present', 'Absent', 'Late', 'Excused'];
 
+import { motion, AnimatePresence } from 'framer-motion';
+
 
 
 export default function AttendancePage() {
@@ -39,6 +41,7 @@ export default function AttendancePage() {
     const [newSession, setNewSession] = useState({ start_time: '', end_time: '' });
     const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, sessionId: number | null, dateStr: string}>({ isOpen: false, sessionId: null, dateStr: '' });
     const [saved, setSaved] = useState(false);
+    const [activePopover, setActivePopover] = useState<number | null>(null);
 
     // -- Data Fetching --
     const { data: activities } = useQuery({ queryKey: ['activities'], queryFn: activityService.getAll });
@@ -113,11 +116,12 @@ export default function AttendancePage() {
     });
 
     // -- Handlers --
-    const cycleStatus = (studentId: number) => {
-        const current = localStatus[studentId] || 'Absent';
-        const next = STATUS_ORDER[(STATUS_ORDER.indexOf(current) + 1) % STATUS_ORDER.length];
-        setLocalStatus((prev) => ({ ...prev, [studentId]: next }));
+
+
+    const setIndividualStatus = (studentId: number, status: AttendanceStatus) => {
+        setLocalStatus((prev) => ({ ...prev, [studentId]: status }));
         setSaved(false);
+        setActivePopover(null);
     };
 
     const setAllStatus = (status: AttendanceStatus) => {
@@ -268,18 +272,17 @@ export default function AttendancePage() {
                             const cfg = STATUS_CONFIG[s];
                             const count = Object.values(localStatus).filter((v) => v === s).length;
                             return (
-                                <button
+                                <div
                                     key={s}
-                                    onClick={() => setAllStatus(s)}
                                     className={clsx(
-                                        'rounded-2xl border p-4 text-center cursor-pointer hover:shadow-md transition-all group',
-                                        cfg.bg, cfg.border
+                                        'rounded-2xl border p-4 text-center transition-all bg-white relative overflow-hidden group',
+                                        cfg.border
                                     )}
-                                    title={`Mark all as ${s}`}
                                 >
-                                    <p className={clsx('text-3xl font-bold', cfg.color)}>{count}</p>
-                                    <p className="text-xs text-gray-500 font-medium mt-1">{cfg.label}</p>
-                                </button>
+                                    <div className={clsx('absolute top-0 right-0 h-16 w-16 -mr-8 -mt-8 opacity-5 rounded-full', cfg.bg.replace('bg-', 'bg-'))} style={{backgroundColor: 'currentColor'}} />
+                                    <p className={clsx('text-3xl font-black tracking-tight', cfg.color)}>{count}</p>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">{cfg.label}</p>
+                                </div>
                             );
                         })}
                     </div>
@@ -303,7 +306,7 @@ export default function AttendancePage() {
                                 }}
                             />
                         </div>
-                        <p className="text-xs text-gray-400 mt-2 text-right">Click a stat card above to mark all students at once</p>
+                        <p className="text-xs text-gray-400 mt-2 text-right">Progress is calculated based on current session markings</p>
                     </div>
 
                     {/* Quick-mark all buttons */}
@@ -327,7 +330,7 @@ export default function AttendancePage() {
                     </div>
 
                     {/* Students List */}
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                         {members.map((member, idx) => {
                             const status: AttendanceStatus = localStatus[member.student_id] || 'Absent';
                             const cfg = STATUS_CONFIG[status];
@@ -335,37 +338,83 @@ export default function AttendancePage() {
 
                             // Avatar letter fallback from index
                             const letter = String.fromCharCode(65 + (idx % 26));
+                            const isPopoverOpen = activePopover === member.student_id;
 
                             return (
                                 <div
                                     key={member.id}
-                                    onClick={() => cycleStatus(member.student_id)}
                                     className={clsx(
-                                        'flex items-center justify-between px-5 py-3.5 rounded-2xl border cursor-pointer select-none transition-all hover:shadow-sm',
-                                        cfg.bg, cfg.border
+                                        'relative flex items-center justify-between px-5 py-4 rounded-2xl border transition-all duration-300',
+                                        isPopoverOpen ? 'bg-white border-[#633194] shadow-lg ring-4 ring-[#633194]/5' : 'bg-white border-gray-100 hover:border-gray-300'
                                     )}
                                 >
                                     {/* Left: student info */}
                                     <div className="flex items-center gap-3">
                                         <div className={clsx(
-                                            'h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm border',
-                                            cfg.bg, cfg.color, cfg.border
+                                            'h-11 w-11 rounded-full flex items-center justify-center font-bold text-sm border-2 shadow-sm transition-colors',
+                                            isPopoverOpen ? 'bg-[#633194] text-white border-[#633194]' : `${cfg.bg} ${cfg.color} ${cfg.border}`
                                         )}>
                                             {letter}
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-800">Student #{member.student_id}</p>
-                                            <p className="text-xs text-gray-500">{member.role.replace('_', ' ')}</p>
+                                            <p className="text-[15px] font-bold text-gray-800">Student #{member.student_id}</p>
+                                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">{member.role.replace('-', ' ')}</p>
                                         </div>
                                     </div>
 
-                                    {/* Right: status pill */}
-                                    <div className={clsx(
-                                        'flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold',
-                                        cfg.color, cfg.bg, cfg.border
-                                    )}>
-                                        <Ico className="h-4 w-4" />
-                                        {cfg.label}
+                                    {/* Right: status and popover */}
+                                    <div className="relative">
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActivePopover(isPopoverOpen ? null : member.student_id);
+                                            }}
+                                            className={clsx(
+                                                'flex items-center gap-2 px-4 py-2 rounded-xl border text-[13px] font-bold transition-all shadow-sm active:scale-95',
+                                                cfg.color, cfg.bg, cfg.border,
+                                                'hover:shadow-md hover:-translate-y-0.5'
+                                            )}
+                                        >
+                                            <Ico className="h-4 w-4" />
+                                            {cfg.label}
+                                        </button>
+
+                                        <AnimatePresence>
+                                            {isPopoverOpen && (
+                                                <>
+                                                    {/* Backdrop for closing */}
+                                                    <div className="fixed inset-0 z-40" onClick={() => setActivePopover(null)} />
+                                                    
+                                                    {/* Popover Menu */}
+                                                    <motion.div
+                                                        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                        exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                                        className="absolute right-0 bottom-full mb-3 p-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 flex gap-2 min-w-[280px]"
+                                                    >
+                                                        {STATUS_ORDER.map((s) => {
+                                                            const scfg = STATUS_CONFIG[s];
+                                                            const SIco = scfg.icon;
+                                                            return (
+                                                                <button
+                                                                    key={s}
+                                                                    onClick={() => setIndividualStatus(member.student_id, s)}
+                                                                    className={clsx(
+                                                                        'flex-1 flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all',
+                                                                        status === s ? `${scfg.bg} ${scfg.color} ring-2 ring-offset-1 ${scfg.ring}` : 'hover:bg-gray-50 grayscale hover:grayscale-0 opacity-60 hover:opacity-100'
+                                                                    )}
+                                                                >
+                                                                    <SIco className="h-6 w-6" />
+                                                                    <span className="text-[10px] font-bold uppercase tracking-tight">{scfg.label}</span>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                        {/* Arrow */}
+                                                        <div className="absolute top-full right-6 -mt-1 w-3 h-3 bg-white border-b border-r border-gray-100 rotate-45" />
+                                                    </motion.div>
+                                                </>
+                                            )}
+                                        </AnimatePresence>
                                     </div>
                                 </div>
                             );
