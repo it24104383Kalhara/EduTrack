@@ -5,7 +5,6 @@ import {
     AcademicCapIcon, 
     BriefcaseIcon, 
     TrophyIcon, 
-    ChatBubbleLeftEllipsisIcon,
     CalendarDaysIcon,
     BellAlertIcon,
     DocumentTextIcon
@@ -148,7 +147,7 @@ export default function DashBoardPage() {
             </div>
 
             {/* Stats Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {/* Students Card */}
                 <div className="bg-[#E1F5FE] p-5 rounded-2xl flex items-center justify-between hover:shadow-md transition-all duration-300 group cursor-default">
                     <div>
@@ -179,17 +178,6 @@ export default function DashBoardPage() {
                     </div>
                     <div className="h-12 w-12 rounded-xl bg-white/70 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
                         <TrophyIcon className="h-7 w-7" />
-                    </div>
-                </div>
-
-                {/* Alerts Card */}
-                <div className="bg-[#E8F5E9] p-5 rounded-2xl flex items-center justify-between hover:shadow-md transition-all duration-300 group cursor-default">
-                    <div>
-                        <p className="text-sm font-medium text-green-600">New Messages</p>
-                        <p className="text-3xl font-bold text-gray-800 mt-1">24</p>
-                    </div>
-                    <div className="h-12 w-12 rounded-xl bg-white/70 flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform">
-                        <ChatBubbleLeftEllipsisIcon className="h-7 w-7" />
                     </div>
                 </div>
             </div>
