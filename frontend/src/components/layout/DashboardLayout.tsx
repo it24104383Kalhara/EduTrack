@@ -87,8 +87,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     const SidebarContent = () => (
         <div className="flex flex-col h-full">
             {/* Logo */}
-            <div className="px-6 py-5 flex items-center gap-3 border-b border-purple-100">
-                <div className="h-9 w-9 bg-[#633194] rounded-xl flex items-center justify-center shadow-md">
+            <Link to="/" className="px-6 py-5 flex items-center gap-3 border-b border-purple-100 hover:opacity-80 transition-all group">
+                <div className="h-9 w-9 bg-[#633194] rounded-xl flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
                     <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-white" stroke="currentColor" strokeWidth={2}>
                         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
@@ -97,7 +97,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                     <h1 className="text-lg font-bold text-[#633194] tracking-wide leading-none">EduTrack</h1>
                     <p className="text-[10px] text-purple-400 uppercase tracking-widest font-semibold">Management</p>
                 </div>
-            </div>
+            </Link>
 
             {/* Navigation */}
             <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">

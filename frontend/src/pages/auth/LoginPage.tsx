@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../../utils/auth";
 
@@ -28,8 +28,8 @@ const LoginPage = () => {
                     style={{ background: 'radial-gradient(circle, #fff 0%, transparent 70%)', transform: 'translate(-30%, 30%)' }} />
 
                 {/* Logo */}
-                <div className="flex items-center gap-3 relative z-10">
-                    <div className="h-10 w-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 shadow-lg">
+                <Link to="/" className="flex items-center gap-3 relative z-10 hover:opacity-80 transition-all group">
+                    <div className="h-10 w-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 shadow-lg group-hover:scale-105 transition-transform">
                         <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 text-white" stroke="currentColor" strokeWidth={2}>
                             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
@@ -38,7 +38,7 @@ const LoginPage = () => {
                         <span className="text-xl font-bold text-white tracking-wide">EduTrack</span>
                         <p className="text-xs text-white/70 uppercase tracking-widest font-semibold">Management</p>
                     </div>
-                </div>
+                </Link>
 
                 {/* Center content */}
                 <div className="relative z-10">
@@ -72,14 +72,14 @@ const LoginPage = () => {
             <div className="flex-1 flex items-center justify-center bg-[#F9FAFB] p-8">
                 <div className="w-full max-w-sm">
                     {/* Mobile logo */}
-                    <div className="flex items-center gap-2 mb-8 lg:hidden">
-                        <div className="h-9 w-9 bg-[#633194] rounded-xl flex items-center justify-center shadow-md">
+                    <Link to="/" className="flex items-center gap-2 mb-8 lg:hidden hover:opacity-80 transition-all group">
+                        <div className="h-9 w-9 bg-[#633194] rounded-xl flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
                             <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-white" stroke="currentColor" strokeWidth={2}>
                                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </div>
                         <span className="text-xl font-bold text-[#633194]">EduTrack</span>
-                    </div>
+                    </Link>
 
                     <div className="mb-8">
                         <h1 className="text-2xl font-bold text-gray-800">Welcome back 👋</h1>

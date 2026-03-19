@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 // ─── SVG Icons ───────────────────────────────────────────────────────────────
 const Icon = {
@@ -136,14 +137,14 @@ export default function LandingPage() {
             <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100' : 'bg-transparent'}`}>
                 <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
                     {/* Logo */}
-                    <a href="/" className="flex items-center gap-2.5 flex-shrink-0">
-                        <div className="h-9 w-9 rounded-xl flex items-center justify-center shadow-md" style={{ background: 'linear-gradient(135deg,#633194,#9b59b6)' }}>
+                    <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 hover:opacity-80 transition-all group">
+                        <div className="h-9 w-9 rounded-xl flex items-center justify-center shadow-md group-hover:scale-105 transition-transform" style={{ background: 'linear-gradient(135deg,#633194,#9b59b6)' }}>
                             <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-white" stroke="currentColor" strokeWidth={2}>
                                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </div>
                         <span className="text-lg font-bold text-[#633194]">EduTrack</span>
-                    </a>
+                    </Link>
 
                     {/* Desktop Module Links */}
                     <nav className="hidden lg:flex items-center gap-1">
