@@ -26,7 +26,7 @@ export default function PrincipalDashboard() {
     const [statusFilter,      setStatusFilter]      = useState('');
     const [selectedReport,    setSelectedReport]    = useState<AttendanceReport | null>(null);
     const [approveModal,      setApproveModal]      = useState(false);
-    const [teachersToNotify,  setTeachersToNotify]  = useState<{ id: string; grade: string; teacher: string }[]>([]);
+    const [teachersToNotify,  setTeachersToNotify]  = useState<{ id: string; grade: string; teacher: string; students: any[] }[]>([]);
 
     const { data: reports, isLoading } = useQuery({
         queryKey: ['allReports', statusFilter],
@@ -56,13 +56,31 @@ export default function PrincipalDashboard() {
         if (selectedReport?.report_details) {
             try {
                 const details = JSON.parse(selectedReport.report_details);
-                const map = new Map<string, { id: string; grade: string; teacher: string; students: any[] }>();
+                const map = new Map<string, { id: string; grades: Set<string>; teacher: string; students: any[] }>();
+                
                 details.forEach((d: any) => {
-                    const key = `${d.grade || 'Unknown'}-${d.class_teacher_name || 'Unknown'}`;
-                    if (!map.has(key)) map.set(key, { id: Math.random().toString(), grade: d.grade || 'Unknown', teacher: d.class_teacher_name || 'Unknown', students: [] });
-                    map.get(key)!.students.push(d);
+                    const teacherName = (d.class_teacher_name || 'Unknown Teacher').trim();
+                    const teacherKey = teacherName.toLowerCase();
+                    const grade = d.grade || 'Unknown';
+
+                    if (!map.has(teacherKey)) {
+                        map.set(teacherKey, { 
+                            id: Math.random().toString(), 
+                            grades: new Set([grade]), 
+                            teacher: teacherName, 
+                            students: [] 
+                        });
+                    }
+                    map.get(teacherKey)!.grades.add(grade);
+                    map.get(teacherKey)!.students.push(d);
                 });
-                extracted = Array.from(map.values());
+
+                extracted = Array.from(map.values()).map(entry => ({
+                    id: entry.id,
+                    grade: Array.from(entry.grades).sort().join(', '),
+                    teacher: entry.teacher,
+                    students: entry.students
+                }));
             } catch { /* ignore parse error */ }
         }
         if (extracted.length === 0) extracted = [{ id: Math.random().toString(), grade: 'All', teacher: 'Unknown Teacher', students: [] }];
@@ -71,24 +89,31 @@ export default function PrincipalDashboard() {
     };
 
     const handleConfirmApprove = async () => {
-        if (!selectedReport) return;
+        if (!selectedReport || reviewMutation.isPending) return;
         try {
             await reviewMutation.mutateAsync({ id: selectedReport.id, status: 'Approved' });
+            
             const dateStr = new Date(selectedReport.report_date).toLocaleDateString('en-US');
-            for (const t of teachersToNotify as any[]) {
-                const present = t.students?.filter((s: any) => s.status === 'Present') || [];
-                const list = present.length > 0
-                    ? present.map((s: any) => `• ${s.student_name || `ID: ${s.student_id}`}`).join('\n')
-                    : 'No attendance records';
-                const msg = `Please update class attendance for Grade ${t.grade} (${t.teacher}).\nActivity: ${selectedReport.activity_name}\nDate: ${dateStr}\n\nPresent Students:\n${list}`;
-                await reportService.notifyTeacher(selectedReport.id, 1, msg);
-            }
-            alert('Report approved and teacher notifications sent!');
+            
+            // Consolidate all students from the report
+            let details: any[] = [];
+            try { 
+                if (selectedReport.report_details) details = JSON.parse(selectedReport.report_details); 
+            } catch { /* empty */ }
+
+            const studentList = details.map((s: any) => 
+                `• ${s.student_name || `ID: ${s.student_id}`} (${s.grade || 'N/A'}): [${s.status}]`
+            ).join('\n');
+
+            const msg = `Attention: Attendance Report Approved\n\nActivity: ${selectedReport.activity_name}\nDate: ${dateStr}\n\nAll Student Statuses:\n${studentList}`;
+            
+            // Send exactly one notification for the whole activity
+            await reportService.notifyTeacher(selectedReport.id, 1, msg);
+            
+            setApproveModal(false);
         } catch (e: any) {
             console.error(e);
-            alert('An error occurred during the approval process.');
-        } finally {
-            setApproveModal(false);
+            alert('An error occurred during the approval process: ' + (e.response?.data?.error || e.message));
         }
     };
 
@@ -382,7 +407,7 @@ export default function PrincipalDashboard() {
                                                         onChange={e => setTeachersToNotify(prev =>
                                                             prev.map(x => x.id === t.id ? { ...x, teacher: e.target.value } : x)
                                                         )}
-                                                        className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all bg-transparent hover:bg-white focus:bg-white"
+                                                        className="w-full p-1 border border-gray-200 rounded-md text-gray-700 focus:ring-1 focus:ring-[#633194] focus:border-[#633194] outline-none"
                                                     />
                                                 </td>
                                             </tr>
@@ -392,13 +417,21 @@ export default function PrincipalDashboard() {
                             </div>
 
                             {/* Message preview */}
-                            <div className="bg-[#F4F0FF] border border-purple-200 rounded-xl p-4 text-xs text-gray-600 whitespace-pre-line leading-relaxed">
-                                <p className="font-bold text-[#633194] mb-1">Message Preview:</p>
-                                Please update class attendance for Grade [Grade] ([Teacher]).{'\n'}
-                                Activity: {selectedReport.activity_name}{'\n'}
-                                Date: {new Date(selectedReport.report_date).toLocaleDateString()}{'\n\n'}
-                                Present Students:{'\n'}• [Student Name]…
-                            </div>
+                             <div className="bg-[#F4F0FF] border border-purple-200 rounded-xl p-4 space-y-3">
+                                <p className="text-xs font-bold text-[#633194] uppercase tracking-wider">Message Preview (Single Alert)</p>
+                                <div className="bg-white/50 border border-purple-100 rounded-lg p-3 text-[11px] text-gray-600 whitespace-pre-line leading-relaxed shadow-sm">
+                                    <p className="font-bold text-[#633194] mb-1">To: Staff/Teacher In-Charge</p>
+                                    Attention: Attendance Report Approved{"\n"}
+                                    Activity: {selectedReport.activity_name}{"\n"}
+                                    Date: {new Date(selectedReport.report_date).toLocaleDateString()}{"\n\n"}
+                                    All Student Statuses:{"\n"}
+                                    {(() => {
+                                        let details: any[] = [];
+                                        try { if (selectedReport.report_details) details = JSON.parse(selectedReport.report_details); } catch { }
+                                        return details.map((s: any) => `• ${s.student_name || `ID: ${s.student_id}`} (${s.grade || 'N/A'}): [${s.status}]`).join('\n');
+                                    })()}
+                                </div>
+                             </div>
 
                             <div className="flex gap-3 pt-2 border-t border-gray-100">
                                 <button onClick={() => setApproveModal(false)}

@@ -14,7 +14,7 @@ import ConfirmationModal from '../../components/ui/ConfirmationModal';
 
 const ROLE_CONFIG: Record<string, { bg: string; text: string; border: string }> = {
     Captain: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
-    Vice_Captain: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+    'Vice-Captain': { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
     Secretary: { bg: 'bg-[#F4F0FF]', text: 'text-[#633194]', border: 'border-purple-200' },
     Member: { bg: 'bg-gray-100', text: 'text-gray-600', border: 'border-gray-200' },
 };
@@ -372,7 +372,7 @@ export default function ActivityMembersPage() {
                                     Activity Role
                                 </label>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {['Member', 'Captain', 'Vice_Captain', 'Secretary'].map(r => {
+                                    {['Member', 'Captain', 'Vice-Captain', 'Secretary'].map(r => {
                                         const cfg = ROLE_CONFIG[r] ?? ROLE_CONFIG['Member'];
                                         return (
                                             <button
@@ -384,7 +384,7 @@ export default function ActivityMembersPage() {
                                                     : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300'
                                                     }`}
                                             >
-                                                {r.replace('_', ' ')}
+                                                {r.replace('-', ' ')}
                                             </button>
                                         );
                                     })}
