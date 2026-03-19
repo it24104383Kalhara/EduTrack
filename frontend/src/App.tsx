@@ -11,6 +11,7 @@ import PrincipalDashboard from "./pages/sports/PrincipalDashboard";
 import TeacherNotificationsPage from "./pages/sports/TeacherNotificationsPage";
 import InventoryPage from "./pages/sports/InventoryPage";
 import AchievementsPage from "./pages/sports/AchievementsPage";
+import DashBoardPage from "./pages/DashBoardPage";
 import { ProtectedRoute } from "./utils/auth";
 import { useState } from "react";
 
@@ -27,7 +28,9 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardLayout />
+                <DashboardLayout>
+                   <DashBoardPage />
+                </DashboardLayout>
               </ProtectedRoute>
             }
           />
