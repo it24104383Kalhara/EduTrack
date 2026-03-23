@@ -4,13 +4,14 @@ import Dashboard from "./components/Dashboard";
 import StudentInfo from "./components/StudentInfo";
 import ViewStudents from "./components/ViewStudents";
 import ResetPassword from "./components/ResetPassword";
+import HeartRateMonitor from "./components/HeartRateMonitor"; // Add this import
 import "./App.css";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
   const [currentPage, setCurrentPage] = useState<
-    "dashboard" | "studentForm" | "viewStudents" | "resetPassword"
+    "dashboard" | "studentForm" | "viewStudents" | "resetPassword" | "heartRate" // Add heartRate
   >("dashboard");
 
   const handleLogout = () => {
@@ -55,12 +56,23 @@ function App() {
     );
   }
 
+  // Add this new section
+  if (currentPage === "heartRate") {
+    return (
+      <HeartRateMonitor
+        onLogout={handleLogout}
+        onBack={() => setCurrentPage("dashboard")}
+      />
+    );
+  }
+
   return (
     <Dashboard
       onLogout={handleLogout}
       onNavigateToStudentForm={() => setCurrentPage("studentForm")}
       onNavigateToViewStudents={() => setCurrentPage("viewStudents")}
       onNavigateToResetPassword={() => setCurrentPage("resetPassword")}
+      onNavigateToHeartRateMonitor={() => setCurrentPage("heartRate")} // Add this
     />
   );
 }
