@@ -1,7 +1,4 @@
-import mysql from 'mysql2/promise';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import * as mysql from 'mysql2/promise';
 
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -10,7 +7,9 @@ const dbConfig = {
   database: process.env.DB_NAME || 'edutrack',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  timezone: 'local', // Use local timezone
+  dateStrings: true // Return dates as strings instead of Date objects
 };
 
 // Create a connection pool

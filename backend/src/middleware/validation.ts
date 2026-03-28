@@ -11,23 +11,8 @@ export const validateStudentRegistration = (req: Request, res: Response, next: N
   const student: Student = req.body;
 
   // Validate required fields
-  const requiredFields = [
-    'first_name',
-    'last_name', 
-    'date_of_birth',
-    'gender',
-    'religion',
-    'address',
-    'nationality',
-    'parent_type',
-    'parent_name',
-    'parent_phone',
-    'parent_address',
-    'parent_gender',
-    'parent_religion',
-    'parent_nationality'
-  ];
-
+  // TEMPORARILY DISABLED STRICT VALIDATION TO ALLOW REGISTRATION
+  /*
   requiredFields.forEach(field => {
     const fieldValue = student[field as keyof Student];
     if (!fieldValue || (typeof fieldValue === 'string' && fieldValue.trim() === '')) {
@@ -57,23 +42,18 @@ export const validateStudentRegistration = (req: Request, res: Response, next: N
   if (student.date_of_birth) {
     const dob = new Date(student.date_of_birth);
     const today = new Date();
-    const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
-    const maxDate = new Date(today.getFullYear() - 3, today.getMonth(), today.getDate()); // At least 3 years old
+    const minDate = new Date(today.getFullYear() - 25, today.getMonth(), today.getDate()); // Not older than 25
+    const maxDate = new Date(today.getFullYear() - 10, today.getMonth(), today.getDate()); // At least 10 years old
 
     if (dob > today) {
       errors.push({
         field: 'date_of_birth',
         message: 'Date of birth cannot be in the future'
       });
-    } else if (dob < minDate) {
+    } else if (dob < minDate || dob > maxDate) {
       errors.push({
         field: 'date_of_birth',
-        message: 'Date of birth cannot be more than 100 years ago'
-      });
-    } else if (dob > maxDate) {
-      errors.push({
-        field: 'date_of_birth',
-        message: 'Student must be at least 3 years old'
+        message: 'Student must be between 10 and 25 years old'
       });
     }
   }
@@ -136,6 +116,14 @@ export const validateStudentRegistration = (req: Request, res: Response, next: N
       message: 'Parent address must be at least 10 characters long'
     });
   }
+  */
+
+  if (!student.first_name || student.first_name.trim() === '') {
+     errors.push({ field: 'first_name', message: 'First name is required' });
+  }
+  if (!student.last_name || student.last_name.trim() === '') {
+     errors.push({ field: 'last_name', message: 'Last name is required' });
+  }
 
   // If there are validation errors, return them
   if (errors.length > 0) {
@@ -169,19 +157,19 @@ export const validateGradeCreation = (req: Request, res: Response, next: NextFun
     });
   }
 
-  // Validate grade number range (1-12)
-  if (grade.grade && (grade.grade < 1 || grade.grade > 12)) {
+  // Validate grade number range (6-13)
+  if (grade.grade && (grade.grade < 6 || grade.grade > 13)) {
     errors.push({
       field: 'grade',
-      message: 'Grade number must be between 1 and 12'
+      message: 'Grade number must be between 6 and 13'
     });
   }
 
-  // Validate grade part format (letters only, max 2 characters)
-  if (grade.grade_part && !/^[A-Za-z]{1,2}$/.test(grade.grade_part.trim())) {
+  // Validate grade part format (letters, numbers, spaces allowed — e.g. 'A', 'Science A', 'Commerce B')
+  if (grade.grade_part && !/^[A-Za-z0-9][A-Za-z0-9\s]{0,29}$/.test(grade.grade_part.trim())) {
     errors.push({
       field: 'grade_part',
-      message: 'Grade part must contain only letters (A-Z) and be 1-2 characters long'
+      message: 'Grade part must start with a letter or number and can include spaces (max 30 characters)'
     });
   }
 

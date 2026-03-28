@@ -1,4 +1,5 @@
 import pool from '../config/database';
+import { SUBJECT_QUERIES } from './DatabaseQueries';
 
 export interface Subject {
   id: string;
@@ -7,6 +8,8 @@ export interface Subject {
   grades: string | string[];
   stream?: string | string[];
   type: '6-11' | '12-13';
+  category?: string;
+  is_optional?: boolean;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -17,60 +20,35 @@ export interface SubjectWithDetails extends Subject {
 }
 
 export class SubjectModel {
-  // Create subjects table
-  static async createTable(): Promise<void> {
-    const query = `
-      CREATE TABLE IF NOT EXISTS subjects (
-        id VARCHAR(50) PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        code VARCHAR(50) NOT NULL UNIQUE,
-        grades JSON NOT NULL,
-        stream JSON,
-        type ENUM('6-11', '12-13') NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_name (name),
-        INDEX idx_code (code),
-        INDEX idx_type (type)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `;
-    
-    try {
-      await pool.execute(query);
-      console.log('✅ Subjects table created or already exists');
-    } catch (error) {
-      console.error('❌ Error creating subjects table:', error);
-      throw error;
-    }
-  }
 
   // Get all subjects
   static async findAll(): Promise<SubjectWithDetails[]> {
-    const query = `
-      SELECT 
-        id,
-        name,
-        code,
-        grades,
-        stream,
-        type,
-        created_at,
-        updated_at
-      FROM subjects
-      ORDER BY 
-        type ASC,
-        name ASC
-    `;
-    
     try {
-      const [rows] = await pool.execute(query);
+      const [rows] = await pool.execute(SUBJECT_QUERIES.FIND_ALL);
       const subjects = rows as any[];
       
-      return subjects.map(subject => ({
-        ...subject,
-        grade_array: Array.isArray(subject.grades) ? subject.grades : JSON.parse(subject.grades || '[]'),
-        stream_array: subject.stream ? (Array.isArray(subject.stream) ? subject.stream : JSON.parse(subject.stream)) : undefined
-      }));
+      return subjects.map(subject => {
+        const parseField = (field: any) => {
+          if (!field) return [];
+          const parsed = Array.isArray(field) ? field : JSON.parse(field);
+          return (Array.isArray(parsed) ? parsed : [parsed]).flatMap(item => {
+            if (typeof item === 'string' && item.startsWith('[')) {
+              try { return JSON.parse(item); } catch { return item; }
+            }
+            return item;
+          });
+        };
+
+        const grades = parseField(subject.grades);
+        const stream = subject.stream ? parseField(subject.stream) : undefined;
+        return {
+          ...subject,
+          grades,
+          grade_array: grades,
+          stream,
+          stream_array: stream
+        };
+      });
     } catch (error) {
       console.error('🔴 [SUBJECT_FIND_ALL_ERROR]:', error);
       throw new Error('Failed to fetch all subjects');
@@ -79,22 +57,8 @@ export class SubjectModel {
 
   // Get subject by ID
   static async findById(id: string): Promise<SubjectWithDetails | null> {
-    const query = `
-      SELECT 
-        id,
-        name,
-        code,
-        grades,
-        stream,
-        type,
-        created_at,
-        updated_at
-      FROM subjects
-      WHERE id = ?
-    `;
-    
     try {
-      const [rows] = await pool.execute(query, [id]);
+      const [rows] = await pool.execute(SUBJECT_QUERIES.FIND_BY_ID, [id]);
       const subjects = rows as any[];
       
       if (subjects.length === 0) {
@@ -102,10 +66,26 @@ export class SubjectModel {
       }
       
       const subject = subjects[0];
+      const parseField = (field: any) => {
+        if (!field) return [];
+        const parsed = Array.isArray(field) ? field : JSON.parse(field);
+        return (Array.isArray(parsed) ? parsed : [parsed]).flatMap(item => {
+          if (typeof item === 'string' && item.startsWith('[')) {
+            try { return JSON.parse(item); } catch { return item; }
+          }
+          return item;
+        });
+      };
+
+      const grades = parseField(subject.grades);
+      const stream = subject.stream ? parseField(subject.stream) : undefined;
+      
       return {
         ...subject,
-        grade_array: Array.isArray(subject.grades) ? subject.grades : JSON.parse(subject.grades || '[]'),
-        stream_array: subject.stream ? (Array.isArray(subject.stream) ? subject.stream : JSON.parse(subject.stream)) : undefined
+        grades,
+        grade_array: grades,
+        stream,
+        stream_array: stream
       };
     } catch (error) {
       console.error('🔴 [SUBJECT_FIND_BY_ID_ERROR]:', error);
@@ -118,26 +98,23 @@ export class SubjectModel {
     const id = `SUBJ_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const gradesArray = Array.isArray(subject.grades) ? subject.grades : [subject.grades];
     
-    const query = `
-      INSERT INTO subjects (
-        id, name, code, grades, stream, type
-      ) VALUES (?, ?, ?, ?, ?, ?)
-    `;
-    
     try {
-      const [result] = await pool.execute(query, [
+      await pool.execute(SUBJECT_QUERIES.CREATE, [
         id,
         subject.name,
         subject.code,
         JSON.stringify(gradesArray),
         subject.stream ? JSON.stringify(Array.isArray(subject.stream) ? subject.stream : [subject.stream]) : null,
-        subject.type
+        subject.type,
+        subject.category || null,
+        subject.is_optional ? 1 : 0
       ]);
       
       return {
         id,
         ...subject,
-        grades: JSON.stringify(gradesArray),
+        grades: gradesArray,
+        stream: subject.stream ? (Array.isArray(subject.stream) ? subject.stream : [subject.stream]) : undefined,
         created_at: new Date(),
         updated_at: new Date()
       };
@@ -180,27 +157,29 @@ export class SubjectModel {
       fields.push('type = ?');
       values.push(updates.type);
     }
+
+    if (updates.category !== undefined) {
+      fields.push('category = ?');
+      values.push(updates.category);
+    }
+
+    if (updates.is_optional !== undefined) {
+      fields.push('is_optional = ?');
+      values.push(updates.is_optional ? 1 : 0);
+    }
     
     if (fields.length === 0) {
       throw new Error('No fields to update');
     }
     
-    const query = `
-      UPDATE subjects 
-      SET ${fields.join(', ')}
-      WHERE id = ?
-    `;
-    
+    const setClause = fields.join(', ');
     values.push(id);
     
     try {
-      const [result] = await pool.execute(query, values);
-      const affectedRows = (result as any).affectedRows;
-      
-      if (affectedRows === 0) {
+      const [result] = await pool.execute(SUBJECT_QUERIES.UPDATE(setClause), values);
+      if ((result as any).affectedRows === 0) {
         return null;
       }
-      
       return await this.findById(id);
     } catch (error) {
       console.error('🔴 [SUBJECT_UPDATE_ERROR]:', error);
@@ -213,12 +192,9 @@ export class SubjectModel {
 
   // Delete subject
   static async delete(id: string): Promise<boolean> {
-    const query = 'DELETE FROM subjects WHERE id = ?';
-    
     try {
-      const [result] = await pool.execute(query, [id]);
-      const affectedRows = (result as any).affectedRows;
-      return affectedRows > 0;
+      const [result] = await pool.execute(SUBJECT_QUERIES.DELETE, [id]);
+      return (result as any).affectedRows > 0;
     } catch (error) {
       console.error('🔴 [SUBJECT_DELETE_ERROR]:', error);
       throw new Error('Failed to delete subject');
@@ -227,22 +203,11 @@ export class SubjectModel {
 
   // Check if subject code exists
   static async findByCode(code: string, excludeId?: string): Promise<Subject | null> {
-    const query = `
-      SELECT id, name, code, grades, stream, type, created_at, updated_at
-      FROM subjects
-      WHERE code = ? ${excludeId ? 'AND id != ?' : ''}
-    `;
-    
     try {
       const params = excludeId ? [code, excludeId] : [code];
-      const [rows] = await pool.execute(query, params);
+      const [rows] = await pool.execute(SUBJECT_QUERIES.FIND_BY_CODE(!!excludeId), params);
       const subjects = rows as any[];
-      
-      if (subjects.length === 0) {
-        return null;
-      }
-      
-      return subjects[0];
+      return subjects.length > 0 ? subjects[0] : null;
     } catch (error) {
       console.error('🔴 [SUBJECT_FIND_BY_CODE_ERROR]:', error);
       throw new Error('Failed to check subject code');
@@ -256,18 +221,8 @@ export class SubjectModel {
     stream?: string, 
     excludeId?: string
   ): Promise<Subject | null> {
-    const query = `
-      SELECT id, name, code, grades, stream, type, created_at, updated_at
-      FROM subjects
-      WHERE LOWER(name) = LOWER(?)
-        AND JSON_CONTAINS(grades, ?)
-        ${stream ? 'AND JSON_CONTAINS(stream, ?)' : 'AND stream IS NULL'}
-        ${excludeId ? 'AND id != ?' : ''}
-    `;
-    
     try {
       let params: any[];
-      
       if (excludeId) {
         if (stream) {
           params = [name, JSON.stringify([grade]), JSON.stringify([stream]), excludeId];
@@ -282,14 +237,9 @@ export class SubjectModel {
         }
       }
       
-      const [rows] = await pool.execute(query, params);
+      const [rows] = await pool.execute(SUBJECT_QUERIES.FIND_DUPLICATE(!!stream, !!excludeId), params);
       const subjects = rows as any[];
-      
-      if (subjects.length === 0) {
-        return null;
-      }
-      
-      return subjects[0];
+      return subjects.length > 0 ? subjects[0] : null;
     } catch (error) {
       console.error('🔴 [SUBJECT_FIND_DUPLICATE_ERROR]:', error);
       throw new Error('Failed to check for duplicate subject');
@@ -298,23 +248,32 @@ export class SubjectModel {
 
   // Get subjects by type
   static async findByType(type: '6-11' | '12-13'): Promise<SubjectWithDetails[]> {
-    const query = `
-      SELECT 
-        id, name, code, grades, stream, type, created_at, updated_at
-      FROM subjects
-      WHERE type = ?
-      ORDER BY name ASC
-    `;
-    
     try {
-      const [rows] = await pool.execute(query, [type]);
+      const [rows] = await pool.execute(SUBJECT_QUERIES.FIND_BY_TYPE, [type]);
       const subjects = rows as any[];
       
-      return subjects.map(subject => ({
-        ...subject,
-        grade_array: Array.isArray(subject.grades) ? subject.grades : JSON.parse(subject.grades || '[]'),
-        stream_array: subject.stream ? (Array.isArray(subject.stream) ? subject.stream : JSON.parse(subject.stream)) : undefined
-      }));
+      return subjects.map(subject => {
+        const parseField = (field: any) => {
+          if (!field) return [];
+          const parsed = Array.isArray(field) ? field : JSON.parse(field);
+          return (Array.isArray(parsed) ? parsed : [parsed]).flatMap(item => {
+            if (typeof item === 'string' && item.startsWith('[')) {
+              try { return JSON.parse(item); } catch { return item; }
+            }
+            return item;
+          });
+        };
+
+        const grades = parseField(subject.grades);
+        const stream = subject.stream ? parseField(subject.stream) : undefined;
+        return {
+          ...subject,
+          grades,
+          grade_array: grades,
+          stream,
+          stream_array: stream
+        };
+      });
     } catch (error) {
       console.error('🔴 [SUBJECT_FIND_BY_TYPE_ERROR]:', error);
       throw new Error('Failed to fetch subjects by type');

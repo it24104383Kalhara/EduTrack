@@ -286,7 +286,7 @@ export class AttendanceApi {
   // ============================================================================
   static getDateRange(period: 'week' | 'month' | 'term'): { start_date: string; end_date: string } {
     const today = new Date();
-    let startDate = new Date();
+    const startDate = new Date();
 
     switch (period) {
       case 'week':

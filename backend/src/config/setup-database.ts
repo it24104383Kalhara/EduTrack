@@ -51,20 +51,104 @@ export const setupDatabase = async () => {
       CREATE TABLE IF NOT EXISTS grades (
         id INT AUTO_INCREMENT PRIMARY KEY,
         grade INT NOT NULL,
-        grade_part VARCHAR(10) NOT NULL,
+        grade_part VARCHAR(30) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         UNIQUE KEY unique_grade (grade, grade_part)
       )
     `);
     
-    // Create student_assignments table (junction table)
+    // Create subjects table
     await connection.execute(`
-      CREATE TABLE IF NOT EXISTS student_assignments (
+      CREATE TABLE IF NOT EXISTS subjects (
+        id VARCHAR(50) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        code VARCHAR(50) NOT NULL UNIQUE,
+        grades JSON NOT NULL,
+        stream JSON,
+        type ENUM('6-11', '12-13') NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_name (name),
+        INDEX idx_code (code),
+        INDEX idx_type (type)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    
+    // Create marks table
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS marks (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT NOT NULL,
+        subject_id VARCHAR(50) NOT NULL,
+        grade_id INT NOT NULL,
+        term VARCHAR(50) NOT NULL,
+        exam_type ENUM('first', 'second', 'third') NOT NULL,
+        marks_obtained DECIMAL(5,2) NOT NULL,
+        max_marks DECIMAL(5,2) NOT NULL,
+        percentage DECIMAL(5,2) GENERATED ALWAYS AS (marks_obtained / max_marks * 100) STORED,
+        grade_obtained ENUM('A', 'B', 'C', 'S', 'F') GENERATED ALWAYS AS (
+          CASE 
+            WHEN (marks_obtained / max_marks * 100) >= 75 THEN 'A'
+            WHEN (marks_obtained / max_marks * 100) >= 65 THEN 'B'
+            WHEN (marks_obtained / max_marks * 100) >= 55 THEN 'C'
+            WHEN (marks_obtained / max_marks * 100) >= 40 THEN 'S'
+            ELSE 'F'
+          END
+        ) STORED,
+        remarks TEXT,
+        exam_date DATE NOT NULL,
+        created_by VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+        FOREIGN KEY (grade_id) REFERENCES grades(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_mark (student_id, subject_id, grade_id, term, exam_type),
+        INDEX idx_student_id (student_id),
+        INDEX idx_subject_id (subject_id),
+        INDEX idx_grade_id (grade_id),
+        INDEX idx_term (term),
+        INDEX idx_exam_date (exam_date),
+        INDEX idx_percentage (percentage),
+        INDEX idx_grade_obtained (grade_obtained)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    
+    // Create email_logs table
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS email_logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        mark_id INT NOT NULL,
+        student_id INT NOT NULL,
+        parent_email VARCHAR(255) NOT NULL,
+        email_type ENUM('low_mark_alert') NOT NULL DEFAULT 'low_mark_alert',
+        status ENUM('sent', 'failed') NOT NULL,
+        error_message TEXT,
+        sent_at TIMESTAMP NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (mark_id) REFERENCES marks(id) ON DELETE CASCADE,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_email_log (mark_id, email_type),
+        INDEX idx_mark_id (mark_id),
+        INDEX idx_student_id (student_id),
+        INDEX idx_status (status),
+        INDEX idx_email_type (email_type),
+        INDEX idx_created_at (created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    
+    // Create student_assignment table (junction table)
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS student_assignment (
         id INT AUTO_INCREMENT PRIMARY KEY,
         grade_id INT NOT NULL,
         student_id INT NOT NULL,
+        student_name VARCHAR(255) NOT NULL,
+        grade INT NOT NULL,
+        section VARCHAR(50) NOT NULL,
         assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (grade_id) REFERENCES grades(id) ON DELETE CASCADE,
         FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
         UNIQUE KEY unique_assignment (grade_id, student_id)
@@ -72,7 +156,7 @@ export const setupDatabase = async () => {
     `);
     
     console.log('Database setup completed successfully!');
-    console.log('Tables created: students, grades, student_assignments');
+    console.log('Tables created: students, grades, subjects, marks, email_logs, student_assignment');
     
   } catch (error) {
     console.error('Database setup failed:', error);

@@ -1,8 +1,9 @@
 .App {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-color: #F9FAFB;
   padding: 0;
   margin: 0;
+  font-family: 'Inter', sans-serif;
 }
 
 * {
@@ -15,18 +16,18 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(30, 41, 59, 0.3);
+  background: rgba(30, 58, 138, 0.1);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.6) 0%, rgba(139, 92, 246, 0.6) 100%);
+  background: var(--primary-blue);
   border-radius: 3px;
   transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.8) 0%, rgba(139, 92, 246, 0.8) 100%);
+  background: var(--primary-dark-blue);
 }
 
 /* Navigation specific scrollbar */
@@ -35,16 +36,16 @@
 }
 
 .nav-scroll::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(30, 58, 138, 0.1);
   border-radius: 4px;
 }
 
 .nav-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: var(--primary-blue);
   border-radius: 4px;
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  border: 1px solid var(--border-light);
 }
 
 .nav-scroll::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+  background: var(--primary-dark-blue);
 }

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { AttendanceModel } from '../models/Attendance';
 import { GradeModel } from '../models/Grade';
+import { AuthRequest } from '../middleware/auth';
 
 // ============================================================================
 // ATTENDANCE API ROUTES
@@ -17,7 +18,7 @@ const router = Router();
 // PURPOSE: Mark attendance for multiple students in a grade
 // ACCESS: Public
 // ============================================================================
-router.post('/mark', async (req: Request, res: Response) => {
+router.post('/mark', async (req: AuthRequest, res: Response) => {
   try {
     const { grade_id, date, attendance_data, marked_by } = req.body;
     
@@ -51,6 +52,16 @@ router.post('/mark', async (req: Request, res: Response) => {
         success: false,
         message: 'Grade not found',
         error: `No grade with ID ${grade_id} exists`,
+        timestamp: new Date().toISOString(),
+        endpoint: '/mark'
+      });
+    }
+
+    // If teacher, verify they own this grade
+    if (req.user?.role === 'teacher' && grade.teacher_id !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: You are not assigned to this class.',
         timestamp: new Date().toISOString(),
         endpoint: '/mark'
       });
@@ -119,7 +130,7 @@ router.post('/mark', async (req: Request, res: Response) => {
 // PURPOSE: Get attendance for a specific grade and date
 // ACCESS: Public
 // ============================================================================
-router.get('/grade/:grade_id/date/:date', async (req: Request, res: Response) => {
+router.get('/grade/:grade_id/date/:date', async (req: AuthRequest, res: Response) => {
   try {
     const gradeId = parseInt(Array.isArray(req.params.grade_id) ? req.params.grade_id[0] : req.params.grade_id);
     const date = Array.isArray(req.params.date) ? req.params.date[0] : req.params.date;
@@ -154,6 +165,16 @@ router.get('/grade/:grade_id/date/:date', async (req: Request, res: Response) =>
         success: false,
         message: 'Grade not found',
         error: `No grade with ID ${gradeId} exists`,
+        timestamp: new Date().toISOString(),
+        endpoint: `/grade/${gradeId}/date/${date}`
+      });
+    }
+
+    // If teacher, verify they own this grade
+    if (req.user?.role === 'teacher' && grade.teacher_id !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: You are not assigned to this class.',
         timestamp: new Date().toISOString(),
         endpoint: `/grade/${gradeId}/date/${date}`
       });
@@ -200,7 +221,7 @@ router.get('/grade/:grade_id/date/:date', async (req: Request, res: Response) =>
 // PURPOSE: Get all attendance dates for a grade
 // ACCESS: Public
 // ============================================================================
-router.get('/grade/:grade_id/dates', async (req: Request, res: Response) => {
+router.get('/grade/:grade_id/dates', async (req: AuthRequest, res: Response) => {
   try {
     const gradeId = parseInt(Array.isArray(req.params.grade_id) ? req.params.grade_id[0] : req.params.grade_id);
     
@@ -222,6 +243,16 @@ router.get('/grade/:grade_id/dates', async (req: Request, res: Response) => {
         success: false,
         message: 'Grade not found',
         error: `No grade with ID ${gradeId} exists`,
+        timestamp: new Date().toISOString(),
+        endpoint: `/grade/${gradeId}/dates`
+      });
+    }
+
+    // If teacher, verify they own this grade
+    if (req.user?.role === 'teacher' && grade.teacher_id !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: You are not assigned to this class.',
         timestamp: new Date().toISOString(),
         endpoint: `/grade/${gradeId}/dates`
       });
@@ -339,7 +370,7 @@ router.get('/student/:student_id/report', async (req: Request, res: Response) =>
 // PURPOSE: Get attendance report for all students in a grade
 // ACCESS: Public
 // ============================================================================
-router.get('/grade/:grade_id/report', async (req: Request, res: Response) => {
+router.get('/grade/:grade_id/report', async (req: AuthRequest, res: Response) => {
   try {
     const gradeId = parseInt(Array.isArray(req.params.grade_id) ? req.params.grade_id[0] : req.params.grade_id);
     const { start_date, end_date } = req.query;
@@ -362,6 +393,16 @@ router.get('/grade/:grade_id/report', async (req: Request, res: Response) => {
         success: false,
         message: 'Grade not found',
         error: `No grade with ID ${gradeId} exists`,
+        timestamp: new Date().toISOString(),
+        endpoint: `/grade/${gradeId}/report`
+      });
+    }
+
+    // If teacher, verify they own this grade
+    if (req.user?.role === 'teacher' && grade.teacher_id !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: You are not assigned to this class.',
         timestamp: new Date().toISOString(),
         endpoint: `/grade/${gradeId}/report`
       });
@@ -432,7 +473,7 @@ router.get('/grade/:grade_id/report', async (req: Request, res: Response) => {
 // PURPOSE: Delete all attendance records for a grade on a specific date
 // ACCESS: Public
 // ============================================================================
-router.delete('/grade/:grade_id/date/:date', async (req: Request, res: Response) => {
+router.delete('/grade/:grade_id/date/:date', async (req: AuthRequest, res: Response) => {
   try {
     const gradeId = parseInt(Array.isArray(req.params.grade_id) ? req.params.grade_id[0] : req.params.grade_id);
     const date = Array.isArray(req.params.date) ? req.params.date[0] : req.params.date;
@@ -467,6 +508,16 @@ router.delete('/grade/:grade_id/date/:date', async (req: Request, res: Response)
         success: false,
         message: 'Grade not found',
         error: `No grade with ID ${gradeId} exists`,
+        timestamp: new Date().toISOString(),
+        endpoint: `/grade/${gradeId}/date/${date}`
+      });
+    }
+
+    // If teacher, verify they own this grade
+    if (req.user?.role === 'teacher' && grade.teacher_id !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: You are not assigned to this class.',
         timestamp: new Date().toISOString(),
         endpoint: `/grade/${gradeId}/date/${date}`
       });
@@ -534,6 +585,40 @@ router.get('/statistics', async (req: Request, res: Response) => {
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString(),
       endpoint: '/statistics'
+    });
+  }
+});
+
+// ============================================================================
+// ENDPOINT: GET /api/attendance/weekly-trends
+// PURPOSE: Get weekly attendance trends
+// ACCESS: Public
+// ============================================================================
+router.get('/weekly-trends', async (req: AuthRequest, res: Response) => {
+  try {
+    const userRole = req.user?.role;
+    const userId = req.user?.id;
+    
+    // If teacher, only fetch trends for their assigned class
+    const teacherId = userRole === 'teacher' ? userId : undefined;
+    const trends = await AttendanceModel.getWeeklyAttendanceTrends(teacherId);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Weekly attendance trends retrieved successfully',
+      data: trends,
+      timestamp: new Date().toISOString(),
+      endpoint: '/weekly-trends'
+    });
+    
+  } catch (error) {
+    console.error('🔴 [ATTENDANCE_WEEKLY_TRENDS_ERROR]:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get weekly attendance trends',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString(),
+      endpoint: '/weekly-trends'
     });
   }
 });

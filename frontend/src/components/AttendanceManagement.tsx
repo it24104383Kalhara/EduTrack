@@ -1,78 +1,63 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { gradeApi, studentApi, attendanceMarkApi } from '../services/api';
 import type { Grade, Student } from '../services/api';
+import './AttendanceManagement.css';
+import { isSchoolLeaveDay as checkIsLeaveDay } from '../utils/DateUtils';
+import { 
+  Search, 
+  Calendar, 
+  CheckCircle, 
+  XCircle, 
+  Clock, 
+  FileText, 
+  Users, 
+  ChevronRight, 
+  ArrowLeft, 
+  Download, 
+  Activity, 
+  AlertTriangle,
+  X,
+  Loader2,
+  BookOpen
+} from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 
 const AttendanceManagement: React.FC = () => {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showStudentsModal, setShowStudentsModal] = useState(false);
-  const [showReportsModal, setShowReportsModal] = useState(false);
+  const [activeView, setActiveView] = useState<'grades' | 'dateSelector' | 'markAttendance' | 'reports' | 'reportDetails' | 'leaveReport' | 'summaryReport'>('grades');
   const [selectedReportDate, setSelectedReportDate] = useState<string>('');
-  const [showDateStudents, setShowDateStudents] = useState(false);
   const [selectedGrade, setSelectedGrade] = useState<Grade | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toLocaleDateString('en-CA'));
-  const [showDateSelection, setShowDateSelection] = useState(false);
-  const [attendanceData, setAttendanceData] = useState<{[key: number]: 'present' | 'absent' | 'late' | 'not-marked'}>({});
+  const [attendanceData, setAttendanceData] = useState<{ [key: number]: 'present' | 'absent' | 'late' | 'not-marked' }>({});
   const [attendanceDates, setAttendanceDates] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [attendanceStats, setAttendanceStats] = useState<{ [studentId: number]: { present: number, total: number, percentage: number } }>({});
+  const [summaryStatsData, setSummaryStatsData] = useState<{ student: Student, present: number, absent: number, late: number, total: number, percentage: number }[]>([]);
+  const { showToast } = useToast();
 
   useEffect(() => {
     fetchGrades();
     fetchStudents();
   }, []);
 
-  // Load attendance data for a specific date
-  const loadAttendanceForDate = async (date: string) => {
-    if (!selectedGrade) return;
-    
-    try {
-      console.log('Loading attendance data for date:', date);
-      
-      const attendanceData = await attendanceMarkApi.getByGradeSectionDate(
-        selectedGrade.grade,
-        selectedGrade.grade_part,
-        date
-      );
-      
-      console.log('Loaded attendance data:', attendanceData);
-      
-      // Convert the database format to the component's expected format
-      const attendanceMap: {[key: number]: 'present' | 'absent' | 'late'} = {};
-      attendanceData.attendance.forEach(record => {
-        console.log(`Mapping student ${record.student_id} to status ${record.status}`);
-        attendanceMap[record.student_id] = record.status;
-      });
-      
-      console.log('Final attendance map:', attendanceMap);
-      setAttendanceData(attendanceMap);
-    } catch (error) {
-      console.error('Error loading attendance data:', error);
-      setAttendanceData({});
-    }
-  };
 
-  // Load attendance dates when a grade is selected for reports
-  useEffect(() => {
-    if (selectedGrade && showReportsModal) {
-      loadAttendanceDates();
-    }
-  }, [selectedGrade, showReportsModal]);
-
-  const loadAttendanceDates = async () => {
+  const loadAttendanceDates = useCallback(async () => {
     if (!selectedGrade) return;
-    
+
     try {
       console.log('Loading dates for grade:', selectedGrade.grade, '-', selectedGrade.grade_part);
-      
+
       // Get all attendance records and filter by grade
       const allAttendance = await attendanceMarkApi.getAllAttendance();
       console.log('All attendance records from API:', allAttendance);
-      
+
       // Filter dates for this specific grade and section
       const filteredRecords = allAttendance.attendance
         .filter(record => record.grade === selectedGrade.grade && record.section === selectedGrade.grade_part);
       console.log('Filtered records for grade', selectedGrade.grade, '-', selectedGrade.grade_part, ':', filteredRecords);
-      
+
       const gradeDates = filteredRecords
         .map(record => {
           const date = new Date(record.marked_date);
@@ -80,7 +65,7 @@ const AttendanceManagement: React.FC = () => {
         })
         .filter((date, index, self) => self.indexOf(date) === index) // Remove duplicates
         .sort((a, b) => new Date(b).getTime() - new Date(a).getTime()); // Sort by date descending
-      
+
       console.log('Final attendance dates to display:', gradeDates);
       console.log('Setting attendanceDates state to:', gradeDates);
       setAttendanceDates(gradeDates);
@@ -88,7 +73,14 @@ const AttendanceManagement: React.FC = () => {
       console.error('Error getting attendance dates:', error);
       setAttendanceDates([]);
     }
-  };
+  }, [selectedGrade]);
+
+  // Load attendance dates when a grade is selected for reports
+  useEffect(() => {
+    if (selectedGrade && activeView === 'reports') {
+      loadAttendanceDates();
+    }
+  }, [selectedGrade, activeView, loadAttendanceDates]);
 
   const fetchGrades = async () => {
     try {
@@ -115,10 +107,10 @@ const AttendanceManagement: React.FC = () => {
 
   const handleTakeAttendance = async (grade: Grade) => {
     setSelectedGrade(grade);
-    setShowDateSelection(true);
+    setActiveView('dateSelector');
     const today = new Date().toLocaleDateString('en-CA'); // Uses local timezone, format: YYYY-MM-DD
     setSelectedDate(today);
-    
+
     // Load existing attendance for today from database
     try {
       const attendanceData = await attendanceMarkApi.getByGradeSectionDate(
@@ -126,60 +118,104 @@ const AttendanceManagement: React.FC = () => {
         grade.grade_part,
         today
       );
-      
+
       // Convert to component format
-      const attendanceMap: {[key: number]: 'present' | 'absent' | 'late'} = {};
+      const attendanceMap: { [key: number]: 'present' | 'absent' | 'late' } = {};
       attendanceData.attendance.forEach(record => {
         attendanceMap[record.student_id] = record.status;
       });
-      
+
       setAttendanceData(attendanceMap);
-    } catch (error) {
+    } catch {
       console.log('No existing attendance for today, starting fresh');
       setAttendanceData({});
     }
+    setSearchTerm('');
   };
 
   const handleDateSelect = async () => {
-    setShowDateSelection(false);
-    
+    // Leave day check (Weekend or Public Holiday)
+    if (checkIsLeaveDay(selectedDate)) {
+      showToast("Selected date is a school holiday (weekend or public holiday). Attendance cannot be marked for this day.", "warning");
+      return;
+    }
+
+    // Calculate historical attendance stats
+    if (selectedGrade) {
+      try {
+        const allAtt = await attendanceMarkApi.getAllAttendance();
+        const records = allAtt.attendance.filter(r => r.grade === selectedGrade.grade && r.section === selectedGrade.grade_part && new Date(r.marked_date) <= new Date(selectedDate));
+
+        const uniqueDates = new Set(records.map(r => r.marked_date));
+        const totalDays = uniqueDates.size;
+
+        const statsMap: { [key: number]: { present: number, total: number, percentage: number } } = {};
+
+        records.forEach(r => {
+          if (!statsMap[r.student_id]) {
+            statsMap[r.student_id] = { present: 0, total: 0, percentage: 0 };
+          }
+          if (r.status === 'present' || r.status === 'late') {
+            statsMap[r.student_id].present += 1;
+          }
+        });
+
+        // Initialize missing students and calculate percentages
+        students.filter(s => selectedGrade.students?.some(gs => gs.id === s.id)).forEach(student => {
+          if (!statsMap[student.id]) {
+            statsMap[student.id] = { present: 0, total: totalDays, percentage: 0 };
+          } else {
+            statsMap[student.id].total = totalDays;
+            statsMap[student.id].percentage = totalDays > 0 ? Math.round((statsMap[student.id].present / totalDays) * 100) : 0;
+          }
+        });
+
+        setAttendanceStats(statsMap);
+      } catch (err) {
+        console.error('Error calculating historical stats', err);
+      }
+    }
+
+    setActiveView('markAttendance');
+
     // Load existing attendance for selected date from database
     if (selectedGrade) {
       try {
         console.log('Loading attendance for grade:', selectedGrade.grade, '-', selectedGrade.grade_part);
         console.log('Selected date:', selectedDate);
-        
+
         const attendanceData = await attendanceMarkApi.getByGradeSectionDate(
           selectedGrade.grade,
           selectedGrade.grade_part,
           selectedDate
         );
-        
+
         // Convert to component format
-        const attendanceMap: {[key: number]: 'present' | 'absent' | 'late'} = {};
+        const attendanceMap: { [key: number]: 'present' | 'absent' | 'late' } = {};
         attendanceData.attendance.forEach(record => {
           attendanceMap[record.student_id] = record.status;
         });
-        
+
         console.log('Found attendance data:', attendanceMap);
         setAttendanceData(attendanceMap);
-      } catch (error) {
+      } catch {
         console.log('No existing data, starting fresh');
         setAttendanceData({});
       }
     }
-    
-    setShowStudentsModal(true);
+
+    setActiveView('markAttendance');
   };
 
-  const closeStudentsModal = () => {
-    setShowStudentsModal(false);
+  const closeStudentsView = () => {
+    setActiveView('grades');
     setSelectedGrade(null);
     setAttendanceData({});
+    setSearchTerm('');
   };
 
   const closeDateSelection = () => {
-    setShowDateSelection(false);
+    setActiveView('grades');
     setSelectedGrade(null);
   };
 
@@ -192,7 +228,7 @@ const AttendanceManagement: React.FC = () => {
 
   const getGradeStudents = () => {
     if (!selectedGrade) return [];
-    return students.filter(student => 
+    return students.filter(student =>
       selectedGrade.students?.some(s => s.id === student.id)
     );
   };
@@ -201,16 +237,16 @@ const AttendanceManagement: React.FC = () => {
     console.log('Submitting attendance for grade:', selectedGrade?.grade, '-', selectedGrade?.grade_part);
     console.log('Date:', selectedDate);
     console.log('Attendance data to save:', attendanceData);
-    
+
     if (!selectedGrade) {
-      alert('No grade selected');
+      showToast('No grade selected', 'error');
       return;
     }
 
     try {
       // Prepare attendance records for bulk marking (exclude not-marked entries)
       const attendanceRecords = Object.entries(attendanceData)
-        .filter(([_studentId, status]) => status !== 'not-marked')
+        .filter(([, status]) => status !== 'not-marked')
         .map(([studentId, status]) => {
           const student = getGradeStudents().find(s => s.id === parseInt(studentId));
           return {
@@ -232,67 +268,37 @@ const AttendanceManagement: React.FC = () => {
       });
 
       console.log('Attendance marked successfully:', result);
-      
+
       // Clear local attendance data
       setAttendanceData({});
-      
-      alert(`Attendance submitted successfully! Marked ${result.marked_students} students.`);
-      closeStudentsModal();
+
+      showToast(`Attendance submitted successfully! Marked ${result.marked_students} students.`, 'success');
+      closeStudentsView();
     } catch (error) {
       console.error('Error submitting attendance:', error);
-      alert('Failed to submit attendance. Please try again.');
+      showToast('Failed to submit attendance. Please try again.', 'error');
     }
   };
 
   const handleViewReports = (grade: Grade) => {
-    console.log('Opening reports for grade:', grade);
     setSelectedGrade(grade);
-    setShowReportsModal(true);
+    setActiveView('reports');
     setSelectedReportDate('');
-    setShowDateStudents(false);
+    setSearchTerm('');
   };
 
-  const closeReportsModal = () => {
-    setShowReportsModal(false);
+  const closeReportsView = () => {
+    setActiveView('grades');
     setSelectedGrade(null);
     setSelectedReportDate('');
-    setShowDateStudents(false);
   };
 
-  
 
-  
-  const clearLocalStorage = () => {
-    // Clear any attendance-related local storage items
-    const keysToRemove = [
-      'attendanceData',
-      'selectedGrade',
-      'selectedDate', 
-      'attendanceDates',
-      'selectedReportDate',
-      'attendanceState'
-    ];
-    
-    keysToRemove.forEach(key => {
-      localStorage.removeItem(key);
-    });
-    
-    // Also clear any other items that might be attendance-related
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.includes('attendance') || key.includes('grade') || key.includes('student'))) {
-        localStorage.removeItem(key);
-      }
-    }
-    
-    console.log('Local storage cleared for attendance management');
-    alert('Local storage cleared successfully!');
-  };
 
 
   const downloadSingleDatePDF = async (date: string) => {
     if (!selectedGrade) return;
-    
+
     try {
       // Get attendance data for the specific date
       const attendanceData = await attendanceMarkApi.getByGradeSectionDate(
@@ -300,17 +306,17 @@ const AttendanceManagement: React.FC = () => {
         selectedGrade.grade_part,
         date
       );
-      
+
       // Get all students for this grade
       const students = getGradeStudents();
-      
+
       // Convert the database format to the component's expected format
-      const attendanceMap: {[key: number]: 'present' | 'absent' | 'late' | 'not-marked'} = {};
+      const attendanceMap: { [key: number]: 'present' | 'absent' | 'late' | 'not-marked' } = {};
       attendanceData.attendance.forEach(record => {
         attendanceMap[record.student_id] = record.status;
       });
-      
-      // Generate PDF content for this specific date
+
+      // Generate premium PDF content for this specific date
       let pdfContent = `
         <!DOCTYPE html>
         <html>
@@ -318,376 +324,134 @@ const AttendanceManagement: React.FC = () => {
             <meta charset="UTF-8">
             <title>Attendance Sheet - Grade ${selectedGrade.grade}-${selectedGrade.grade_part} - ${date}</title>
             <style>
-              @page {
-                margin: 0;
-                padding: 0;
-                size: A4;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              @media print {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              body { 
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                margin: 0; 
-                padding: 30px;
-                background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
-                color: #1f2937;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .header {
-                text-align: center;
-                margin-bottom: 40px;
-                padding: 25px;
-                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
-                border-radius: 12px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .header h1 {
-                color: white !important;
-                font-size: 28px;
-                margin: 0 0 10px 0;
-                font-weight: 300;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .header p {
-                color: rgba(255, 255, 255, 0.9) !important;
-                font-size: 16px;
-                margin: 0;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .content {
-                background: white;
-                border-radius: 12px;
-                padding: 30px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .stats {
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                gap: 10px;
-                margin-bottom: 20px;
-              }
-              .stat-card {
-                text-align: center;
-                padding: 12px;
-                border-radius: 8px;
-                border-left: 4px solid;
-                transition: all 0.3s ease;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-              }
-              .stat-card:hover {
-                transform: translateY(-3px) scale(1.02);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-              }
-              .stat-card.present {
-                background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-                border-color: #059669;
-                border-left: 4px solid #10b981;
-                color: white !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .stat-card.absent {
-                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-                border-color: #dc2626;
-                border-left: 4px solid #ef4444;
-                color: white !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .stat-card.late {
-                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-                border-color: #d97706;
-                border-left: 4px solid #f59e0b;
-                color: white !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .stat-card.not-marked {
-                background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
-                border-color: #4b5563;
-                border-left: 4px solid #6b7280;
-                color: white !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .stat-number {
-                font-size: 24px;
-                font-weight: 700;
-                margin-bottom: 4px;
-                color: white !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .stat-label {
-                font-size: 12px;
-                font-weight: 500;
-                color: rgba(255, 255, 255, 0.9) !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              table {
-                width: 100%;
-                border-collapse: separate;
-                border-spacing: 0;
-                margin-top: 25px;
-                background: white;
-                border-radius: 12px;
-                overflow: hidden;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-                border: 2px solid #e5e7eb;
-              }
-              th {
-                background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
-                color: white !important;
-                padding: 16px 12px;
-                text-align: center;
-                font-weight: 700;
-                font-size: 14px;
-                border: none;
-                position: sticky;
-                top: 0;
-                z-index: 10;
-                border-bottom: 3px solid #4f46e5;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              td {
-                padding: 14px 12px;
-                font-size: 13px;
-                position: relative;
-                border-bottom: 1px solid #e5e7eb;
-                border-right: 1px solid #e5e7eb;
-                vertical-align: middle;
-                text-align: center;
-              }
-              td:first-child {
-                text-align: center;
-                font-weight: 700;
-                background: #f8fafc !important;
-                color: #4f46e5 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              td:nth-child(2) {
-                text-align: left;
-                font-weight: 600;
-                color: #1f2937 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              td:nth-child(3) {
-                text-align: center;
-              }
-              td:nth-child(4) {
-                text-align: left;
-                color: #6b7280 !important;
-                font-size: 12px;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              tr:nth-child(even) {
-                background: #f9fafb;
-              }
-              tr:nth-child(odd) {
-                background: white;
-              }
-              tr:hover {
-                background: #f0f9ff;
-                transform: scale(1.005);
-                transition: all 0.2s ease;
-                box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1);
-              }
-              tr:hover td {
-                border-bottom-color: #4f46e5;
-                border-right-color: #4f46e5;
-              }
-              .present {
-                background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-                color: white !important;
-                font-weight: 700;
-                border-radius: 6px;
-                padding: 6px 12px;
-                display: inline-block;
-                min-width: 70px;
-                font-size: 11px;
-                text-align: center;
-                box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .absent {
-                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-                color: white !important;
-                font-weight: 700;
-                border-radius: 6px;
-                padding: 6px 12px;
-                display: inline-block;
-                min-width: 70px;
-                font-size: 11px;
-                text-align: center;
-                box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .late {
-                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-                color: white !important;
-                font-weight: 700;
-                border-radius: 6px;
-                padding: 6px 12px;
-                display: inline-block;
-                min-width: 70px;
-                font-size: 11px;
-                text-align: center;
-                box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .not-marked {
-                background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
-                color: white !important;
-                font-weight: 700;
-                border-radius: 6px;
-                padding: 6px 12px;
-                display: inline-block;
-                min-width: 70px;
-                font-size: 11px;
-                text-align: center;
-                box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .footer {
-                margin-top: 40px;
-                text-align: center;
-                color: #6b7280;
-                font-size: 12px;
-                padding: 20px;
-                background: #f9fafb;
-                border-radius: 8px;
-              }
+              @page { margin: 0.5in; size: A4; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              * { box-sizing: border-box; }
+              body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 28px; background: #F8F7FF; color: #1e1b4b; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; border-radius: 20px; padding: 28px 32px; margin-bottom: 28px; display: flex; align-items: center; justify-content: space-between; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .header-left { display: flex; align-items: center; gap: 16px; }
+              .header-logo { width: 56px; height: 56px; background: rgba(255,255,255,0.18) !important; border-radius: 14px; display: flex; align-items: center; justify-content: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header h1 { color: white !important; font-size: 26px; margin: 0 0 4px; font-weight: 800; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-sub { color: rgba(255,255,255,0.8) !important; font-size: 14px; margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-right { text-align: right; }
+              .header-chip { background: rgba(255,255,255,0.18) !important; color: white !important; border-radius: 10px; padding: 6px 14px; font-size: 13px; font-weight: 700; margin-bottom: 6px; display: inline-block; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-date { color: rgba(255,255,255,0.7) !important; font-size: 12px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+              .stat-card { padding: 16px; border-radius: 14px; text-align: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .stat-card.present { background: #D1FAE5 !important; border: 2px solid #6EE7B7; }
+              .stat-card.absent { background: #FEE2E2 !important; border: 2px solid #FCA5A5; }
+              .stat-card.late { background: #FEF3C7 !important; border: 2px solid #FCD34D; }
+              .stat-card.not-marked { background: #F1F5F9 !important; border: 2px solid #CBD5E1; }
+              .stat-number { font-size: 32px; font-weight: 900; margin-bottom: 4px; }
+              .stat-card.present .stat-number { color: #059669 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .stat-card.absent .stat-number { color: #DC2626 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .stat-card.late .stat-number { color: #D97706 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .stat-card.not-marked .stat-number { color: #475569 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .stat-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #475569 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .section-label { font-size: 13px; font-weight: 800; color: #633194 !important; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; padding-left: 4px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              table { width: 100%; border-collapse: collapse; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 12px rgba(99,49,148,0.08); background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              th { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; color: white !important; padding: 14px 12px; text-align: left; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              td { padding: 13px 12px; font-size: 13px; border-bottom: 1px solid #EDE9FE; vertical-align: middle; color: #1E293B !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              tr:nth-child(even) td { background: #FAFAFA !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .student-id { font-weight: 700; color: #633194 !important; text-align: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .student-name { font-weight: 700; color: #1e1b4b !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .student-overall { font-size: 10px; color: #64748B !important; margin-top: 2px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .badge { font-weight: 800; border-radius: 7px; padding: 5px 12px; display: inline-block; font-size: 11px; text-align: center; text-transform: uppercase; letter-spacing: 0.04em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .present { background: #D1FAE5 !important; color: #065F46 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .absent { background: #FEE2E2 !important; color: #991B1B !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .late { background: #FEF3C7 !important; color: #92400E !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .not-marked { background: #F1F5F9 !important; color: #475569 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .footer { margin-top: 32px; text-align: center; border-top: 1px solid #EDE9FE; padding-top: 16px; font-size: 11px; color: #94A3B8 !important; -webkit-print-color-adjust: exact !important; print-color-assist: exact !important; }
+              .footer strong { color: #633194 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             </style>
           </head>
           <body>
             <div class="header">
-              <h1>📊 Attendance Sheet</h1>
-              <p>Grade: ${selectedGrade.grade}-${selectedGrade.grade_part} | Date: ${date}</p>
-            </div>
-            
-            <div class="content">
-              <!-- Statistics Summary -->
-              <div class="stats">
-                <div class="stat-card present">
-                  <div class="stat-number">${students.filter(s => attendanceMap[s.id] === 'present').length}</div>
-                  <div class="stat-label">✅ Present</div>
+              <div class="header-left">
+                <div class="header-logo">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
                 </div>
-                <div class="stat-card absent">
-                  <div class="stat-number">${students.filter(s => attendanceMap[s.id] === 'absent').length}</div>
-                  <div class="stat-label">❌ Absent</div>
-                </div>
-                <div class="stat-card late">
-                  <div class="stat-number">${students.filter(s => attendanceMap[s.id] === 'late').length}</div>
-                  <div class="stat-label">⏰ Late</div>
-                </div>
-                <div class="stat-card not-marked">
-                  <div class="stat-number">${students.filter(s => !attendanceMap[s.id]).length}</div>
-                  <div class="stat-label">⏸️ Not Marked</div>
+                <div>
+                  <h1>EduTrack</h1>
+                  <p class="header-sub">Attendance Sheet — Daily Report</p>
                 </div>
               </div>
-              
-              <!-- Attendance Details Table -->
-              <table>
-                <thead>
-                  <tr>
-                    <th style="width: 10%; text-align: center;">Student ID</th>
-                    <th style="width: 40%;">Student Name</th>
-                    <th style="width: 15%; text-align: center;">Status</th>
-                    <th style="width: 35%;">Parent Phone</th>
-                  </tr>
-                </thead>
-                <tbody>
-        `;
-      
+              <div class="header-right">
+                <div class="header-chip">Grade ${selectedGrade.grade}-${selectedGrade.grade_part}</div>
+                <div class="header-date">📅 ${date}</div>
+              </div>
+            </div>
+
+            <div class="stats">
+              <div class="stat-card present"><div class="stat-number">${students.filter(s => attendanceMap[s.id] === 'present').length}</div><div class="stat-label">Present</div></div>
+              <div class="stat-card absent"><div class="stat-number">${students.filter(s => attendanceMap[s.id] === 'absent').length}</div><div class="stat-label">Absent</div></div>
+              <div class="stat-card late"><div class="stat-number">${students.filter(s => attendanceMap[s.id] === 'late').length}</div><div class="stat-label">Late</div></div>
+              <div class="stat-card not-marked"><div class="stat-number">${students.filter(s => !attendanceMap[s.id]).length}</div><div class="stat-label">Not Marked</div></div>
+            </div>
+
+            <div class="section-label">Attendance Record</div>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:10%; text-align:center;">#</th>
+                  <th style="width:55%;">Student Name</th>
+                  <th style="width:20%; text-align:center;">Status</th>
+                  <th style="width:15%; text-align:center;">Attendance %</th>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+
+      // Calculate historical attendance stats for Single PDF
+      let attendanceStats: any = null;
+      try {
+        const allAtt = await attendanceMarkApi.getAllAttendance();
+        const records = allAtt.attendance.filter(r => r.grade === selectedGrade.grade && r.section === selectedGrade.grade_part && new Date(r.marked_date) <= new Date(date));
+        const totalDays = new Set(records.map(r => r.marked_date)).size;
+        attendanceStats = {};
+        records.forEach(r => {
+          if (!attendanceStats[r.student_id]) attendanceStats[r.student_id] = { present: 0, total: totalDays, percentage: 0 };
+          if (r.status === 'present' || r.status === 'late') attendanceStats[r.student_id].present += 1;
+        });
+        students.forEach(s => {
+          if (!attendanceStats[s.id]) attendanceStats[s.id] = { present: 0, total: totalDays, percentage: 0 };
+          else attendanceStats[s.id].percentage = totalDays > 0 ? Math.round((attendanceStats[s.id].present / totalDays) * 100) : 0;
+        });
+      } catch (e) { console.error(e); }
+
       students.forEach(student => {
         const status = attendanceMap[student.id] || 'not-marked';
-        const statusClass = status === 'present' ? 'present' : 
-                          status === 'absent' ? 'absent' : 
-                          status === 'late' ? 'late' : 'not-marked';
-        const statusText = status === 'present' ? '✅ Present' : 
-                         status === 'absent' ? '❌ Absent' : 
-                         status === 'late' ? '⏰ Late' : '⏸️ Not Marked';
-        
+        const statusText = status === 'present' ? 'Present' : status === 'absent' ? 'Absent' : status === 'late' ? 'Late' : 'Not Marked';
+        const pct = attendanceStats && attendanceStats[student.id] ? attendanceStats[student.id].percentage : null;
+        const pctColor = pct !== null ? (pct >= 75 ? '#059669' : pct >= 50 ? '#D97706' : '#DC2626') : '#94A3B8';
         pdfContent += `
-                  <tr>
-                    <td style="text-align: center; font-weight: 600;">${student.id}</td>
-                    <td>${student.first_name} ${student.last_name}</td>
-                    <td style="text-align: center;"><span class="${statusClass}">${statusText}</span></td>
-                    <td style="color: #6b7280;">📱 ${student.parent_phone}</td>
-                  </tr>
+              <tr>
+                <td class="student-id">${student.id}</td>
+                <td>
+                  <div class="student-name">${student.first_name} ${student.last_name}</div>
+                  ${pct !== null ? `<div class="student-overall">Overall: <b style="color: ${pctColor};">${pct}%</b></div>` : ''}
+                </td>
+                <td style="text-align:center;"><span class="badge ${status}">${statusText}</span></td>
+                <td style="text-align:center; font-weight: 700; color: ${pctColor};">${pct !== null ? pct + '%' : '—'}</td>
+              </tr>
         `;
       });
-      
+
       pdfContent += `
-                </tbody>
-              </table>
-            </div>
-            
-            <div class="footer">
-              <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
-              <p>© 2026 EduTrack Student Management System</p>
-            </div>
-          </body>
+            </tbody>
+          </table>
+          <div class="footer">
+            <strong>EduTrack</strong> — Student Management System &nbsp;|&nbsp; Generated: ${new Date().toLocaleString()}
+          </div>
+        </body>
         </html>
       `;
-      
+
       // Create and download PDF for this date
       const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(pdfContent);
         printWindow.document.close();
-        
+
         // Wait a moment before printing to ensure content is loaded
         setTimeout(() => {
           printWindow.print();
@@ -697,10 +461,10 @@ const AttendanceManagement: React.FC = () => {
           }, 1000);
         }, 500);
       }
-      
+
     } catch (error) {
       console.error(`Error generating PDF for ${date}:`, error);
-      alert(`Failed to generate PDF for ${date}. Please try again.`);
+      showToast(`Failed to generate PDF for ${date}. Please try again.`, 'error');
     }
   };
 
@@ -709,18 +473,18 @@ const AttendanceManagement: React.FC = () => {
       console.log('downloadCompleteAttendancePDF: No selectedGrade, returning.');
       return;
     }
-    
+
     try {
       console.log('downloadCompleteAttendancePDF: selectedGrade', selectedGrade);
       // Use the same method as loadAttendanceDates to get all dates for this grade
       const allAttendance = await attendanceMarkApi.getAllAttendance();
       console.log('downloadCompleteAttendancePDF: allAttendance', allAttendance);
-      
+
       // Filter dates for this specific grade and section
       const filteredRecords = allAttendance.attendance
         .filter(record => record.grade === selectedGrade.grade && record.section === selectedGrade.grade_part);
       console.log('downloadCompleteAttendancePDF: filteredRecords', filteredRecords);
-      
+
       const attendanceDates = filteredRecords
         .map(record => {
           const date = new Date(record.marked_date);
@@ -729,17 +493,17 @@ const AttendanceManagement: React.FC = () => {
         .filter((date, index, self) => self.indexOf(date) === index) // Remove duplicates
         .sort((a, b) => new Date(a).getTime() - new Date(b).getTime()); // Sort by date ascending
       console.log('downloadCompleteAttendancePDF: attendanceDates', attendanceDates);
-      
+
       if (attendanceDates.length === 0) {
-        alert('No attendance data found for this grade');
+        showToast('No attendance data found for this grade', 'warning');
         return;
       }
-      
+
       // Get all students for this grade
       const students = getGradeStudents();
-      
+
       // Fetch attendance data for each date using the same API as loadAttendanceForDate
-      const allAttendanceData: {[key: string]: {[key: number]: 'present' | 'absent' | 'late' | 'not-marked'}} = {};
+      const allAttendanceData: { [key: string]: { [key: number]: 'present' | 'absent' | 'late' | 'not-marked' } } = {};
       for (const date of attendanceDates) {
         try {
           const attendanceData = await attendanceMarkApi.getByGradeSectionDate(
@@ -747,9 +511,9 @@ const AttendanceManagement: React.FC = () => {
             selectedGrade.grade_part,
             date
           );
-          
+
           // Convert the database format to the component's expected format
-          const attendanceMap: {[key: number]: 'present' | 'absent' | 'late' | 'not-marked'} = {};
+          const attendanceMap: { [key: number]: 'present' | 'absent' | 'late' | 'not-marked' } = {};
           attendanceData.attendance.forEach(record => {
             attendanceMap[record.student_id] = record.status;
           });
@@ -758,8 +522,8 @@ const AttendanceManagement: React.FC = () => {
           console.error(`Error fetching attendance for ${date}:`, error);
         }
       }
-      
-      // Generate PDF content
+
+      // Generate premium Complete PDF content
       let pdfContent = `
         <!DOCTYPE html>
         <html>
@@ -767,304 +531,126 @@ const AttendanceManagement: React.FC = () => {
             <meta charset="UTF-8">
             <title>Complete Attendance Report - Grade ${selectedGrade.grade}-${selectedGrade.grade_part}</title>
             <style>
-              @page {
-                margin: 0.5in;
-                size: A4;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              @media print {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              body { 
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                margin: 0; 
-                padding: 20px;
-                background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
-                color: #1f2937;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .header {
-                text-align: center;
-                margin-bottom: 20px;
-                padding: 12px 15px;
-                background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #7c3aed 100%) !important;
-                border-radius: 12px;
-                box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
-                position: relative;
-                overflow: hidden;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .header::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.15"/><circle cx="10" cy="50" r="0.5" fill="white" opacity="0.15"/><circle cx="90" cy="30" r="0.5" fill="white" opacity="0.15"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-                pointer-events: none;
-              }
-              .header-content {
-                position: relative;
-                z-index: 1;
-              }
-              .header h1 {
-                color: white !important;
-                font-size: 24px;
-                margin: 0 0 8px 0;
-                font-weight: 700;
-                text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-                letter-spacing: 0.5px;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .header-subtitle {
-                color: rgba(255, 255, 255, 0.95) !important;
-                font-size: 16px;
-                margin: 0 0 8px 0;
-                font-weight: 500;
-                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .header-meta {
-                display: flex;
-                justify-content: center;
-                gap: 15px;
-                margin-top: 8px;
-                flex-wrap: wrap;
-              }
-              .meta-item {
-                background: rgba(255, 255, 255, 0.15);
-                padding: 4px 10px;
-                border-radius: 12px;
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .meta-label {
-                color: rgba(255, 255, 255, 0.8) !important;
-                font-size: 10px;
-                font-weight: 500;
-                text-transform: uppercase;
-                letter-spacing: 0.4px;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .meta-value {
-                color: white !important;
-                font-size: 13px;
-                font-weight: 700;
-                margin-top: 1px;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .header-badge {
-                display: inline-block;
-                background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-                color: white !important;
-                padding: 3px 10px;
-                border-radius: 12px;
-                font-size: 11px;
-                font-weight: 600;
-                margin-top: 8px;
-                box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .date-section {
-                margin-bottom: 25px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                page-break-inside: avoid;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .date-header {
-                background: linear-gradient(135deg, #1f2937 0%, #374151 100%) !important;
-                color: white !important;
-                padding: 12px 16px;
-                border-radius: 8px;
-                margin-bottom: 15px;
-                font-size: 16px;
-                font-weight: 600;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .stats-row {
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                gap: 10px;
-                margin-bottom: 15px;
-              }
-              .stat-card {
-                text-align: center;
-                padding: 8px;
-                border-radius: 6px;
-                font-size: 12px;
-              }
-              .stat-card.present {
-                background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-                color: white !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .stat-card.absent {
-                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-                color: white !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .stat-card.late {
-                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-                color: white !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .stat-card.not-marked {
-                background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
-                color: white !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 10px;
-                font-size: 11px;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              th {
-                background: linear-gradient(135deg, #1f2937 0%, #374151 100%) !important;
-                color: white !important;
-                padding: 8px 6px;
-                text-align: left;
-                font-weight: 600;
-                border: 1px solid #374151;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              td {
-                padding: 6px;
-                border: 1px solid #e5e7eb;
-                vertical-align: top;
-              }
-              tr:nth-child(even) {
-                background: #f9fafb !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .present {
-                background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-                color: white !important;
-                font-weight: 600;
-                padding: 2px 6px;
-                border-radius: 3px;
-                display: inline-block;
-                font-size: 10px;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .absent {
-                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-                color: white !important;
-                font-weight: 600;
-                padding: 2px 6px;
-                border-radius: 3px;
-                display: inline-block;
-                font-size: 10px;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .late {
-                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-                color: white !important;
-                font-weight: 600;
-                padding: 2px 6px;
-                border-radius: 3px;
-                display: inline-block;
-                font-size: 10px;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .not-marked {
-                background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
-                color: white !important;
-                font-weight: 600;
-                padding: 2px 6px;
-                border-radius: 3px;
-                display: inline-block;
-                font-size: 10px;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              .footer {
-                margin-top: 30px;
-                text-align: center;
-                color: #6b7280;
-                font-size: 11px;
-                padding: 15px;
-                background: #f9fafb;
-                border-radius: 8px;
-              }
+              @page { margin: 0.5in; size: A4; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              * { box-sizing: border-box; }
+              body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 28px; background: #F8F7FF; color: #1e1b4b; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; border-radius: 20px; padding: 24px 32px; margin-bottom: 28px; display: flex; align-items: center; justify-content: space-between; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .header-left { display: flex; align-items: center; gap: 16px; }
+              .header-logo { width: 52px; height: 52px; background: rgba(255,255,255,0.18) !important; border-radius: 14px; display: flex; align-items: center; justify-content: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header h1 { color: white !important; font-size: 24px; margin: 0 0 4px; font-weight: 800; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-sub { color: rgba(255,255,255,0.8) !important; font-size: 13px; margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-right { text-align: right; }
+              .header-chip { background: rgba(255,255,255,0.18) !important; color: white !important; border-radius: 10px; padding: 5px 12px; font-size: 13px; font-weight: 700; display: inline-block; margin-bottom: 4px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-meta { color: rgba(255,255,255,0.7) !important; font-size: 11px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .section-label { font-size: 13px; font-weight: 800; color: #633194 !important; text-transform: uppercase; letter-spacing: 0.06em; margin: 24px 0 10px; padding-left: 4px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .date-section { margin-bottom: 28px; page-break-inside: avoid; }
+              .date-header { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%) !important; color: white !important; padding: 10px 16px; border-radius: 10px; margin-bottom: 12px; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 14px; }
+              .stat-card { padding: 12px; border-radius: 12px; text-align: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .stat-card.present { background: #D1FAE5 !important; border: 2px solid #6EE7B7; color: #065F46 !important; }
+              .stat-card.absent { background: #FEE2E2 !important; border: 2px solid #FCA5A5; color: #991B1B !important; }
+              .stat-card.late { background: #FEF3C7 !important; border: 2px solid #FCD34D; color: #92400E !important; }
+              .stat-card.not-marked { background: #F1F5F9 !important; border: 2px solid #CBD5E1; color: #475569 !important; }
+              table { width: 100%; border-collapse: collapse; overflow: hidden; background: white; margin-bottom: 8px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              th { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; color: white !important; padding: 11px 10px; text-align: left; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              td { padding: 10px; font-size: 12px; border-bottom: 1px solid #EDE9FE; vertical-align: middle; color: #1E293B !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              tr:nth-child(even) td { background: #FAFAFA !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .badge { font-weight: 800; border-radius: 6px; padding: 3px 10px; display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .present { background: #D1FAE5 !important; color: #065F46 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .absent { background: #FEE2E2 !important; color: #991B1B !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .late { background: #FEF3C7 !important; color: #92400E !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .not-marked { background: #F1F5F9 !important; color: #475569 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .footer { margin-top: 32px; text-align: center; border-top: 1px solid #EDE9FE; padding-top: 16px; font-size: 11px; color: #94A3B8 !important; }
+              .footer strong { color: #633194 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             </style>
           </head>
           <body>
             <div class="header">
-              <div class="header-content">
-                <h1>📊 Complete Attendance Report</h1>
-                <div class="header-subtitle">Grade: ${selectedGrade.grade}-${selectedGrade.grade_part} | All Days</div>
-                
-                <div class="header-meta">
-                  <div class="meta-item">
-                    <div class="meta-label">Total Days</div>
-                    <div class="meta-value">${attendanceDates.length} days</div>
-                  </div>
-                  <div class="meta-item">
-                    <div class="meta-label">Generated</div>
-                    <div class="meta-value">${new Date().toLocaleDateString()}</div>
-                  </div>
-                  <div class="meta-item">
-                    <div class="meta-label">Time</div>
-                    <div class="meta-value">${new Date().toLocaleTimeString()}</div>
-                  </div>
+              <div class="header-left">
+                <div class="header-logo">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
                 </div>
-                
-                <div class="header-badge">
-                  ✨ Official Attendance Document
+                <div>
+                  <h1>EduTrack</h1>
+                  <p class="header-sub">Complete Attendance Report — All Days</p>
                 </div>
+              </div>
+              <div class="header-right">
+                <div class="header-chip">Grade ${selectedGrade.grade}-${selectedGrade.grade_part}</div>
+                <div class="header-meta">${attendanceDates.length} days &nbsp;|&nbsp; ${new Date().toLocaleDateString()}</div>
               </div>
             </div>
       `;
-      
+
+      // Calculate overall student statistics
+      const studentStats: { [key: number]: { present: number, total: number, absent: number, late: number, percentage: number } } = {};
+      const totalDays = attendanceDates.length;
+      students.forEach(student => {
+        studentStats[student.id] = { present: 0, total: totalDays, absent: 0, late: 0, percentage: 0 };
+      });
+
+      attendanceDates.forEach(date => {
+        const dayData = allAttendanceData[date];
+        if (dayData) {
+          students.forEach(student => {
+            const status = dayData[student.id];
+            if (status === 'present' || status === 'late') {
+              studentStats[student.id].present += 1;
+              if (status === 'late') studentStats[student.id].late += 1;
+            } else if (status === 'absent') {
+              studentStats[student.id].absent += 1;
+            }
+          });
+        }
+      });
+
+      students.forEach(student => {
+        const stat = studentStats[student.id];
+        stat.percentage = stat.total > 0 ? Math.round((stat.present / stat.total) * 100) : 0;
+      });
+
+      // Add Student Summary Table to PDF
+      pdfContent += `
+            <div class="date-section">
+              <div class="date-header" style="background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important; display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                Student Overall Attendance Summary
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 8%;">ID</th>
+                    <th style="width: 35%;">Student Name</th>
+                    <th style="width: 14%; text-align: center;">Total Days</th>
+                    <th style="width: 14%; text-align: center;">Present (+Late)</th>
+                    <th style="width: 14%; text-align: center;">Absent</th>
+                    <th style="width: 15%; text-align: center;">Percentage</th>
+                  </tr>
+                </thead>
+                <tbody>
+      `;
+
+      students.forEach(student => {
+        const stat = studentStats[student.id];
+        const pctColor = stat.percentage >= 75 ? '#059669' : stat.percentage >= 50 ? '#D97706' : '#DC2626';
+        pdfContent += `
+                  <tr>
+                    <td style="text-align: center; font-weight: 700; color: #633194;">${student.id}</td>
+                    <td><div style="font-weight: 700; color: #1e1b4b;">${student.first_name} ${student.last_name}</div></td>
+                    <td style="text-align: center; font-weight: 600;">${stat.total}</td>
+                    <td style="text-align: center; color: #059669; font-weight: 700;">${stat.present}</td>
+                    <td style="text-align: center; color: #DC2626; font-weight: 700;">${stat.absent}</td>
+                    <td style="text-align: center; font-weight: 800; color: ${pctColor};">${stat.percentage}%</td>
+                  </tr>
+        `;
+      });
+
+      pdfContent += `
+                </tbody>
+              </table>
+            </div>
+      `;
+
       // Generate content for each date
       attendanceDates.forEach((date: string) => {
         const dayAttendance = allAttendanceData[date] || {};
@@ -1072,77 +658,49 @@ const AttendanceManagement: React.FC = () => {
         const absentCount = students.filter(s => dayAttendance[s.id] === 'absent').length;
         const lateCount = students.filter(s => dayAttendance[s.id] === 'late').length;
         const notMarkedCount = students.filter(s => !dayAttendance[s.id]).length;
-        
+
         pdfContent += `
             <div class="date-section">
-              <div class="date-header">📅 ${date}</div>
-              
-              <div class="stats-row">
-                <div class="stat-card present">
-                  <div style="font-size: 16px; font-weight: 700;">${presentCount}</div>
-                  <div>✅ Present</div>
-                </div>
-                <div class="stat-card absent">
-                  <div style="font-size: 16px; font-weight: 700;">${absentCount}</div>
-                  <div>❌ Absent</div>
-                </div>
-                <div class="stat-card late">
-                  <div style="font-size: 16px; font-weight: 700;">${lateCount}</div>
-                  <div>⏰ Late</div>
-                </div>
-                <div class="stat-card not-marked">
-                  <div style="font-size: 16px; font-weight: 700;">${notMarkedCount}</div>
-                  <div>⏸️ Not Marked</div>
-                </div>
+              <div class="date-header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                ${date}
               </div>
-              
-              <table>
-                <thead>
-                  <tr>
-                    <th style="width: 8%;">Student ID</th>
-                    <th style="width: 35%;">Student Name</th>
-                    <th style="width: 12%;">Status</th>
-                    <th style="width: 45%;">Parent Phone</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <div class="stats-row">
+                <div class="stat-card present"><div style="font-size:18px; font-weight:900;">${presentCount}</div><div style="font-size:10px; font-weight:800; text-transform:uppercase;">Present</div></div>
+                <div class="stat-card absent"><div style="font-size:18px; font-weight:900;">${absentCount}</div><div style="font-size:10px; font-weight:800; text-transform:uppercase;">Absent</div></div>
+                <div class="stat-card late"><div style="font-size:18px; font-weight:900;">${lateCount}</div><div style="font-size:10px; font-weight:800; text-transform:uppercase;">Late</div></div>
+                <div class="stat-card not-marked"><div style="font-size:18px; font-weight:900;">${notMarkedCount}</div><div style="font-size:10px; font-weight:800; text-transform:uppercase;">Not Marked</div></div>
+              </div>
+              <table><thead><tr>
+                <th style="width:8%; text-align:center;">#</th>
+                <th style="width:55%;">Student Name</th>
+                <th style="width:20%; text-align:center;">Status</th>
+              </tr></thead><tbody>
         `;
-        
+
         students.forEach(student => {
           const status = dayAttendance[student.id] || 'not-marked';
-          const statusClass = status === 'present' ? 'present' : 
-                            status === 'absent' ? 'absent' : 
-                            status === 'late' ? 'late' : 'not-marked';
-          const statusText = status === 'present' ? '✅ Present' : 
-                           status === 'absent' ? '❌ Absent' : 
-                           status === 'late' ? '⏰ Late' : '⏸️ Not Marked';
-          
+          const statusText = status === 'present' ? 'Present' : status === 'absent' ? 'Absent' : status === 'late' ? 'Late' : 'Not Marked';
           pdfContent += `
                   <tr>
-                    <td style="text-align: center; font-weight: 600;">${student.id}</td>
-                    <td>${student.first_name} ${student.last_name}</td>
-                    <td style="text-align: center;"><span class="${statusClass}">${statusText}</span></td>
-                    <td style="color: #6b7280;">📱 ${student.parent_phone}</td>
+                    <td style="text-align: center; font-weight: 700; color: #633194;">${student.id}</td>
+                    <td style="font-weight: 600; color: #1e1b4b;">${student.first_name} ${student.last_name}</td>
+                    <td style="text-align: center;"><span class="badge ${status}">${statusText}</span></td>
                   </tr>
           `;
         });
-        
-        pdfContent += `
-                </tbody>
-              </table>
-            </div>
-        `;
+
+        pdfContent += `</tbody></table></div>`;
       });
-      
+
       pdfContent += `
             <div class="footer">
-              <p>© 2026 EduTrack Student Management System</p>
-              <p>Total Students: ${students.length} | Total Days: ${attendanceDates.length}</p>
+              <strong>EduTrack</strong> — Student Management System &nbsp;|&nbsp; Total Students: ${students.length} | Total Days: ${attendanceDates.length} | Generated: ${new Date().toLocaleString()}
             </div>
           </body>
         </html>
       `;
-      
+
       // Create and download PDF
       const printWindow = window.open('', '_blank');
       if (printWindow) {
@@ -1150,982 +708,981 @@ const AttendanceManagement: React.FC = () => {
         printWindow.document.close();
         printWindow.print();
       }
-      
+
     } catch (error) {
       console.error('Error generating complete attendance report:', error);
-      alert('Failed to generate complete attendance report. Please try again.');
+      showToast('Failed to generate complete attendance report. Please try again.', 'error');
     }
+  };
+
+  const downloadSummaryAttendancePDF = async () => {
+    if (!selectedGrade) return;
+
+    try {
+      const allAttendance = await attendanceMarkApi.getAllAttendance();
+      const filteredRecords = allAttendance.attendance
+        .filter(record => record.grade === selectedGrade.grade && record.section === selectedGrade.grade_part);
+
+      const attendanceDates = filteredRecords
+        .map(record => new Date(record.marked_date).toLocaleDateString('en-CA'))
+        .filter((date, index, self) => self.indexOf(date) === index);
+
+      if (attendanceDates.length === 0) {
+        showToast('No attendance data found for this grade', 'warning');
+        return;
+      }
+
+      const students = getGradeStudents();
+      const studentStats: { [key: number]: { present: number, total: number, absent: number, percentage: number } } = {};
+      const totalDays = attendanceDates.length;
+
+      students.forEach(student => {
+        studentStats[student.id] = { present: 0, total: totalDays, absent: 0, percentage: 0 };
+      });
+
+      filteredRecords.forEach(record => {
+        const studentId = record.student_id;
+        if (studentStats[studentId]) {
+          if (record.status === 'present' || record.status === 'late') {
+            studentStats[studentId].present += 1;
+          } else if (record.status === 'absent') {
+            studentStats[studentId].absent += 1;
+          }
+        }
+      });
+
+      students.forEach(student => {
+        const stat = studentStats[student.id];
+        stat.percentage = stat.total > 0 ? Math.round((stat.present / stat.total) * 100) : 0;
+      });
+
+      let pdfContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>Summary Attendance Report - Grade ${selectedGrade.grade}-${selectedGrade.grade_part}</title>
+            <style>
+              @page { margin: 0.5in; size: A4; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              * { box-sizing: border-box; }
+              body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 28px; background: #F8F7FF; color: #1e1b4b; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; border-radius: 20px; padding: 24px 32px; margin-bottom: 28px; display: flex; align-items: center; justify-content: space-between; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .header-left { display: flex; align-items: center; gap: 16px; }
+              .header-logo { width: 52px; height: 52px; background: rgba(255,255,255,0.18) !important; border-radius: 14px; display: flex; align-items: center; justify-content: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header h1 { color: white !important; font-size: 24px; margin: 0 0 4px; font-weight: 800; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-sub { color: rgba(255,255,255,0.8) !important; font-size: 13px; margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-right { text-align: right; }
+              .header-chip { background: rgba(255,255,255,0.18) !important; color: white !important; border-radius: 10px; padding: 5px 12px; font-size: 13px; font-weight: 700; display: inline-block; margin-bottom: 4px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-meta { color: rgba(255,255,255,0.7) !important; font-size: 11px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              table { width: 100%; border-collapse: collapse; background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              th { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; color: white !important; padding: 11px 10px; text-align: left; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              td { padding: 10px; font-size: 12px; border-bottom: 1px solid #EDE9FE; vertical-align: middle; color: #1E293B !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              tr:nth-child(even) td { background: #FAFAFA !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .footer { margin-top: 32px; text-align: center; border-top: 1px solid #EDE9FE; padding-top: 16px; font-size: 11px; color: #94A3B8 !important; }
+              .footer strong { color: #633194 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="header-left">
+                <div class="header-logo">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                </div>
+                <div>
+                  <h1>EduTrack</h1>
+                  <p class="header-sub">Summary Attendance Report &mdash; Overall</p>
+                </div>
+              </div>
+              <div class="header-right">
+                <div class="header-chip">Grade ${selectedGrade.grade}-${selectedGrade.grade_part}</div>
+                <div class="header-meta">${totalDays} days &nbsp;|&nbsp; ${new Date().toLocaleDateString()}</div>
+              </div>
+            </div>
+            <table>
+              <thead><tr>
+                <th style="width:8%; text-align:center;">#</th>
+                <th style="width:42%;">Student Name</th>
+                <th style="width:12%; text-align:center;">Total Days</th>
+                <th style="width:12%; text-align:center;">Present</th>
+                <th style="width:12%; text-align:center;">Absent</th>
+                <th style="width:14%; text-align:center;">Attendance %</th>
+              </tr></thead>
+              <tbody>
+      `;
+
+      students.forEach(student => {
+        const stat = studentStats[student.id];
+        const pctColor = stat.percentage >= 75 ? '#059669' : stat.percentage >= 50 ? '#D97706' : '#DC2626';
+        pdfContent += `
+                  <tr>
+                    <td style="text-align: center; font-weight: 700; color: #633194;">${student.id}</td>
+                    <td style="font-weight: 700; color: #1e1b4b;">${student.first_name} ${student.last_name}</td>
+                    <td style="text-align: center; font-weight: 600;">${stat.total}</td>
+                    <td style="text-align: center; color: #059669; font-weight: 700;">${stat.present}</td>
+                    <td style="text-align: center; color: #DC2626; font-weight: 700;">${stat.absent}</td>
+                    <td style="text-align: center; font-weight: 800; color: ${pctColor};">${stat.percentage}%</td>
+                  </tr>
+        `;
+      });
+
+      pdfContent += `
+              </tbody>
+            </table>
+            <div class="footer">
+              <strong>EduTrack</strong> &mdash; Student Management System &nbsp;|&nbsp; Total Students: ${students.length} | Total Days: ${totalDays} | Generated: ${new Date().toLocaleString()}
+            </div>
+          </body>
+        </html>
+      `;
+
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(pdfContent);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    } catch (error) {
+      console.error('Error generating summary attendance report:', error);
+      showToast('Failed to generate summary report. Please try again.', 'error');
+    }
+  };
+
+  const handleViewSummaryReport = async () => {
+    if (!selectedGrade) return;
+
+    try {
+      const allAttendance = await attendanceMarkApi.getAllAttendance();
+      const filteredRecords = allAttendance.attendance
+        .filter(record => record.grade === selectedGrade.grade && record.section === selectedGrade.grade_part);
+
+      const attendanceDates = filteredRecords
+        .map(record => new Date(record.marked_date).toLocaleDateString('en-CA'))
+        .filter((date, index, self) => self.indexOf(date) === index);
+
+      if (attendanceDates.length === 0) {
+        showToast('No attendance data found for this grade', 'warning');
+        return;
+      }
+
+      const students = getGradeStudents();
+      const studentStats: { [key: number]: { present: number, total: number, absent: number, late: number, percentage: number } } = {};
+      const totalDays = attendanceDates.length;
+
+      students.forEach(student => {
+        studentStats[student.id] = { present: 0, total: totalDays, absent: 0, late: 0, percentage: 0 };
+      });
+
+      filteredRecords.forEach(record => {
+        const studentId = record.student_id;
+        if (studentStats[studentId]) {
+          if (record.status === 'present') studentStats[studentId].present += 1;
+          else if (record.status === 'late') {
+            studentStats[studentId].late += 1;
+            studentStats[studentId].present += 1; // Count late as present for percentage
+          }
+          else if (record.status === 'absent') studentStats[studentId].absent += 1;
+        }
+      });
+
+      const statsArray = students.map(student => {
+        const stat = studentStats[student.id];
+        stat.percentage = stat.total > 0 ? Math.round((stat.present / stat.total) * 100) : 0;
+        return { student, ...stat };
+      });
+
+      setSummaryStatsData(statsArray);
+      setActiveView('summaryReport');
+    } catch (e) {
+      console.error(e);
+      showToast('Failed to load summary', 'error');
+    }
+  };
+
+  // DateStudentsView component to show attendance details for a specific date
+
+  const DateStudentsView: React.FC<{
+    grade: Grade;
+    date: string;
+    students: Student[];
+  }> = ({ grade, date, students }) => {
+    const [dateAttendanceData, setDateAttendanceData] = useState<{ [key: number]: 'present' | 'absent' | 'late' | 'not-marked' }>({});
+    const [dateStats, setDateStats] = useState<{ [studentId: number]: { present: number, total: number, percentage: number } }>({});
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+      const loadDateAttendance = async () => {
+        try {
+          const [attendanceData, allAtt] = await Promise.all([
+            attendanceMarkApi.getByGradeSectionDate(grade.grade, grade.grade_part, date),
+            attendanceMarkApi.getAllAttendance()
+          ]);
+
+          const attendanceMap: { [key: number]: 'present' | 'absent' | 'late' | 'not-marked' } = {};
+          attendanceData.attendance.forEach(record => {
+            attendanceMap[record.student_id] = record.status;
+          });
+          setDateAttendanceData(attendanceMap);
+
+          const records = allAtt.attendance.filter(r => r.grade === grade.grade && r.section === grade.grade_part && new Date(r.marked_date) <= new Date(date));
+          const totalDays = new Set(records.map(r => r.marked_date)).size;
+          const statsMap: { [key: number]: { present: number, total: number, percentage: number } } = {};
+
+          records.forEach(r => {
+            if (!statsMap[r.student_id]) statsMap[r.student_id] = { present: 0, total: 0, percentage: 0 };
+            if (r.status === 'present' || r.status === 'late') statsMap[r.student_id].present += 1;
+          });
+
+          students.forEach(student => {
+            if (!statsMap[student.id]) {
+              statsMap[student.id] = { present: 0, total: totalDays, percentage: 0 };
+            } else {
+              statsMap[student.id].total = totalDays;
+              statsMap[student.id].percentage = totalDays > 0 ? Math.round((statsMap[student.id].present / totalDays) * 100) : 0;
+            }
+          });
+          setDateStats(statsMap);
+
+        } catch (error) {
+          console.error('Error loading attendance data:', error);
+          setDateAttendanceData({});
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadDateAttendance();
+    }, [grade, date]);
+
+    if (loading) {
+      return (
+        <div className="am-empty-state">
+          <Loader2 className="animate-spin" size={32} style={{ color: '#8B5CF6', marginBottom: '16px', animation: 'spin 1s linear infinite' }} />
+          <div>Loading attendance data...</div>
+          <style>{`
+            @keyframes spin {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      );
+    }
+
+    const presentStudents = students.filter(s => dateAttendanceData[s.id] === 'present');
+    const absentStudents = students.filter(s => dateAttendanceData[s.id] === 'absent');
+    const lateStudents = students.filter(s => dateAttendanceData[s.id] === 'late');
+    const unmarkedStudents = students.filter(s => !dateAttendanceData[s.id] || dateAttendanceData[s.id] === 'not-marked');
+
+    const renderStudentsList = (group: typeof students, title: string) => {
+      const titleColor = title === 'Present' ? '#10B981' : title === 'Absent' ? '#EF4444' : title === 'Late' ? '#F59E0B' : '#64748B';
+      const bgHighlight = title === 'Present' ? '#ECFDF5' : title === 'Absent' ? '#FEF2F2' : title === 'Late' ? '#FFFBEB' : '#F8FAFC';
+      
+      return (
+      <div style={{ marginBottom: '20px', background: '#FFFFFF', padding: '16px', borderRadius: '16px', border: '1px solid #EDE9FE', boxShadow: '0 4px 12px rgba(99,49,148,0.03)' }}>
+        <h3 style={{ fontSize: '14px', fontWeight: 800, marginBottom: '16px', color: titleColor, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: titleColor, boxShadow: `0 0 8px ${titleColor}80` }}></div>
+          {title} ({group.length})
+        </h3>
+        {group.length === 0 ? (
+          <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', color: '#94A3B8', fontSize: '13px', fontStyle: 'italic', textAlign: 'center', border: '1px dashed #E2E8F0' }}>
+            No students in this category
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
+            {group.map(student => (
+              <div key={student.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px', background: '#FFFFFF', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', transition: 'all 0.2s' }} onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.06)'; }} onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.02)'; }}>
+                <div style={{ minWidth: '36px', width: '36px', height: '36px', borderRadius: '10px', background: bgHighlight, display: 'flex', alignItems: 'center', justifyContent: 'center', color: titleColor, fontWeight: 900, fontSize: '15px' }}>
+                  {student.first_name.charAt(0)}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 800, color: '#1E293B', fontSize: '14px', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{student.first_name} {student.last_name}</div>
+                  <div style={{ fontSize: '12px', color: '#64748B', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 600 }}>ID: {student.id}</span>
+                    {dateStats[student.id] && (
+                      <>
+                        <span style={{ color: '#CBD5E1' }}>|</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: dateStats[student.id].percentage >= 75 ? '#10B981' : dateStats[student.id].percentage >= 50 ? '#F59E0B' : '#EF4444', fontWeight: 700 }}>
+                          <Activity size={10} /> {dateStats[student.id].percentage}%
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div style={{ 
+                    padding: '4px 10px', 
+                    background: bgHighlight, 
+                    color: titleColor, 
+                    borderRadius: '8px', 
+                    fontSize: '11px', 
+                    fontWeight: 800, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '4px',
+                    border: `1px solid ${titleColor}30`
+                  }}>
+                  {title === 'Present' ? <CheckCircle size={12} /> : title === 'Absent' ? <XCircle size={12} /> : title === 'Late' ? <Clock size={12} /> : <AlertTriangle size={12} />}
+                  {title}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )};
+
+    return (
+      <div className="am-reports-grouped">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+          {[
+            { label: 'Present', count: presentStudents.length, color: '#10B981', bg: '#DCFCE7' },
+            { label: 'Absent', count: absentStudents.length, color: '#EF4444', bg: '#FEE2E2' },
+            { label: 'Late', count: lateStudents.length, color: '#F59E0B', bg: '#FEF3C7' },
+            { label: 'Not Marked', count: unmarkedStudents.length, color: '#64748B', bg: '#F1F5F9' }
+          ].map((stat, i) => (
+            <div key={i} style={{ background: '#FFFFFF', padding: '12px 16px', borderRadius: '12px', border: '1px solid #EDE9FE', boxShadow: '0 2px 6px rgba(99,49,148,0.03)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+               <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: stat.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color, fontWeight: 900, fontSize: '16px' }}>
+                 {stat.count}
+               </div>
+               <div>
+                 <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stat.label}</div>
+               </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {renderStudentsList(presentStudents, 'Present')}
+          {renderStudentsList(absentStudents, 'Absent')}
+          {renderStudentsList(lateStudents, 'Late')}
+          {renderStudentsList(unmarkedStudents, 'Not Marked')}
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 25%, #1e40af 50%, #1e3a8a 75%, #1e3a8a 100%)',
-        padding: '40px',
-        fontFamily: 'Inter, sans-serif',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#e2e8f0'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
-          <div>Loading Attendance Management...</div>
+      <div className="am-loader-container">
+        <div className="am-loader">
+          <Loader2 className="animate-spin" size={32} style={{ color: '#8B5CF6', marginBottom: '16px', animation: 'spin 1s linear infinite' }} />
+          <h2 style={{ fontWeight: 600 }}>Loading Attendance System...</h2>
         </div>
       </div>
     );
   }
 
-  return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 25%, #1e40af 50%, #1e3a8a 75%, #1e3a8a 100%)',
-      padding: '40px',
-      fontFamily: 'Inter, sans-serif',
-      fontSize: '18px',
-      color: '#e2e8f0',
-      position: 'relative',
-      maxHeight: '100vh',
-      overflowY: 'auto'
-    }}>
-      <div style={{
-        maxWidth: '1600px',
-        margin: '0 auto',
-        background: 'rgba(255, 255, 255, 0.03)',
-        borderRadius: '24px',
-        border: '3px solid #000000',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
-        backdropFilter: 'blur(10px)',
-        padding: '60px'
-      }}>
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '40px'
-        }}>
-          <div style={{
-            fontSize: '48px',
-            marginBottom: '20px',
-            filter: 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.5))',
-            animation: 'pulse 2s infinite'
-          }}>
-            📅
-          </div>
-          <h1 style={{
-            fontSize: '32px',
-            fontWeight: '800',
-            color: '#3b82f6',
-            marginBottom: '16px',
-            textShadow: '0 0 20px rgba(59, 130, 246, 0.3)',
-            letterSpacing: '-1px'
-          }}>
-            Attendance Management
-          </h1>
-          <p style={{
-            fontSize: '16px',
-            color: '#94a3b8',
-            marginBottom: '30px',
-            maxWidth: '700px',
-            margin: '0 auto 30px',
-            lineHeight: '1.6',
-            fontWeight: '400'
-          }}>
-            Select a grade to manage attendance tracking and monitoring
-          </p>
-          
-          {/* Clear Storage Button */}
-          <button
-            onClick={clearLocalStorage}
-            style={{
-              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '10px 20px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              marginBottom: '20px',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'scale(1.05)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.3)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          >
-            🗑️ Clear Local Storage
-          </button>
-        </div>
-
-        <div style={{
-          background: 'rgba(59, 130, 246, 0.1)',
-          borderRadius: '16px',
-          border: '2px solid #3b82f6',
-          padding: '20px'
-        }}>
-          <h2 style={{
-            fontSize: '20px',
-            fontWeight: '700',
-            color: '#3b82f6',
-            marginBottom: '15px',
-            textAlign: 'center',
-            marginTop: 0
-          }}>
-            📚 Available Grades ({grades.length})
-          </h2>
-          
-          {grades.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '30px',
-              color: '#94a3b8'
-            }}>
-              <div style={{ fontSize: '36px', marginBottom: '12px' }}>📚</div>
-              <div style={{ fontSize: '16px', marginBottom: '6px' }}>No grades available</div>
-              <div style={{ fontSize: '13px' }}>Please create grades in Grade Management first</div>
-            </div>
-          ) : (
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px'
-            }}>
-              {grades.map(grade => (
-                <div
-                  key={grade.id}
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%)',
-                    border: '1px solid #3b82f6',
-                    borderRadius: '8px',
-                    padding: '12px 15px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}
-                  onClick={() => {
-                    // Future: Navigate to grade-specific attendance management
-                    console.log(`Selected grade: ${grade.grade}-${grade.grade_part}`);
-                  }}
+  const renderView = () => {
+    switch (activeView) {
+      case 'dateSelector':
+        return (
+          <div className="am-grid-container" style={{ padding: '24px', maxWidth: '400px', margin: '40px auto' }}>
+            <h2 className="am-modal-title" style={{ fontSize: '20px', marginBottom: '8px' }}>Select Date</h2>
+            <p className="am-modal-subtitle" style={{ marginBottom: '20px' }}>
+              Grade: {selectedGrade?.grade}-{selectedGrade?.grade_part}
+            </p>
+            <input
+              type="date"
+              className="am-input"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              style={{ marginBottom: '24px' }}
+            />
+            <div className="am-btn-group" style={{ justifyContent: 'flex-end', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+              {checkIsLeaveDay(selectedDate) && (
+                <div style={{
+                  color: '#dc2626',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  background: '#fef2f2',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid #fee2e2',
+                  width: '100%',
+                  textAlign: 'center'
+                }}>
+                  <AlertTriangle size={16} /> School is closed (Weekend / Public Holiday)
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="am-btn-secondary" onClick={closeDateSelection}>
+                  <X size={14} style={{ marginRight: '4px' }} /> Cancel
+                </button>
+                <button
+                  className="am-btn-primary"
+                  onClick={handleDateSelect}
+                  disabled={checkIsLeaveDay(selectedDate)}
+                  style={{ opacity: checkIsLeaveDay(selectedDate) ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    flex: 1
-                  }}>
-                    <div style={{
-                      background: '#3b82f6',
-                      color: 'white',
-                      borderRadius: '50%',
-                      width: '32px',
-                      height: '32px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '14px',
-                      fontWeight: '700',
-                      flexShrink: 0
-                    }}>
-                      {grade.grade}
-                    </div>
-                    
-                    <div style={{ flex: 1 }}>
-                      <div style={{
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        color: '#ffffff',
-                        marginBottom: '2px'
-                      }}>
-                        Grade {grade.grade}-{grade.grade_part}
-                      </div>
-                      
-                      <div style={{
-                        fontSize: '12px',
-                        color: '#94a3b8',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '15px'
-                      }}>
-                        <span>👥 {grade.students?.length || 0} students</span>
-                        <span>📅 {new Date(grade.created_at || '').toLocaleDateString()}</span>
-                      </div>
-                    </div>
+                  Continue <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'markAttendance':
+        return (
+          <div style={{ padding: '24px 28px', flex: 1, display: 'flex', flexDirection: 'column', background: '#F8F7FF', borderRadius: '24px', animation: 'fadeSlideIn 0.3s ease-out' }}>
+            <style>{`
+              @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+              .student-att-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #EDE9FE; }
+              .student-att-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99,49,148,0.08); border-color: #DDD6FE; }
+              .att-btn { transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+              .att-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+              .att-btn-active-present { background: linear-gradient(135deg, #10B981, #059669) !important; color: white !important; border-color: #059669 !important; box-shadow: 0 4px 12px rgba(16,185,129,0.3) !important; }
+              .att-btn-active-absent { background: linear-gradient(135deg, #EF4444, #DC2626) !important; color: white !important; border-color: #DC2626 !important; box-shadow: 0 4px 12px rgba(239,68,68,0.3) !important; }
+              .att-btn-active-late { background: linear-gradient(135deg, #F59E0B, #D97706) !important; color: white !important; border-color: #D97706 !important; box-shadow: 0 4px 12px rgba(245,158,11,0.3) !important; }
+              .att-btn-active-not-marked { background: linear-gradient(135deg, #64748B, #475569) !important; color: white !important; border-color: #475569 !important; box-shadow: 0 4px 12px rgba(100,116,139,0.3) !important; }
+              
+              .search-wrapper-att input:focus { border-color: #633194 !important; box-shadow: 0 0 0 4px rgba(99,49,148,0.1) !important; }
+            `}</style>
+            
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', background: '#FFFFFF', padding: '16px 20px', borderRadius: '16px', boxShadow: '0 2px 12px rgba(99,49,148,0.04)', border: '1px solid #EDE9FE' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'linear-gradient(135deg, #633194, #4B2380)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF' }}>
+                  <Calendar size={24} />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#1e1b4b', margin: '0 0 4px' }}>Mark Attendance</h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#633194', background: '#F4F0FF', padding: '4px 10px', borderRadius: '8px' }}>
+                      Grade {selectedGrade?.grade}-{selectedGrade?.grade_part}
+                    </span>
+                    <span style={{ fontSize: '13px', color: '#64748B', fontWeight: 600 }}>•</span>
+                    <span style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Clock size={14} /> {selectedDate}
+                    </span>
                   </div>
-                  
-                  <div style={{
-                    display: 'flex',
-                    gap: '8px'
-                  }}>
-                    <button
-                      style={{
-                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '6px 12px',
-                        fontSize: '11px',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTakeAttendance(grade);
-                      }}
-                    >
-                      📝 Take
-                    </button>
-                    <button
-                      style={{
-                        background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '6px 12px',
-                        fontSize: '11px',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewReports(grade);
-                      }}
-                    >
-                      📊 Reports
-                    </button>
-                  </div>
+                </div>
+              </div>
+              <button 
+                onClick={closeStudentsView} 
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', borderRadius: '12px', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseOver={(e) => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = '#0F172A'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.color = '#475569'; }}
+              >
+                <ArrowLeft size={16} /> Back to Grades
+              </button>
+            </div>
+
+            {/* Counters */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '28px' }}>
+              {[
+                { label: 'Present', count: Object.values(attendanceData).filter(s => s === 'present').length, color: '#10B981', bg: '#DCFCE7' },
+                { label: 'Absent', count: Object.values(attendanceData).filter(s => s === 'absent').length, color: '#EF4444', bg: '#FEE2E2' },
+                { label: 'Late', count: Object.values(attendanceData).filter(s => s === 'late').length, color: '#F59E0B', bg: '#FEF3C7' },
+                { label: 'Unmarked', count: getGradeStudents().length - Object.keys(attendanceData).filter(k => attendanceData[Number(k)] !== 'not-marked').length, color: '#64748B', bg: '#F1F5F9' }
+              ].map((stat, i) => (
+                <div key={i} style={{ background: '#FFFFFF', padding: '12px 16px', borderRadius: '12px', border: '1px solid #EDE9FE', boxShadow: '0 2px 6px rgba(99,49,148,0.03)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                   <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: stat.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color, fontWeight: 900, fontSize: '16px' }}>
+                     {stat.count}
+                   </div>
+                   <div>
+                     <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stat.label}</div>
+                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
-      </div>
 
-        {/* Date Selection Modal */}
-        {showDateSelection && selectedGrade && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.8)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px'
-          }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-              border: '2px solid #3b82f6',
-              borderRadius: '16px',
-              padding: '20px',
-              maxWidth: '350px',
-              width: '100%'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px'
-              }}>
-                <div>
-                  <h2 style={{
-                    fontSize: '20px',
-                    fontWeight: '700',
-                    color: '#3b82f6',
-                    margin: '0 0 8px 0'
-                  }}>
-                    📅 Select Date
-                  </h2>
-                  <p style={{
-                    fontSize: '14px',
-                    color: '#94a3b8',
-                    margin: 0
-                  }}>
-                    Grade: {selectedGrade.grade}-{selectedGrade.grade_part}
-                  </p>
-                </div>
-                <button
-                  onClick={closeDateSelection}
-                  style={{
-                    background: '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '8px 16px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer'
-                  }}
-                >
-                  ✕ Close
-                </button>
-              </div>
+            {/* Search */}
+            <div className="search-wrapper-att" style={{ position: 'relative', marginBottom: '20px' }}>
+              <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#9D85C5' }} />
+              <input
+                type="text"
+                placeholder="Search students to mark..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ width: '100%', padding: '12px 14px 12px 42px', borderRadius: '14px', border: '2px solid #EDE9FE', outline: 'none', fontSize: '14px', background: '#FFFFFF', transition: 'all 0.2s', boxSizing: 'border-box' }}
+              />
+            </div>
 
-              <div style={{
-                background: 'rgba(59, 130, 246, 0.1)',
-                borderRadius: '12px',
-                padding: '20px'
-              }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  color: '#94a3b8',
-                  marginBottom: '8px',
-                  fontWeight: '500'
-                }}>
-                  Select Attendance Date
-                </label>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    color: '#e2e8f0',
-                    outline: 'none'
-                  }}
-                />
-              </div>
+            {/* List */}
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '8px' }}>
+              {getGradeStudents()
+                .filter(student => (student.first_name + ' ' + student.last_name).toLowerCase().includes(searchTerm.toLowerCase()) || student.id.toString().includes(searchTerm))
+                .map((student, idx) => (
+                  <div key={student.id} className="student-att-card" style={{ background: '#FFFFFF', borderRadius: '14px', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', animation: 'fadeSlideIn 0.3s ease-out', animationDelay: (idx * 0.04) + 's', animationFillMode: 'both' }}>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#F4F0FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#633194', fontWeight: 800, fontSize: '15px' }}>
+                        {student.first_name.charAt(0)}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 800, color: '#1e1b4b', fontSize: '14px', marginBottom: '2px' }}>{student.first_name} {student.last_name}</div>
+                        {attendanceStats[student.id] && (
+                          <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                             <Activity size={12} color="#9D85C5" /> 
+                             Overall: <span style={{ color: attendanceStats[student.id].percentage >= 75 ? '#10B981' : attendanceStats[student.id].percentage >= 50 ? '#F59E0B' : '#EF4444' }}>{attendanceStats[student.id].percentage}%</span>
+                             <span style={{ color: '#CBD5E1' }}>|</span>
+                             {attendanceStats[student.id].present}/{attendanceStats[student.id].total} Days
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-              <div style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: '10px',
-                marginTop: '20px'
-              }}>
-                <button
-                  onClick={closeDateSelection}
-                  style={{
-                    background: 'rgba(107, 114, 128, 0.2)',
-                    color: 'white',
-                    border: '1px solid rgba(107, 114, 128, 0.3)',
-                    borderRadius: '8px',
-                    padding: '10px 20px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDateSelect}
-                  style={{
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '10px 20px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Continue →
-                </button>
-              </div>
+                    <div style={{ display: 'flex', gap: '6px', background: '#F8FAFC', padding: '4px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                      {(['present', 'absent', 'late', 'not-marked'] as const).map(status => {
+                        const isActive = attendanceData[student.id] === status || (!attendanceData[student.id] && status === 'not-marked');
+                        const activeClass = isActive ? 'att-btn-active-' + status : '';
+                        
+                        let label = '', icon = null;
+                        if (status === 'present') { label = 'Present'; icon = <CheckCircle size={14} />; }
+                        else if (status === 'absent') { label = 'Absent'; icon = <XCircle size={14} />; }
+                        else if (status === 'late') { label = 'Late'; icon = <Clock size={14} />; }
+                        else { label = 'Reset'; icon = <ArrowLeft size={14} style={{ transform: 'rotate(45deg)' }} />; }
+
+                        return (
+                          <button
+                            key={status}
+                            className={'att-btn ' + activeClass}
+                            onClick={() => toggleAttendance(student.id, status)}
+                            style={{ 
+                              padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px',
+                              background: isActive ? 'transparent' : '#FFFFFF', 
+                              color: isActive ? 'white' : '#64748B',
+                              border: '1px solid ' + (isActive ? 'transparent' : '#E2E8F0'),
+                              borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer'
+                            }}
+                          >
+                            {icon} {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+                
+                {getGradeStudents().length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748B', background: '#FFFFFF', borderRadius: '16px', border: '1px dashed #CBD5E1' }}>
+                    <Users size={48} color="#CBD5E1" style={{ marginBottom: '16px' }} />
+                    <div style={{ fontSize: '18px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>No students in this class</div>
+                    <div style={{ fontSize: '14px' }}>Assign students to this class in the Grade Management section.</div>
+                  </div>
+                )}
+            </div>
+
+            {/* Footer fixed action */}
+            <div style={{ marginTop: '20px', background: '#FFFFFF', padding: '16px 20px', borderRadius: '16px', boxShadow: '0 -4px 20px rgba(99,49,148,0.06)', border: '1px solid #EDE9FE', display: 'flex', justifyContent: 'flex-end' }}>
+               <button 
+                 onClick={handleSubmitAttendance}
+                 style={{ 
+                   padding: '12px 24px', 
+                   background: 'linear-gradient(135deg, #633194, #4C1D95)', 
+                   color: '#FFFFFF', 
+                   border: 'none', 
+                   borderRadius: '10px', 
+                   fontSize: '14px', 
+                   fontWeight: 800, 
+                   cursor: 'pointer', 
+                   display: 'flex', 
+                   alignItems: 'center', 
+                   gap: '10px',
+                   boxShadow: '0 4px 14px rgba(99,49,148,0.3)',
+                   transition: 'all 0.2s'
+                 }}
+                 onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(99,49,148,0.4)'; }}
+                 onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(99,49,148,0.3)'; }}
+               >
+                 <CheckCircle size={18} /> Submit Attendance
+               </button>
             </div>
           </div>
-        )}
+        );
 
-        {/* Students Modal */}
-        {showStudentsModal && selectedGrade && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.8)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            padding: '20px 20px 20px 320px'
-          }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-              border: '2px solid #3b82f6',
-              borderRadius: '16px',
-              padding: '20px',
-              maxWidth: '1000px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflowY: 'auto'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px'
-              }}>
-                <div>
-                  <h2 style={{
-                    fontSize: '24px',
-                    fontWeight: '700',
-                    color: '#3b82f6',
-                    margin: '0 0 8px 0'
-                  }}>
-                    📝 Take Attendance
-                  </h2>
-                  <p style={{
-                    fontSize: '14px',
-                    color: '#94a3b8',
-                    margin: 0
-                  }}>
-                    Grade: {selectedGrade.grade}-{selectedGrade.grade_part} | Date: {selectedDate}
-                  </p>
-                </div>
-                <button
-                  onClick={closeStudentsModal}
-                  style={{
-                    background: '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '8px 16px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer'
-                  }}
-                >
-                  ✕ Close
-                </button>
+      case 'reports':
+        return (
+          <div className="am-grid-container" style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div className="am-modal-header" style={{ marginBottom: '16px' }}>
+              <div>
+                <h2 className="am-modal-title">Attendance Reports</h2>
+                <p className="am-modal-subtitle">Grade: {selectedGrade?.grade}-{selectedGrade?.grade_part}</p>
               </div>
+              <button className="am-btn-secondary" onClick={closeReportsView} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ArrowLeft size={14} /> Back to Reports
+              </button>
+            </div>
 
-              <div style={{
-                background: 'rgba(59, 130, 246, 0.1)',
-                borderRadius: '12px',
-                padding: '15px',
-                marginBottom: '20px'
-              }}>
-                <div style={{
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  color: '#3b82f6',
-                  marginBottom: '10px'
-                }}>
-                  Students List ({getGradeStudents().length})
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px', color: 'var(--text-primary)' }}>
+                Available Dates ({attendanceDates.filter(date => date.includes(searchTerm)).length})
+              </h3>
+
+              {/* Search Bar for Dates in Reports */}
+              <div style={{ position: 'relative', marginBottom: '16px' }}>
+                <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                <input
+                  type="text"
+                  placeholder="Filter by date (YYYY-MM-DD)..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px 8px 32px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #E2E8F0',
+                    fontSize: '13px',
+                    outline: 'none',
+                    transition: 'all 0.2s ease',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = '#8B5CF6'}
+                  onBlur={(e) => e.currentTarget.style.borderColor = '#E2E8F0'}
+                />
+              </div>
+              {attendanceDates.length === 0 ? (
+                <div className="am-empty-state">
+                  <div className="am-empty-icon"><Calendar size={32} style={{ color: '#8B5CF6', marginBottom: '16px' }} /></div>
+                  <div>No attendance records found</div>
                 </div>
-                
-                {getGradeStudents().length === 0 ? (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '20px',
-                    color: '#94a3b8'
-                  }}>
-                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>👥</div>
-                    <div>No students assigned to this grade</div>
-                  </div>
-                ) : (
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px'
-                  }}>
-                    {getGradeStudents().map(student => (
-                      <div
-                        key={student.id}
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          borderRadius: '8px',
-                          padding: '12px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between'
-                        }}
-                      >
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px'
-                        }}>
-                          <div style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '14px',
-                            color: 'white',
-                            fontWeight: '700'
-                          }}>
-                            {student.first_name.charAt(0)}{student.last_name.charAt(0)}
-                          </div>
-                          <div>
-                            <div style={{
-                              fontSize: '14px',
-                              fontWeight: '600',
-                              color: '#ffffff',
-                              marginBottom: '2px'
+              ) : (
+                <div className="am-list" style={{ flex: 1, maxHeight: 'none', gridTemplateColumns: '1fr' }}>
+                  {attendanceDates
+                    .filter(date => date.includes(searchTerm))
+                    .map(date => (
+                      <div key={date} className="am-list-item">
+                        <div className="am-student-name" style={{ marginBottom: 0, display: 'flex', alignItems: 'center' }}>
+                          {date}
+                          {checkIsLeaveDay(date) && (
+                            <span style={{
+                              marginLeft: '10px',
+                              fontSize: '9px',
+                              background: '#eff6ff',
+                              color: '#3b82f6',
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              border: '1px solid #dbeafe',
+                              fontWeight: 700,
+                              textTransform: 'uppercase'
                             }}>
-                              {student.first_name} {student.last_name}
-                            </div>
-                            <div style={{
-                              fontSize: '12px',
-                              color: '#94a3b8'
-                            }}>
-                              📱 {student.parent_phone}
-                            </div>
-                          </div>
+                              Holiday
+                            </span>
+                          )}
                         </div>
-                        
-                        <div style={{
-                          display: 'flex',
-                          gap: '8px'
-                        }}>
-                          <button
-                            onClick={() => toggleAttendance(student.id, 'present')}
-                            style={{
-                              background: attendanceData[student.id] === 'present' 
-                                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                                : 'rgba(16, 185, 129, 0.2)',
-                              color: 'white',
-                              border: attendanceData[student.id] === 'present' 
-                                ? '1px solid #10b981'
-                                : '1px solid rgba(16, 185, 129, 0.3)',
-                              borderRadius: '6px',
-                              padding: '6px 12px',
-                              fontSize: '11px',
-                              fontWeight: '600',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            ✅ Present
-                          </button>
-                          <button
-                            onClick={() => toggleAttendance(student.id, 'absent')}
-                            style={{
-                              background: attendanceData[student.id] === 'absent' 
-                                ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
-                                : 'rgba(239, 68, 68, 0.2)',
-                              color: 'white',
-                              border: attendanceData[student.id] === 'absent' 
-                                ? '1px solid #ef4444'
-                                : '1px solid rgba(239, 68, 68, 0.3)',
-                              borderRadius: '6px',
-                              padding: '6px 12px',
-                              fontSize: '11px',
-                              fontWeight: '600',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            ❌ Absent
-                          </button>
-                          <button
-                            onClick={() => toggleAttendance(student.id, 'late')}
-                            style={{
-                              background: attendanceData[student.id] === 'late' 
-                                ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
-                                : 'rgba(245, 158, 11, 0.2)',
-                              color: 'white',
-                              border: attendanceData[student.id] === 'late' 
-                                ? '1px solid #f59e0b'
-                                : '1px solid rgba(245, 158, 11, 0.3)',
-                              borderRadius: '6px',
-                              padding: '6px 12px',
-                              fontSize: '11px',
-                              fontWeight: '600',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            ⏰ Late
-                          </button>
+                        <div className="am-btn-group">
+                            <button
+                              className="am-btn-blue"
+                              onClick={() => {
+                                setSelectedReportDate(date);
+                                setActiveView('reportDetails');
+                              }}
+                              style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              <FileText size={12} /> Details
+                            </button>
+                            <button
+                              className="am-btn-success"
+                              onClick={() => downloadSingleDatePDF(date)}
+                              style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              <Download size={12} /> PDF
+                            </button>
                         </div>
                       </div>
                     ))}
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
+            </div>
 
+            <div className="am-modal-footer" style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button className="am-btn-secondary" onClick={handleViewSummaryReport} style={{ background: '#f8fafc', color: '#0f172a', border: '1px solid #e2e8f0', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Activity size={14} /> View Summary
+              </button>
+              <button className="am-btn-primary" onClick={downloadCompleteAttendancePDF} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Download size={16} /> Download Complete Report
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'reportDetails':
+        return (
+          <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', background: '#F8F7FF', borderRadius: '24px', animation: 'fadeSlideIn 0.3s ease-out' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', background: '#FFFFFF', padding: '16px 20px', borderRadius: '16px', boxShadow: '0 2px 12px rgba(99,49,148,0.04)', border: '1px solid #EDE9FE' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'linear-gradient(135deg, #633194, #4B2380)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF' }}>
+                  <FileText size={24} />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#1e1b4b', margin: '0 0 4px' }}>Attendance Details</h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#633194', background: '#F4F0FF', padding: '4px 10px', borderRadius: '8px' }}>
+                      Grade {selectedGrade?.grade}-{selectedGrade?.grade_part}
+                    </span>
+                    <span style={{ fontSize: '13px', color: '#64748B', fontWeight: 600 }}>•</span>
+                    <span style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Calendar size={14} /> {selectedReportDate}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button 
+                onClick={() => setActiveView('reports')} 
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', borderRadius: '12px', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseOver={(e) => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = '#0F172A'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.color = '#475569'; }}
+              >
+                <ArrowLeft size={16} /> Back to Reports
+              </button>
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              {selectedGrade && selectedReportDate && (
+                <DateStudentsView
+                  grade={selectedGrade}
+                  date={selectedReportDate}
+                  students={getGradeStudents()}
+                />
+              )}
+            </div>
+          </div>
+        );
+
+      case 'summaryReport':
+        return (
+          <div className="am-grid-container" style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div className="am-modal-header" style={{ marginBottom: '16px' }}>
+              <div>
+                <h2 className="am-modal-title">Overall Summary Report</h2>
+                <p className="am-modal-subtitle">Grade: {selectedGrade?.grade}-{selectedGrade?.grade_part}</p>
+              </div>
+              <button className="am-btn-secondary" onClick={() => setActiveView('reports')}>Back to Reports</button>
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              <div className="am-list" style={{ gridTemplateColumns: '1fr' }}>
+                {summaryStatsData.map(stat => (
+                  <div key={stat.student.id} className="am-list-item">
+                    <div className="am-student-info" style={{ flex: 2 }}>
+                      <div className="am-student-name">{stat.student.first_name} {stat.student.last_name}</div>
+                      <div className="am-student-meta">
+                        ID: {stat.student.id}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '20px', flex: 3, justifySelf: 'flex-end', justifyContent: 'flex-end', alignItems: 'center' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '10px', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Total</div>
+                        <div style={{ fontSize: '14px', fontWeight: 600 }}>{stat.total}</div>
+                      </div>
+                      <div style={{ textAlign: 'center', background: '#ecfdf5', padding: '4px 12px', borderRadius: '8px' }}>
+                        <div style={{ fontSize: '10px', color: '#10B981', textTransform: 'uppercase', fontWeight: 700 }}>Present</div>
+                        <div style={{ fontSize: '15px', fontWeight: 700, color: '#10B981' }}>{stat.present}</div>
+                      </div>
+                      <div style={{ textAlign: 'center', background: '#fef2f2', padding: '4px 12px', borderRadius: '8px' }}>
+                        <div style={{ fontSize: '10px', color: '#EF4444', textTransform: 'uppercase', fontWeight: 700 }}>Absent</div>
+                        <div style={{ fontSize: '15px', fontWeight: 700, color: '#EF4444' }}>{stat.absent}</div>
+                      </div>
+                      <div style={{ textAlign: 'right', minWidth: '60px' }}>
+                        <div style={{
+                          fontSize: '18px',
+                          fontWeight: 800,
+                          color: stat.percentage >= 75 ? '#10B981' : stat.percentage >= 50 ? '#F59E0B' : '#EF4444'
+                        }}>
+                          {stat.percentage}%
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="am-modal-footer" style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
+              <button className="am-btn-success" onClick={downloadSummaryAttendancePDF} style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white', padding: '10px 20px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Download size={18} /> Download as PDF
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'leaveReport': {
+        const currentMonth = new Date(selectedDate).getMonth();
+        const currentYear = new Date(selectedDate).getFullYear();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const leaveDays = [];
+        for (let d = 1; d <= daysInMonth; d++) {
+          const leaveDate = new Date(currentYear, currentMonth, d);
+          const dateStr = leaveDate.toLocaleDateString('en-CA');
+          if (checkIsLeaveDay(dateStr)) {
+            const day = leaveDate.getDay();
+            const isWeekend = day === 0 || day === 6;
+            leaveDays.push({
+              date: dateStr,
+              type: isWeekend ? (day === 0 ? 'Sunday' : 'Saturday') : 'Public Holiday',
+              dayName: leaveDate.toLocaleDateString('en-US', { weekday: 'long' })
+            });
+          }
+        }
+
+        return (
+          <div className="am-grid-container" style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div className="am-modal-header" style={{ marginBottom: '16px' }}>
+              <div>
+                <h2 className="am-modal-title">Monthly School Leave Report</h2>
+                <p className="am-modal-subtitle">
+                  {new Date(selectedDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </p>
+              </div>
+              <button className="am-btn-secondary" onClick={() => setActiveView('grades')} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <X size={14} /> Close
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <p style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', marginBottom: '8px', textTransform: 'uppercase' }}>Select Month</p>
+              <input
+                type="month" // Changed to type="month" for better month selection
+                className="am-input"
+                value={selectedDate.substring(0, 7)} // Format for month input
+                onChange={(e) => setSelectedDate(`${e.target.value}-01`)} // Set to first day of selected month
+              />
+            </div>
+
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
               <div style={{
+                background: 'var(--brand-primary-light)',
+                padding: '12px',
+                borderRadius: '8px',
+                marginBottom: '16px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                gap: '15px'
+                border: '1px solid var(--brand-primary-light)'
               }}>
-                <div style={{
-                  fontSize: '14px',
-                  color: '#94a3b8'
-                }}>
-                  Marked: {Object.keys(attendanceData).length} / {getGradeStudents().length} students
-                </div>
-                <div style={{
-                  display: 'flex',
-                  gap: '10px'
-                }}>
-                  <button
-                    onClick={() => setAttendanceData({})}
-                    style={{
-                      background: 'rgba(107, 114, 128, 0.2)',
-                      color: 'white',
-                      border: '1px solid rgba(107, 114, 128, 0.3)',
-                      borderRadius: '8px',
-                      padding: '10px 20px',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    🔄 Reset
-                  </button>
-                  <button
-                    onClick={handleSubmitAttendance}
-                    disabled={Object.keys(attendanceData).length === 0}
-                    style={{
-                      background: Object.keys(attendanceData).length > 0
-                        ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                        : 'rgba(107, 114, 128, 0.3)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '10px 20px',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      cursor: Object.keys(attendanceData).length > 0 ? 'pointer' : 'not-allowed'
-                    }}
-                  >
-                    ✅ Submit Attendance
-                  </button>
-                </div>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand-primary)' }}>Total School Leave Days</span>
+                <span style={{ fontSize: '18px', fontWeight: 900, color: 'var(--brand-primary)' }}>{leaveDays.length}</span>
+              </div>
+
+              <div className="am-list" style={{ flex: 1, maxHeight: 'none', gridTemplateColumns: '1fr' }}>
+                {leaveDays.map((ld, i) => (
+                  <div key={i} className="am-list-item" style={{ padding: '10px 14px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{ld.date}</span>
+                      <span style={{ fontSize: '11px', color: '#64748b' }}>{ld.dayName}</span>
+                    </div>
+                    <span style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      padding: '4px 8px',
+                      borderRadius: '12px',
+                      background: ld.type.includes('Holiday') ? '#fef2f2' : '#f8fafc',
+                      color: ld.type.includes('Holiday') ? '#dc2626' : '#64748b',
+                      border: `1px solid ${ld.type.includes('Holiday') ? '#fee2e2' : '#e2e8f0'}`
+                    }}>
+                      {ld.type}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        )}
+        );
+      }
 
-        {/* Simple Reports Modal */}
-        {showReportsModal && selectedGrade && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.8)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            padding: '20px 20px 20px 320px'
-          }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-              border: '2px solid #8b5cf6',
-              borderRadius: '16px',
-              padding: '25px',
-              maxWidth: '800px',
-              width: '100%',
-              maxHeight: '80vh',
-              overflowY: 'auto'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px'
-              }}>
-                <div>
-                  <h2 style={{
-                    fontSize: '20px',
-                    fontWeight: '700',
-                    color: '#8b5cf6',
-                    margin: '0 0 8px 0'
-                  }}>
-                    📊 Attendance Report
-                  </h2>
-                  <p style={{
-                    fontSize: '14px',
-                    color: '#94a3b8',
-                    margin: 0
-                  }}>
-                    Grade: {selectedGrade.grade}-{selectedGrade.grade_part}
-                  </p>
-                </div>
-                <button
-                  onClick={closeReportsModal}
-                  style={{
-                    background: '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '8px 16px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer'
-                  }}
-                >
-                  ✕ Close
-                </button>
+      default:
+        return (
+          <div className="am-grid-container" style={{ padding: '16px', flex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 className="am-grid-title" style={{ fontSize: '16px', margin: 0, textAlign: 'left' }}>
+                📚 Available Grades ({grades.length})
+              </h2>
+              <button
+                className="am-btn-secondary"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', padding: '6px 12px', fontSize: '12px' }}
+                onClick={() => setActiveView('leaveReport')}
+              >
+                <Calendar size={14} /> School Leave Report
+              </button>
+            </div>
+
+            {grades.length === 0 ? (
+              <div className="am-empty-state">
+                <div className="am-empty-icon"><BookOpen size={48} color="#633194" /></div>
+                <div style={{ fontWeight: 600, fontSize: '18px', color: 'var(--text-primary)', marginBottom: '4px' }}>No grades available</div>
+                <div>Please create grades in Grade Management first</div>
               </div>
+            ) : (
+              <>
+                {/* Premium Search Bar for Grades */}
+                <div style={{ position: 'relative', marginBottom: '16px' }}>
+                  <Search
+                    size={16}
+                    style={{
+                      position: 'absolute',
+                      left: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: '#94A3B8'
+                    }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search grades..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px 10px 38px',
+                      borderRadius: '10px',
+                      border: '1.5px solid #E2E8F0',
+                      fontSize: '14px',
+                      outline: 'none',
+                      transition: 'all 0.2s ease',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => e.currentTarget.style.borderColor = '#8B5CF6'}
+                    onBlur={(e) => e.currentTarget.style.borderColor = '#E2E8F0'}
+                  />
+                </div>
 
-              <div style={{
-                display: 'flex',
-                gap: '20px'
-              }}>
-                {/* Dates List */}
-                <div style={{
-                  flex: '0 0 250px',
-                  background: 'rgba(139, 92, 246, 0.1)',
-                  borderRadius: '12px',
-                  padding: '20px'
-                }}>
-                  <h3 style={{
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    color: '#8b5cf6',
-                    marginBottom: '15px',
-                    marginTop: 0
-                  }}>
-                    📅 Attendance Days
-                  </h3>
-                  
-                  {attendanceDates.length === 0 ? (
-                    <div style={{
-                      textAlign: 'center',
-                      padding: '20px',
-                      color: '#94a3b8'
-                    }}>
-                      <div>No attendance days found</div>
-                      <div style={{ fontSize: '12px', marginTop: '8px' }}>Take attendance first to see days here</div>
-                    </div>
-                  ) : (
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px'
-                    }}>
-                      {attendanceDates.map((date: string) => (
-                        <div
-                          key={date}
-                          onClick={() => {
-                            setSelectedReportDate(date);
-                            setShowDateStudents(true);
-                            loadAttendanceForDate(date);
-                          }}
-                          style={{
-                            background: selectedReportDate === date
-                              ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'
-                              : 'rgba(255, 255, 255, 0.05)',
-                            border: selectedReportDate === date
-                              ? '2px solid #8b5cf6'
-                              : '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: '8px',
-                            padding: '10px 12px',
-                            fontSize: '12px',
-                            color: '#ffffff',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            width: '100%',
-                            marginBottom: '4px',
-                            transition: 'all 0.2s ease'
-                          }}
-                        >
-                          <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center'
-                          }}>
-                            <span>📅 {date.split('T')[0]}</span>
-                            <span style={{
-                              fontSize: '10px',
-                              color: '#10b981',
-                              fontWeight: '600'
-                            }}>
-                              ✓ Marked
-                            </span>
+                <div className="am-grades-grid">
+                  {grades
+                    .filter(grade =>
+                      `Grade ${grade.grade}-${grade.grade_part}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      grade.grade.toString().includes(searchTerm) ||
+                      grade.grade_part.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                    .map(grade => (
+                      <div key={grade.id} className="am-grade-card">
+                        <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                          <div className="am-grade-badge">{grade.grade}</div>
+                          <div className="am-grade-info" style={{ marginLeft: '12px' }}>
+                            <div className="am-grade-name">Grade {grade.grade}-{grade.grade_part}</div>
+                            <div className="am-grade-meta" style={{ gap: '8px' }}>
+                              <span title="Total Students" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Users size={14} /> {grade.students?.length || 0}</span>
+                              <span title="Updated Date" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Calendar size={14} /> {new Date(grade.updated_at || grade.created_at || '').toLocaleDateString()}</span>
+                            </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                                    
-                  {/* Download Complete Attendance Button */}
-                  <button
-                    onClick={downloadCompleteAttendancePDF}
-                    style={{
-                      background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '12px 16px',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      marginTop: '10px',
-                      width: '100%'
-                    }}
-                  >
-                    📚 Download
-                  </button>
-                  
-                  </div>
-
-                {/* Students List for Selected Date */}
-                {showDateStudents && selectedReportDate && (
-                  <div style={{
-                    flex: '1',
-                    background: 'rgba(139, 92, 246, 0.1)',
-                    borderRadius: '12px',
-                    padding: '20px'
-                  }}>
-                    <h3 style={{
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      color: '#8b5cf6',
-                      marginBottom: '15px',
-                      marginTop: 0
-                    }}>
-                      👥 Students attendance for {selectedReportDate}
-                    </h3>
-                    
-                    {/* Download PDF Button for Selected Date */}
-                    <button
-                      onClick={() => downloadSingleDatePDF(selectedReportDate)}
-                      style={{
-                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        padding: '10px 16px',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        marginBottom: '15px',
-                        width: '100%'
-                      }}
-                    >
-                      📄 Download PDF for {selectedReportDate}
-                    </button>
-                    
-                    <div style={{
-                      maxHeight: '400px',
-                      overflowY: 'auto'
-                    }}>
-                      {getGradeStudents().length === 0 ? (
-                        <div style={{
-                          textAlign: 'center',
-                          padding: '20px',
-                          color: '#94a3b8'
-                        }}>
-                          <div>No students found for this grade</div>
+                        <div className="am-btn-group">
+                          <button className="am-btn-primary" onClick={() => handleTakeAttendance(grade)}>Take</button>
+                          <button className="am-btn-secondary" onClick={() => handleViewReports(grade)}>Reports</button>
                         </div>
-                      ) : (
-                        <div style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '8px'
-                        }}>
-                          {getGradeStudents().map((student) => {
-                            const status = attendanceData[student.id] || 'not-marked';
-                            return (
-                              <div
-                                key={student.id}
-                                style={{
-                                  background: 'rgba(255, 255, 255, 0.05)',
-                                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                                  borderRadius: '8px',
-                                  padding: '12px',
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center'
-                                }}
-                              >
-                                <div style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '12px'
-                                }}>
-                                  <div style={{
-                                    background: 'rgba(139, 92, 246, 0.2)',
-                                    color: '#8b5cf6',
-                                    padding: '4px 8px',
-                                    borderRadius: '4px',
-                                    fontSize: '12px',
-                                    fontWeight: '600'
-                                  }}>
-                                    ID: {student.id}
-                                  </div>
-                                  <div>
-                                    <div style={{
-                                      color: '#e2e8f0',
-                                      fontSize: '14px',
-                                      fontWeight: '500'
-                                    }}>
-                                      {student.first_name} {student.last_name}
-                                    </div>
-                                    <div style={{
-                                      color: '#94a3b8',
-                                      fontSize: '12px'
-                                    }}>
-                                      📱 {student.parent_phone}
-                                    </div>
-                                  </div>
-                                </div>
-                                
-                                <div style={{
-                                  padding: '4px 12px',
-                                  borderRadius: '6px',
-                                  fontSize: '12px',
-                                  fontWeight: '600',
-                                  textTransform: 'uppercase',
-                                  ...status === 'present' && {
-                                    background: 'rgba(16, 185, 129, 0.2)',
-                                    color: '#10b981'
-                                  },
-                                  ...status === 'absent' && {
-                                    background: 'rgba(239, 68, 68, 0.2)',
-                                    color: '#ef4444'
-                                  },
-                                  ...status === 'late' && {
-                                    background: 'rgba(251, 191, 36, 0.2)',
-                                    color: '#fbbf24'
-                                  },
-                                  ...status === 'not-marked' && {
-                                    background: 'rgba(148, 163, 184, 0.2)',
-                                    color: '#94a3b8'
-                                  }
-                                }}>
-                                  {status === 'present' && '✅ Present'}
-                                  {status === 'absent' && '❌ Absent'}
-                                  {status === 'late' && '⏰ Late'}
-                                  {status === 'not-marked' && '⭕ Not Marked'}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+                      </div>
+                    ))}
+                </div>
+              </>
+            )}
           </div>
-        )}
-      
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-        }
-      `}</style>
+        );
+    }
+  };
+
+  return (
+    <div className="am-container" style={{ height: '100%' }}>
+      <div className="am-card" style={{ height: '100%', borderRadius: 0, border: 'none', boxShadow: 'none' }}>
+        <div className="am-header" style={{ marginBottom: '12px', paddingBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Calendar size={28} color="#633194" />
+            <h1 className="am-title" style={{ fontSize: '20px' }}>Attendance Management</h1>
+          </div>
+          <p className="am-subtitle" style={{ fontSize: '12px', marginTop: '4px' }}>
+            Track and manage student daily attendance records.
+          </p>
+        </div>
+        {renderView()}
+      </div>
     </div>
   );
 };

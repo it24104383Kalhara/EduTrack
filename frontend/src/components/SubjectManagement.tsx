@@ -1,18 +1,47 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Search,
+  Edit2,
+  Trash2,
+  Plus,
+  X,
+  Loader2,
+  Library,
+  CheckCircle
+} from 'lucide-react';
 import { subjectApi } from '../services/api';
 import type { Subject } from '../services/api';
 
 const SubjectManagement: React.FC = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [streams, setStreams] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeFormTab, setActiveFormTab] = useState<'6-11' | '12-13'>('6-11');
+  const [formData, setFormData] = useState({
+    name: '',
+    code: '',
+    grades: [] as string[],
+    streams: [] as string[],
+    category: '',
+    is_optional: false
+  });
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
     code: '',
     grades: [] as string[],
-    type: '6-11' as '6-11' | '12-13'
+    type: '6-11' as '6-11' | '12-13',
+    category: '',
+    is_optional: false
   });
+
+  const commonCategories = [
+    'Aesthetics',
+    'Category 1',
+    'Category 2',
+    'Category 3',
+    'Religion'
+  ];
 
   useEffect(() => {
     fetchSubjects();
@@ -25,29 +54,14 @@ const SubjectManagement: React.FC = () => {
       setSubjects(subjectsData);
     } catch (error) {
       console.error('Failed to fetch subjects:', error);
-      alert('Failed to load subjects from database. Please try again.');
+      alert('Failed to load subjects. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Form states for Grade 6-11
-  const [subject6to11, setSubject6to11] = useState({
-    name: '',
-    code: '',
-    grades: [] as string[]
-  });
-
-  // Form states for Grade 12-13
-  const [subject12to13, setSubject12to13] = useState({
-    name: '',
-    code: '',
-    grades: [] as string[],
-    streams: [] as string[]
-  });
-
-  const handleGrade6to11Change = (grade: string) => {
-    setSubject6to11(prev => ({
+  const handleGradeToggle = (grade: string) => {
+    setFormData(prev => ({
       ...prev,
       grades: prev.grades.includes(grade)
         ? prev.grades.filter(g => g !== grade)
@@ -55,22 +69,34 @@ const SubjectManagement: React.FC = () => {
     }));
   };
 
-  const handleGrade12to13Change = (grade: string) => {
-    setSubject12to13(prev => ({
-      ...prev,
-      grades: prev.grades.includes(grade)
-        ? prev.grades.filter(g => g !== grade)
-        : [...prev.grades, grade]
-    }));
-  };
-
-  const handleStreamChange = (stream: string) => {
-    setSubject12to13(prev => ({
+  const handleStreamToggle = (stream: string) => {
+    setFormData(prev => ({
       ...prev,
       streams: prev.streams.includes(stream)
         ? prev.streams.filter(s => s !== stream)
         : [...prev.streams, stream]
     }));
+  };
+
+  const handleAddSubject = async () => {
+    if (!formData.name || !formData.code || formData.grades.length === 0) {
+      alert('Please fill in Name, Code and select at least one Grade.');
+      return;
+    }
+    try {
+      setLoading(true);
+      const newSub = await subjectApi.create({
+        ...formData,
+        type: activeFormTab,
+        stream: activeFormTab === '12-13' ? formData.streams : undefined
+      });
+      setSubjects(prev => [...prev, newSub]);
+      setFormData({ name: '', code: '', grades: [], streams: [], category: '', is_optional: false });
+    } catch (error: any) {
+      alert(error.message || 'Failed to add subject.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const deleteSubject = async (id: string) => {
@@ -79,10 +105,9 @@ const SubjectManagement: React.FC = () => {
       try {
         await subjectApi.delete(id);
         setSubjects(prev => prev.filter(s => s.id !== id));
-        alert(`Subject "${subject.name}" deleted successfully from database!`);
       } catch (error) {
         console.error('Failed to delete subject:', error);
-        alert('Failed to delete subject from database. Please try again.');
+        alert('Failed to delete subject. Please try again.');
       }
     }
   };
@@ -90,11 +115,27 @@ const SubjectManagement: React.FC = () => {
   const editSubject = (id: string) => {
     const subject = subjects.find(s => s.id === id);
     if (subject) {
+      let parsedGrades: string[] = [];
+      if (Array.isArray(subject.grades)) {
+        parsedGrades = subject.grades.flatMap(g => {
+          if (typeof g === 'string' && g.startsWith('[')) {
+            try { return JSON.parse(g); } catch { return g; }
+          }
+          return g;
+        });
+      } else if (typeof subject.grades === 'string' && (subject.grades as string).startsWith('[')) {
+        try { parsedGrades = JSON.parse(subject.grades as string); } catch { parsedGrades = [subject.grades as string]; }
+      } else {
+        parsedGrades = [subject.grades as string];
+      }
+
       setEditForm({
         name: subject.name,
         code: subject.code,
-        grades: Array.isArray(subject.grades) ? subject.grades : [subject.grades],
-        type: subject.type
+        grades: parsedGrades,
+        type: subject.type,
+        category: subject.category || '',
+        is_optional: !!subject.is_optional
       });
       setEditingId(id);
     }
@@ -102,43 +143,24 @@ const SubjectManagement: React.FC = () => {
 
   const saveEdit = async () => {
     if (!editingId) return;
-    
-    if (!editForm.name.trim() || !editForm.code.trim()) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    if (editForm.grades.length === 0) {
-      alert('Please select at least one grade');
-      return;
-    }
-
     try {
       const updatedSubject = await subjectApi.update(editingId, {
-        name: editForm.name.trim(),
-        code: editForm.code.trim(),
+        name: editForm.name,
+        code: editForm.code,
         grades: editForm.grades,
-        type: editForm.type
+        type: editForm.type,
+        category: editForm.category || undefined,
+        is_optional: editForm.is_optional
       });
-
-      setSubjects(prev => prev.map(s => 
-        s.id === editingId 
-          ? updatedSubject
-          : s
-      ));
-      
+      setSubjects(prev => prev.map(s => s.id === editingId ? updatedSubject : s));
       setEditingId(null);
-      setEditForm({ name: '', code: '', grades: [], type: '6-11' });
-      alert(`Subject updated successfully in database!`);
-    } catch (error) {
-      console.error('Failed to update subject:', error);
-      alert('Failed to update subject in database. Please try again.');
+    } catch (error: any) {
+      alert(error.message || 'Failed to update subject.');
     }
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditForm({ name: '', code: '', grades: [], type: '6-11' });
   };
 
   const handleEditGradeChange = (grade: string) => {
@@ -150,1158 +172,503 @@ const SubjectManagement: React.FC = () => {
     }));
   };
 
-  const addStream = () => {
-    const streamName = prompt('Enter stream name:');
-    if (streamName && streamName.trim()) {
-      setStreams(prev => [...prev, streamName.trim()]);
-      alert(`Stream "${streamName.trim()}" added!`);
-    }
+  const cardStyle: React.CSSProperties = {
+    background: '#FFFFFF',
+    padding: '24px 32px 32px',
+    borderRadius: '24px',
+    border: '2px solid #E2E8F0',
+    boxShadow: '0 10px 30px -10px rgba(99, 49, 148, 0.12)',
+    position: 'relative',
+    overflow: 'hidden'
   };
 
-  const removeStream = () => {
-    const streamName = prompt('Enter stream name to remove:');
-    if (streamName && streamName.trim()) {
-      setStreams(prev => prev.filter(s => s !== streamName.trim()));
-      alert(`Stream "${streamName.trim()}" removed!`);
-    }
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '8px 12px',
+    borderRadius: '10px',
+    border: '2px solid #F3F4F6',
+    background: '#ffffff',
+    fontSize: '12px',
+    fontWeight: '500',
+    color: '#1F2937',
+    outline: 'none',
+    transition: 'all 0.2s ease',
+    boxSizing: 'border-box'
   };
 
-  const addSubject6to11 = async () => {
-    if (!subject6to11.name.trim() || !subject6to11.code.trim()) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    if (subject6to11.grades.length === 0) {
-      alert('Please select at least one grade');
-      return;
-    }
-
-    try {
-      const newSubject = await subjectApi.create({
-        name: subject6to11.name.trim(),
-        code: subject6to11.code.trim(),
-        grades: subject6to11.grades,
-        type: '6-11'
-      });
-
-      setSubjects(prev => [...prev, newSubject]);
-      setSubject6to11({ name: '', code: '', grades: [] });
-      alert(`Subject "${newSubject.name}" added successfully to database!`);
-    } catch (error) {
-      console.error('Failed to add subject:', error);
-      alert('Failed to add subject to database. Please try again.');
-    }
-  };
-
-  const addSubject12to13 = async () => {
-    if (!subject12to13.name.trim() || !subject12to13.code.trim()) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    if (subject12to13.grades.length === 0) {
-      alert('Please select at least one grade');
-      return;
-    }
-
-    try {
-      const newSubject = await subjectApi.create({
-        name: subject12to13.name.trim(),
-        code: subject12to13.code.trim(),
-        grades: subject12to13.grades,
-        stream: subject12to13.streams.length > 0 ? subject12to13.streams : undefined,
-        type: '12-13'
-      });
-
-      setSubjects(prev => [...prev, newSubject]);
-      setSubject12to13({ name: '', code: '', grades: [], streams: [] });
-      alert(`Subject "${newSubject.name}" added successfully to ${subject12to13.streams.length || 0} stream(s)!`);
-    } catch (error) {
-      console.error('Failed to add subject:', error);
-      alert('Failed to add subject to database. Please try again.');
-    }
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: '10px',
+    fontWeight: '800',
+    color: '#633194',
+    marginBottom: '4px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em'
   };
 
   return (
     <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100vh',
-      color: '#e2e8f0',
-      padding: '40px'
+      minHeight: '100%',
+      background: '#F8F7FF',
+      padding: '20px 24px',
+      fontFamily: 'Inter, sans-serif'
     }}>
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 50%, rgba(15, 23, 42, 0.9) 100%)',
-        backdropFilter: 'blur(20px)',
-        borderRadius: '20px',
-        padding: '40px',
-        border: '1px solid rgba(99, 102, 241, 0.3)',
-        boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)',
-        maxWidth: '1200px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflowY: 'auto'
-      }}>
-        <div style={{ fontSize: '3rem', marginBottom: '20px', textAlign: 'center' }}>📖</div>
-        <h2 style={{ 
-          fontSize: '1.8rem', 
-          fontWeight: '800', 
-          marginBottom: '30px',
-          textAlign: 'center',
-          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text'
-        }}>
-          Add Subjects
-        </h2>
-        
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '30px'
-        }}>
-          {/* Grade 6 to 11 Form */}
-          <div style={{
-            background: 'rgba(16, 185, 129, 0.05)',
-            border: '1px solid rgba(16, 185, 129, 0.2)',
-            borderRadius: '15px',
-            padding: '25px'
-          }}>
-            <h3 style={{
-              color: '#10b981',
-              fontSize: '1.3rem',
-              fontWeight: '700',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
-              📚 Grade 6 to 11 Subjects
-            </h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  color: '#94a3b8',
-                  marginBottom: '8px',
-                  fontWeight: '500'
-                }}>
-                  Subject Name *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter subject name"
-                  value={subject6to11.name}
-                  onChange={(e) => setSubject6to11(prev => ({ ...prev, name: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'rgba(15, 23, 42, 0.6)',
-                    border: '1px solid rgba(148, 163, 184, 0.2)',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    color: '#e2e8f0',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-              
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  color: '#94a3b8',
-                  marginBottom: '8px',
-                  fontWeight: '500'
-                }}>
-                  Subject Code *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter subject code"
-                  value={subject6to11.code}
-                  onChange={(e) => setSubject6to11(prev => ({ ...prev, code: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'rgba(15, 23, 42, 0.6)',
-                    border: '1px solid rgba(148, 163, 184, 0.2)',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    color: '#e2e8f0',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  color: '#10b981',
-                  marginBottom: '10px',
-                  fontWeight: '600'
-                }}>
-                  Select Grades *
-                </label>
-                <div style={{
-                  background: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid rgba(16, 185, 129, 0.2)',
-                  borderRadius: '8px',
-                  padding: '12px'
-                }}>
-                  {['6', '7', '8', '9', '10', '11'].map(grade => (
-                    <div key={grade} style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      marginBottom: '8px',
-                      cursor: 'pointer'
-                    }}>
-                      <input
-                        type="checkbox"
-                        id={`grade-6-11-${grade}`}
-                        value={grade}
-                        checked={subject6to11.grades.includes(grade)}
-                        onChange={() => handleGrade6to11Change(grade)}
-                        style={{
-                          marginRight: '10px',
-                          width: '16px',
-                          height: '16px',
-                          cursor: 'pointer'
-                        }}
-                      />
-                      <label htmlFor={`grade-6-11-${grade}`} style={{
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem',
-                        cursor: 'pointer',
-                        userSelect: 'none'
-                      }}>
-                        Grade {grade}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <button
-                onClick={addSubject6to11}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '1rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  boxShadow: '0 8px 25px rgba(16, 185, 129, 0.3)',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 12px 30px rgba(16, 185, 129, 0.4)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(16, 185, 129, 0.3)';
-                }}
-              >
-                ➕ Add Subject
-              </button>
-            </div>
-          </div>
-
-          {/* Grade 12 to 13 Form */}
-          <div style={{
-            background: 'rgba(139, 92, 246, 0.05)',
-            border: '1px solid rgba(139, 92, 246, 0.2)',
-            borderRadius: '15px',
-            padding: '25px'
-          }}>
-            <h3 style={{
-              color: '#8b5cf6',
-              fontSize: '1.3rem',
-              fontWeight: '700',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
-              🎓 Grade 12 to 13 Subjects
-            </h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  color: '#94a3b8',
-                  marginBottom: '8px',
-                  fontWeight: '500'
-                }}>
-                  Subject Name *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter subject name"
-                  value={subject12to13.name}
-                  onChange={(e) => setSubject12to13(prev => ({ ...prev, name: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'rgba(15, 23, 42, 0.6)',
-                    border: '1px solid rgba(148, 163, 184, 0.2)',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    color: '#e2e8f0',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-              
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  color: '#94a3b8',
-                  marginBottom: '8px',
-                  fontWeight: '500'
-                }}>
-                  Subject Code *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter subject code"
-                  value={subject12to13.code}
-                  onChange={(e) => setSubject12to13(prev => ({ ...prev, code: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'rgba(15, 23, 42, 0.6)',
-                    border: '1px solid rgba(148, 163, 184, 0.2)',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    color: '#e2e8f0',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  color: '#8b5cf6',
-                  marginBottom: '10px',
-                  fontWeight: '600'
-                }}>
-                  Stream Type *
-                </label>
-                <div style={{
-                  background: 'rgba(139, 92, 246, 0.1)',
-                  border: '1px solid rgba(139, 92, 246, 0.2)',
-                  borderRadius: '8px',
-                  padding: '15px',
-                  marginBottom: '15px'
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    gap: '15px',
-                    marginBottom: '10px',
-                    flexWrap: 'wrap'
-                  }}>
-                    {streams.map(stream => (
-                      <label key={stream} style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        color: '#e2e8f0'
-                      }}>
-                        <input
-                          type="checkbox"
-                          value={stream}
-                          checked={subject12to13.streams.includes(stream)}
-                          onChange={() => handleStreamChange(stream)}
-                          style={{ marginRight: '8px' }}
-                        />
-                        {stream}
-                      </label>
-                    ))}
-                  </div>
-                  <div style={{
-                    marginTop: '10px',
-                    display: 'flex',
-                    gap: '10px',
-                    flexWrap: 'wrap'
-                  }}>
-                    <button
-                      onClick={addStream}
-                      style={{
-                        padding: '6px 12px',
-                        background: 'rgba(139, 92, 246, 0.2)',
-                        border: '1px solid rgba(139, 92, 246, 0.4)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.8rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '5px'
-                      }}
-                    >
-                      ➕ Add Stream
-                    </button>
-                    <button
-                      onClick={removeStream}
-                      style={{
-                        padding: '6px 12px',
-                        background: 'rgba(239, 68, 68, 0.2)',
-                        border: '1px solid rgba(239, 68, 68, 0.4)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.8rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '5px'
-                      }}
-                    >
-                      🗑️ Remove Stream
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  color: '#8b5cf6',
-                  marginBottom: '10px',
-                  fontWeight: '600'
-                }}>
-                  Select Grades *
-                </label>
-                <div style={{
-                  background: 'rgba(139, 92, 246, 0.1)',
-                  border: '1px solid rgba(139, 92, 246, 0.2)',
-                  borderRadius: '8px',
-                  padding: '12px'
-                }}>
-                  {['12', '13'].map(grade => (
-                    <div key={grade} style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      marginBottom: '8px',
-                      cursor: 'pointer'
-                    }}>
-                      <input
-                        type="checkbox"
-                        id={`grade-12-13-${grade}`}
-                        value={grade}
-                        checked={subject12to13.grades.includes(grade)}
-                        onChange={() => handleGrade12to13Change(grade)}
-                        style={{
-                          marginRight: '10px',
-                          width: '16px',
-                          height: '16px',
-                          cursor: 'pointer'
-                        }}
-                      />
-                      <label htmlFor={`grade-12-13-${grade}`} style={{
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem',
-                        cursor: 'pointer',
-                        userSelect: 'none'
-                      }}>
-                        Grade {grade}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <button
-                onClick={addSubject12to13}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '1rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  boxShadow: '0 8px 25px rgba(139, 92, 246, 0.3)',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 12px 30px rgba(139, 92, 246, 0.4)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(139, 92, 246, 0.3)';
-                }}
-              >
-                ➕ Add Subject
-              </button>
-            </div>
+      <div style={{ width: '100%' }}>
+        {/* Page Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 900, color: '#1e1b4b', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Library size={28} color="#633194" /> Subject Management
+            </h1>
+            <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#64748b' }}>Configure curriculum subjects and grade levels.</p>
           </div>
         </div>
 
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
-            <div>Loading subjects from database...</div>
-          </div>
-        ) : (
-          <>
-            {/* Display Added Subjects */}
-            {subjects.length > 0 && (
-          <div style={{
-            marginTop: '30px',
-            padding: '25px',
-            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)',
-            border: '1px solid rgba(99, 102, 241, 0.2)',
-            borderRadius: '20px',
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '20px'
-            }}>
-              <h3 style={{
-                color: '#6366f1',
-                fontSize: '1.4rem',
-                fontWeight: '700',
-                margin: '0',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}>
-                <span style={{ fontSize: '1.8rem' }}>📋</span>
-                Added Subjects
-              </h3>
-              <div style={{
-                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                color: 'white',
-                padding: '8px 16px',
-                borderRadius: '20px',
-                fontSize: '0.9rem',
-                fontWeight: '600',
-                boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
-              }}>
-                {subjects.length} {subjects.length === 1 ? 'Subject' : 'Subjects'}
+        {/* Registration Forms Grid */}
+        <div style={{ marginBottom: '48px' }}>
+        {/* Unified Premium Entry Form */}
+        <div style={{ marginBottom: '40px', maxWidth: '1000px', marginLeft: 'auto', marginRight: 'auto' }}>
+          <div style={cardStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px', borderBottom: '1px solid #F3F4F6', paddingBottom: '20px' }}>
+              <div style={{ width: '40px', height: '40px', background: '#F5F3FF', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #DDD6FE' }}>
+                <Plus size={20} color="#633194" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#1E1B4B', letterSpacing: '-0.01em' }}>Create New Subject</h2>
+                <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748B', fontWeight: '500' }}>Specify category and grade details below.</p>
               </div>
             </div>
-            
-            <div style={{
-              display: 'grid',
-              gap: '15px',
-              maxHeight: '300px',
-              overflowY: 'auto',
-              paddingRight: '10px'
-            }}>
-              {subjects.map((subject) => (
-                <div 
-                  key={subject.id} 
+
+            {/* Type Selector Tabs */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '32px', background: '#F9FAFB', padding: '4px', borderRadius: '14px', maxWidth: '400px', marginLeft: 'auto', marginRight: 'auto' }}>
+              {(['6-11' , '12-13'] as const).map(type => (
+                <button
+                  key={type}
+                  onClick={() => setActiveFormTab(type)}
                   style={{
-                    padding: '20px 22px',
-                    background: `linear-gradient(135deg, 
-                      ${subject.type === '6-11' 
-                        ? 'rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0.15) 50%, rgba(16, 185, 129, 0.08) 100%' 
-                        : 'rgba(139, 92, 246, 0.25) 0%, rgba(139, 92, 246, 0.15) 50%, rgba(139, 92, 246, 0.08) 100%'
-                    }`,
-                    border: `1px solid ${
-                      subject.type === '6-11' 
-                        ? 'rgba(16, 185, 129, 0.6)' 
-                        : 'rgba(139, 92, 246, 0.6)'
-                    }`,
-                    borderRadius: '20px',
-                    fontSize: '0.9rem',
-                    fontWeight: '500',
-                    color: '#e2e8f0',
-                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    flex: 1,
+                    padding: '6px 12px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: activeFormTab === type ? '#633194' : 'transparent',
+                    color: activeFormTab === type ? 'white' : '#64748B',
+                    fontWeight: '700',
+                    fontSize: '12px',
                     cursor: 'pointer',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    boxShadow: `0 8px 32px ${
-                      subject.type === '6-11' 
-                        ? 'rgba(16, 185, 129, 0.3)' 
-                        : 'rgba(139, 92, 246, 0.3)'
-                    }`,
-                    backdropFilter: 'blur(12px)',
-                    transform: 'translateZ(0)'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-6px) scale(1.02)';
-                    e.currentTarget.style.boxShadow = `0 16px 48px ${
-                      subject.type === '6-11' 
-                        ? 'rgba(16, 185, 129, 0.5)' 
-                        : 'rgba(139, 92, 246, 0.5)'
-                    }`;
-                    e.currentTarget.style.border = `1px solid ${
-                      subject.type === '6-11' 
-                        ? 'rgba(16, 185, 129, 0.8)' 
-                        : 'rgba(139, 92, 246, 0.8)'
-                    }`;
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                    e.currentTarget.style.boxShadow = `0 8px 32px ${
-                      subject.type === '6-11' 
-                        ? 'rgba(16, 185, 129, 0.3)' 
-                        : 'rgba(139, 92, 246, 0.3)'
-                    }`;
-                    e.currentTarget.style.border = `1px solid ${
-                      subject.type === '6-11' 
-                        ? 'rgba(16, 185, 129, 0.6)' 
-                        : 'rgba(139, 92, 246, 0.6)'
-                    }`;
+                    transition: 'all 0.2s'
                   }}
                 >
-                  {/* Header with Subject Info - Top Left */}
-                  <div style={{
+                  Grade {type}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+              <div>
+                <label style={labelStyle}>Subject Name</label>
+                <input
+                  className="edu-input"
+                  placeholder="e.g. Mathematics"
+                  value={formData.name}
+                  onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Subject Code</label>
+                <input
+                  className="edu-input"
+                  placeholder="e.g. MATH6"
+                  value={formData.code}
+                  onChange={e => setFormData(p => ({ ...p, code: e.target.value }))}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Category (Bucket)</label>
+                <select
+                  className="edu-input"
+                  value={formData.category}
+                  onChange={e => setFormData(p => ({ ...p, category: e.target.value }))}
+                  style={{ ...inputStyle, appearance: 'none' }}
+                >
+                  <option value="">Select Category</option>
+                  {['Aesthetics', 'Category 1', 'Category 2', 'Category 3', 'Religion'].map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', marginTop: '14px' }}>
+                <div 
+                  onClick={() => setFormData(p => ({ ...p, is_optional: !p.is_optional }))}
+                  style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '15px',
-                    marginBottom: '15px',
-                    paddingTop: '10px',
-                    paddingLeft: '10px'
-                  }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{
-                        display: 'inline-block',
-                        background: `linear-gradient(135deg, 
-                          ${subject.type === '6-11' 
-                            ? 'rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%' 
-                            : 'rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%'
-                        }`,
-                        border: `1px solid ${
-                          subject.type === '6-11' 
-                            ? 'rgba(16, 185, 129, 0.4)' 
-                            : 'rgba(139, 92, 246, 0.4)'
-                        }`,
-                        borderRadius: '12px',
-                        padding: '8px 16px',
-                        fontSize: '1.1rem',
-                        fontWeight: '700',
-                        color: subject.type === '6-11' ? '#10b981' : '#8b5cf6',
-                        lineHeight: '1.2',
-                        boxShadow: `0 2px 8px ${
-                          subject.type === '6-11' 
-                            ? 'rgba(16, 185, 129, 0.2)' 
-                            : 'rgba(139, 92, 246, 0.2)'
-                        }`,
-                        backdropFilter: 'blur(4px)',
-                        transition: 'all 0.3s ease'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-1px)';
-                        e.currentTarget.style.boxShadow = `0 4px 12px ${
-                          subject.type === '6-11' 
-                            ? 'rgba(16, 185, 129, 0.3)' 
-                            : 'rgba(139, 92, 246, 0.3)'
-                        }`;
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = `0 2px 8px ${
-                          subject.type === '6-11' 
-                            ? 'rgba(16, 185, 129, 0.2)' 
-                            : 'rgba(139, 92, 246, 0.2)'
-                        }`;
-                      }}>
-                        {subject.code} - {subject.name}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Subject Type Badge - Top Right */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '12px',
-                    right: '12px',
-                    background: subject.type === '6-11' 
-                      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                      : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                    color: 'white',
-                    padding: '4px 12px',
-                    borderRadius: '12px',
-                    fontSize: '0.65rem',
-                    fontWeight: '700',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    backdropFilter: 'blur(8px)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px'
-                  }}>
-                    {subject.type === '6-11' ? '6-11' : '12-13'}
-                  </div>
-
-                  {/* Grades as Badges */}
-                  <div style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
                     gap: '8px',
-                    marginBottom: '10px',
-                    alignItems: 'flex-start',
-                    paddingLeft: '60px'
+                    cursor: 'pointer',
+                    background: formData.is_optional ? '#F5F3FF' : '#F9FAFB',
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    border: formData.is_optional ? '1px solid #DDD6FE' : '1px solid #E5E7EB',
+                    transition: 'all 0.2s',
+                    width: 'fit-content'
+                  }}
+                >
+                  <div style={{ 
+                    width: '18px', 
+                    height: '18px', 
+                    borderRadius: '5px', 
+                    border: '2px solid #633194',
+                    background: formData.is_optional ? '#633194' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}>
-                    {(() => {
-                      let gradesArray: string[] = [];
-                      try {
-                        if (Array.isArray(subject.grades)) {
-                          gradesArray = subject.grades;
-                        } else if (typeof subject.grades === 'string') {
-                          gradesArray = JSON.parse(subject.grades);
-                        } else {
-                          gradesArray = [subject.grades].filter(Boolean);
-                        }
-                      } catch (e) {
-                        gradesArray = [];
-                      }
-                      
-                      return gradesArray.filter(Boolean).map(grade => (
-                        <div
-                          key={grade}
-                          style={{
-                            background: 'rgba(99, 102, 241, 0.15)',
-                            border: '1px solid rgba(99, 102, 241, 0.3)',
-                            padding: '4px 10px',
-                            borderRadius: '14px',
-                            fontSize: '0.7rem',
-                            fontWeight: '600',
-                            color: '#6366f1',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            whiteSpace: 'nowrap',
-                            flexShrink: 0,
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseOver={(e) => {
-                            e.currentTarget.style.background = 'rgba(99, 102, 241, 0.25)';
-                            e.currentTarget.style.transform = 'translateY(-1px)';
-                          }}
-                          onMouseOut={(e) => {
-                            e.currentTarget.style.background = 'rgba(99, 102, 241, 0.15)';
-                            e.currentTarget.style.transform = 'translateY(0)';
-                          }}
-                        >
-                          📚 Grade {grade}
-                        </div>
-                      ));
-                    })()}
+                    {formData.is_optional && <CheckCircle size={12} color="white" />}
                   </div>
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: formData.is_optional ? '#633194' : '#64748B' }}>Optional Subject</span>
+                </div>
+              </div>
 
-                  {/* Streams as Badges (if exists) */}
-                  {subject.stream && (
-                    <div style={{
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={labelStyle}>Select Grade Levels</label>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {(activeFormTab === '6-11' ? ['6', '7', '8', '9', '10', '11'] : ['12', '13']).map(g => (
+                    <button
+                      key={g}
+                      onClick={() => handleGradeToggle(g)}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '10px',
+                        border: formData.grades.includes(g) ? '2px solid #633194' : '2px solid #F3F4F6',
+                        background: formData.grades.includes(g) ? '#F5F3FF' : '#FFFFFF',
+                        color: formData.grades.includes(g) ? '#633194' : '#64748B',
+                        fontWeight: '700',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      G{g}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {activeFormTab === '12-13' && (
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label style={labelStyle}>Streams</label>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {['Science', 'Commerce', 'Arts', 'Technology'].map(s => (
+                      <button
+                        key={s}
+                        onClick={() => handleStreamToggle(s)}
+                        style={{
+                          padding: '10px 16px',
+                          borderRadius: '10px',
+                          border: formData.streams.includes(s) ? '2px solid #8B5CF6' : '1px solid #E5E7EB',
+                          background: formData.streams.includes(s) ? '#F5F3FF' : 'white',
+                          color: formData.streams.includes(s) ? '#633194' : '#4B5563',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+                  <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
+                    <button
+                      onClick={handleAddSubject}
+                      disabled={loading}
+                      style={{
+                        padding: '8px 24px',
+                        background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        fontWeight: '800',
+                        cursor: 'pointer',
+                        boxShadow: '0 8px 30px rgba(99, 49, 148, 0.2)',
+                        transition: 'all 0.3s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                  {loading ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
+                  Add Subject to Curriculum
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+        {/* Search and List */}
+        <div style={{
+          background: '#FFFFFF',
+          padding: '40px',
+          borderRadius: '32px',
+          border: '1px solid #E5E7EB',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.05)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {/* Top accent line */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #633194, #8B5CF6)' }}></div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap', gap: '32px' }}>
+            <div>
+              <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#111827', margin: 0, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Library size={32} color="#633194" /> Registered Subjects
+              </h2>
+              <p style={{ color: '#6B7280', fontSize: '15px', marginTop: '6px', fontWeight: '500' }}>Manage and monitor all curriculum subjects from one place.</p>
+            </div>
+            <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
+              <input
+                className="edu-input"
+                placeholder="Search by name or code..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                style={{ ...inputStyle, paddingLeft: '44px', height: '42px', borderRadius: '12px' }}
+              />
+              <Search size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+            {loading ? (
+              <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '100px 0' }}>
+                <Loader2 size={48} style={{ color: '#8B5CF6', marginBottom: '20px', animation: 'spin 2s linear infinite' }} />
+                <div style={{ color: '#6B7280', fontSize: '18px', fontWeight: '600' }}>Loading curriculum data...</div>
+                <style>{`
+                  @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                  }
+                `}</style>
+              </div>
+            ) : subjects.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.code.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+              <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '100px 0', background: '#F9FAFB', borderRadius: '24px', border: '2px dashed #E5E7EB' }}>
+                <Search size={48} style={{ color: '#CBD5E1', marginBottom: '20px' }} />
+                <div style={{ color: '#64748B', fontSize: '18px', fontWeight: '600' }}>
+                  {searchTerm ? `No results for "${searchTerm}"` : 'No subjects registered yet'}
+                </div>
+              </div>
+            ) : (
+              subjects
+                .filter(subject => subject.name.toLowerCase().includes(searchTerm.toLowerCase()) || subject.code.toLowerCase().includes(searchTerm.toLowerCase()))
+                .map((subject) => (
+                  <div
+                    key={subject.id}
+                    style={{
+                      border: '1.5px solid #F3E8FF',
+                      padding: '16px 20px',
+                      borderRadius: '16px',
                       display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '6px',
-                      marginBottom: '10px',
-                      alignItems: 'flex-start',
-                      paddingLeft: '60px'
-                    }}>
-                      {(() => {
-                        let streamsArray: string[] = [];
-                        try {
-                          if (Array.isArray(subject.stream)) {
-                            streamsArray = subject.stream;
-                          } else if (typeof subject.stream === 'string') {
-                            streamsArray = JSON.parse(subject.stream);
-                          } else {
-                            streamsArray = [subject.stream].filter(Boolean);
-                          }
-                        } catch (e) {
-                          streamsArray = [];
-                        }
-                        
-                        return streamsArray.filter(Boolean).map(stream => (
-                          <div
-                            key={stream}
-                            style={{
-                              background: 'rgba(245, 158, 11, 0.15)',
-                              border: '1px solid rgba(245, 158, 11, 0.3)',
-                              padding: '4px 10px',
-                              borderRadius: '14px',
-                              fontSize: '0.7rem',
-                              fontWeight: '600',
-                              color: '#f59e0b',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              whiteSpace: 'nowrap',
-                              flexShrink: 0,
-                              transition: 'all 0.2s ease'
-                            }}
-                            onMouseOver={(e) => {
-                              e.currentTarget.style.background = 'rgba(245, 158, 11, 0.25)';
-                              e.currentTarget.style.transform = 'translateY(-1px)';
-                            }}
-                            onMouseOut={(e) => {
-                              e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)';
-                              e.currentTarget.style.transform = 'translateY(0)';
-                            }}
-                          >
-                            🎯 {stream}
+                      flexDirection: 'column',
+                      gap: '12px',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      position: 'relative',
+                      background: '#FAF5FF'
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.borderColor = '#8B5CF6';
+                      e.currentTarget.style.boxShadow = '0 12px 24px rgba(139, 92, 246, 0.08)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.background = '#FFFFFF';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.borderColor = '#F3E8FF';
+                      e.currentTarget.style.boxShadow = 'none';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.background = '#FAF5FF';
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <span style={{ fontSize: '10px', color: '#8B5CF6', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{subject.code}</span>
+                        <h4 style={{ fontSize: '16px', fontWeight: '700', color: '#111827', margin: '2px 0 0 0', letterSpacing: '-0.01em' }}>{subject.name}</h4>
+                        {subject.category && (
+                          <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ fontWeight: '600' }}>Bucket:</span> {subject.category}
+                            {subject.is_optional && <span style={{ color: '#8B5CF6', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', fontSize: '10px', marginLeft: '4px' }}>Optional</span>}
                           </div>
+                        )}
+                      </div>
+                      <span style={{ background: '#F5F3FF', color: '#633194', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: '700', border: '1px solid #DDD6FE' }}>{subject.type}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {(() => {
+                        let displayGrades: string[] = [];
+                        if (Array.isArray(subject.grades)) {
+                          displayGrades = subject.grades.flatMap(g => {
+                            if (typeof g === 'string' && g.startsWith('[')) {
+                              try { return JSON.parse(g); } catch { return g; }
+                            }
+                            return g;
+                          });
+                        } else if (typeof subject.grades === 'string' && (subject.grades as string).startsWith('[')) {
+                          try { displayGrades = JSON.parse(subject.grades as string); } catch { displayGrades = [subject.grades as string]; }
+                        } else {
+                          displayGrades = [subject.grades as string];
+                        }
+                        return displayGrades.map(g => (
+                          <span key={g} style={{ background: '#F8FAFC', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: '700', border: '1px solid #E2E8F0', color: '#475569' }}>
+                            G{g}
+                          </span>
                         ));
                       })()}
                     </div>
-                  )}
-
-                  {/* Action Buttons at Bottom-Right */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '8px',
-                    right: '8px',
-                    display: 'flex',
-                    gap: '6px'
-                  }}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        editSubject(subject.id);
-                      }}
-                      style={{
-                        padding: '4px 8px',
-                        background: 'rgba(59, 130, 246, 0.2)',
-                        border: '1px solid rgba(59, 130, 246, 0.4)',
-                        borderRadius: '6px',
-                        color: '#3b82f6',
-                        fontSize: '0.7rem',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '3px',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
-                        e.currentTarget.style.transform = 'translateY(-1px)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                      }}
-                    >
-                      ✏️ Edit
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteSubject(subject.id);
-                      }}
-                      style={{
-                        padding: '4px 8px',
-                        background: 'rgba(239, 68, 68, 0.2)',
-                        border: '1px solid rgba(239, 68, 68, 0.4)',
-                        borderRadius: '6px',
-                        color: '#ef4444',
-                        fontSize: '0.7rem',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '3px',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.3)';
-                        e.currentTarget.style.transform = 'translateY(-1px)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                      }}
-                    >
-                      🗑️ Delete
-                    </button>
+                    <div style={{ display: 'flex', gap: '12px', marginTop: 'auto', paddingTop: '12px' }}>
+                      <button onClick={() => editSubject(subject.id)} style={{ flex: 1, padding: '6px 10px', borderRadius: '8px', border: '1.5px solid #E2E8F0', background: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: '700', color: '#633194', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }} onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = '#633194'} onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = '#E2E8F0'}>
+                        <Edit2 size={12} /> Edit
+                      </button>
+                      <button onClick={() => deleteSubject(subject.id)} style={{ flex: 1, padding: '6px 10px', borderRadius: '8px', border: '1.5px solid #FEE2E2', background: '#FEF2F2', color: '#DC2626', cursor: 'pointer', fontSize: '12px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }} onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = '#DC2626'} onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = '#FEE2E2'}>
+                        <Trash2 size={12} /> Delete
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))
+              )}
           </div>
-        )}
-        </> )}
-      </div>
-      
-      {editingId && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: '1000'
-        }}>
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '20px',
-            padding: '30px',
-            border: '1px solid rgba(99, 102, 241, 0.3)',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)',
-            maxWidth: '500px',
-            width: '90%',
-            maxHeight: '90vh',
-            overflowY: 'auto'
-          }}>
-            <div style={{
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              marginBottom: '20px',
-              color: '#e2e8f0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
-              ✏️ Edit Subject
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{
-                background: editForm.type === '6-11' 
-                  ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%)'
-                  : 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%)',
-                border: `1px solid ${
-                  editForm.type === '6-11' 
-                    ? 'rgba(16, 185, 129, 0.4)' 
-                    : 'rgba(139, 92, 246, 0.4)'
-                }`,
-                borderRadius: '8px',
-                padding: '8px 12px',
-                textAlign: 'center',
-                color: editForm.type === '6-11' ? '#10b981' : '#8b5cf6',
-                fontSize: '0.8rem',
-                fontWeight: '600',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>
-                Subject Type: {editForm.type === '6-11' ? 'Grades 6-11' : 'Grades 12-13'}
-              </div>
-              
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  color: '#94a3b8',
-                  marginBottom: '8px',
-                  fontWeight: '500'
-                }}>
-                  Subject Name *
-                </label>
-                <input
-                  type="text"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'rgba(15, 23, 42, 0.6)',
-                    border: '1px solid rgba(148, 163, 184, 0.2)',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    color: '#e2e8f0',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-              
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  color: '#94a3b8',
-                  marginBottom: '8px',
-                  fontWeight: '500'
-                }}>
-                  Subject Code *
-                </label>
-                <input
-                  type="text"
-                  value={editForm.code}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, code: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'rgba(15, 23, 42, 0.6)',
-                    border: '1px solid rgba(148, 163, 184, 0.2)',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    color: '#e2e8f0',
-                    outline: 'none'
-                  }}
-                />
-              </div>
+        </div>
 
+      {/* Edit Modal */}
+      {editingId && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(17, 24, 39, 0.4)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+          <div style={{ background: 'white', padding: '40px', borderRadius: '32px', width: '480px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid #E5E7EB', animation: 'modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+              <h3 style={{ fontSize: '26px', fontWeight: '800', color: '#111827', margin: 0, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Edit2 size={24} color="#633194" /> Edit Subject
+              </h3>
+              <button
+                onClick={cancelEdit}
+                style={{ background: '#F3F4F6', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <X size={20} color="#4B5563" />
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  color: '#94a3b8',
-                  marginBottom: '10px',
-                  fontWeight: '600'
-                }}>
-                  Select Grades *
-                </label>
-                <div style={{
-                  background: 'rgba(99, 102, 241, 0.1)',
-                  border: '1px solid rgba(99, 102, 241, 0.2)',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  maxHeight: editForm.type === '6-11' ? 'none' : '200px',
-                  overflowY: editForm.type === '6-11' ? 'visible' : 'auto'
-                }}>
-                  {editForm.type === '6-11' 
-                    ? ['6', '7', '8', '9', '10', '11'].map(grade => (
-                        <div key={grade} style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          marginBottom: '8px',
-                          cursor: 'pointer'
-                        }}>
-                          <input
-                            type="checkbox"
-                            id={`edit-grade-${grade}`}
-                            value={grade}
-                            checked={editForm.grades.includes(grade)}
-                            onChange={() => handleEditGradeChange(grade)}
-                            style={{
-                              marginRight: '10px',
-                              width: '16px',
-                              height: '16px',
-                              cursor: 'pointer'
-                            }}
-                          />
-                          <label htmlFor={`edit-grade-${grade}`} style={{
-                            color: '#e2e8f0',
-                            fontSize: '0.9rem',
-                            cursor: 'pointer',
-                            userSelect: 'none'
-                          }}>
-                            Grade {grade}
-                          </label>
-                        </div>
-                      ))
-                    : ['12', '13'].map(grade => (
-                        <div key={grade} style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          marginBottom: '8px',
-                          cursor: 'pointer'
-                        }}>
-                          <input
-                            type="checkbox"
-                            id={`edit-grade-${grade}`}
-                            value={grade}
-                            checked={editForm.grades.includes(grade)}
-                            onChange={() => handleEditGradeChange(grade)}
-                            style={{
-                              marginRight: '10px',
-                              width: '16px',
-                              height: '16px',
-                              cursor: 'pointer'
-                            }}
-                          />
-                          <label htmlFor={`edit-grade-${grade}`} style={{
-                            color: '#e2e8f0',
-                            fontSize: '0.9rem',
-                            cursor: 'pointer',
-                            userSelect: 'none'
-                          }}>
-                            Grade {grade}
-                          </label>
-                        </div>
-                      ))
-                  }
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#4B5563', marginBottom: '10px' }}>Subject Name</label>
+                <input className="edu-input" value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#4B5563', marginBottom: '10px' }}>Subject Code</label>
+                <input className="edu-input" value={editForm.code} onChange={e => setEditForm(p => ({ ...p, code: e.target.value }))} style={inputStyle} />
+              </div>
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#4B5563', marginBottom: '10px' }}>Category (Bucket)</label>
+                  {editForm.type === '6-11' ? (
+                    <select
+                      className="edu-input"
+                      value={editForm.category}
+                      onChange={e => setEditForm(p => ({ ...p, category: e.target.value }))}
+                      style={{ ...inputStyle, padding: '10px 12px' }}
+                    >
+                      <option value="">Select Category</option>
+                      {commonCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  ) : (
+                    <select
+                      className="edu-input"
+                      value={editForm.category}
+                      onChange={e => setEditForm(p => ({ ...p, category: e.target.value }))}
+                      style={{ ...inputStyle, padding: '10px 12px' }}
+                    >
+                      <option value="">Select Category</option>
+                      {['Category 1', 'Category 2', 'Category 3'].map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  )}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', marginTop: '24px' }}>
+                  <label style={{ fontSize: '14px', fontWeight: '600', color: '#4B5563', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={editForm.is_optional} onChange={e => setEditForm(p => ({ ...p, is_optional: e.target.checked }))} style={{ accentColor: '#633194', width: '18px', height: '18px' }} />
+                    Optional
+                  </label>
                 </div>
               </div>
-              
-              <div style={{
-                display: 'flex',
-                gap: '10px',
-                marginTop: '10px'
-              }}>
-                <button
-                  onClick={saveEdit}
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '10px',
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    boxShadow: '0 8px 25px rgba(16, 185, 129, 0.3)',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 12px 30px rgba(16, 185, 129, 0.4)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(16, 185, 129, 0.3)';
-                  }}
-                >
-                  💾 Save Changes
-                </button>
-                <button
-                  onClick={cancelEdit}
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '10px',
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    boxShadow: '0 8px 25px rgba(239, 68, 68, 0.3)',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 12px 30px rgba(239, 68, 68, 0.4)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(239, 68, 68, 0.3)';
-                  }}
-                >
-                  ❌ Cancel
-                </button>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '700', color: '#4B5563', marginBottom: '16px' }}>Grades</label>
+                <div style={{ background: '#F9FAFB', padding: '16px', borderRadius: '12px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                  {(editForm.type === '6-11' ? ['6', '7', '8', '9', '10', '11'] : ['12', '13']).map(g => (
+                    <label
+                      key={g}
+                      style={{
+                        fontSize: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        color: '#4B5563',
+                        fontWeight: '500'
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={editForm.grades.includes(g)}
+                        onChange={() => handleEditGradeChange(g)}
+                        style={{ accentColor: '#633194', width: '14px', height: '14px', cursor: 'pointer' }}
+                      />
+                      G{g}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                <button onClick={cancelEdit} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1.5px solid #D1D5DB', background: 'white', cursor: 'pointer', fontWeight: '700', fontSize: '13px' }}>Cancel</button>
+                <button onClick={saveEdit} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#633194', color: 'white', cursor: 'pointer', fontWeight: '700', fontSize: '13px', boxShadow: '0 8px 16px rgba(99, 49, 148, 0.2)' }}>Save Changes</button>
               </div>
             </div>
           </div>
         </div>
       )}
-  );
+
+      <style>{`
+        .forms-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 24px;
+        }
+        .edu-input:focus {
+          outline: none !important;
+          border-color: #633194 !important;
+          background: #FFFFFF !important;
+          box-shadow: 0 0 0 4px rgba(99, 49, 148, 0.1) !important;
+        }
+        @media (min-width: 1024px) {
+          .forms-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+          }
+          .form-divider {
+            display: block !important;
+          }
+        }
+        @keyframes modalIn {
+          from { opacity: 0; transform: scale(0.95) translateY(10px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+      </div>
     </div>
   );
-
 };
 
 export default SubjectManagement;

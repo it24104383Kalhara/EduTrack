@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { gradeApi, studentApi } from '../services/api';
 import type { Grade, Student } from '../services/api';
+import MarksEntry from './MarksEntry';
 
 const MarksManagement: React.FC = () => {
   const [grades, setGrades] = useState<Grade[]>([]);
@@ -50,12 +51,7 @@ const MarksManagement: React.FC = () => {
     setShowMarksPage(true);
   };
 
-  const closeMarksPage = () => {
-    setShowMarksPage(false);
-    setSelectedTerm(null);
-    setSelectedGrade(null);
-  };
-
+  
   const closeTermSelection = () => {
     setShowTermSelection(false);
     setSelectedGrade(null);
@@ -73,9 +69,9 @@ const MarksManagement: React.FC = () => {
       <div style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #0f766e 0%, #134e4a 25%, #115e59 50%, #134e4a 75%, #0f766e 100%)',
-        padding: '40px',
+        padding: '24px',
         fontFamily: 'Inter, sans-serif',
-        fontSize: '18px',
+        fontSize: '16px',
         color: '#e2e8f0',
         position: 'relative',
         display: 'flex',
@@ -83,7 +79,7 @@ const MarksManagement: React.FC = () => {
         justifyContent: 'center'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
+          <div style={{ fontSize: '20px', marginBottom: '8px' }}>⏳</div>
           <div>Loading Marks Management System...</div>
         </div>
       </div>
@@ -95,45 +91,43 @@ const MarksManagement: React.FC = () => {
     return (
       <div style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0f766e 0%, #134e4a 25%, #115e59 50%, #134e4a 75%, #0f766e 100%)',
-        padding: '40px',
+        background: '#F9FAFB',
+        padding: '12px',
         fontFamily: 'Inter, sans-serif',
-        fontSize: '18px',
-        color: '#e2e8f0',
         position: 'relative'
       }}>
         <div style={{
-          maxWidth: '1400px',
+          maxWidth: '1200px',
           margin: '0 auto',
-          background: 'rgba(255, 255, 255, 0.03)',
-          borderRadius: '24px',
-          border: '3px solid #000000',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
-          backdropFilter: 'blur(10px)',
-          padding: '60px'
+          background: '#FFFFFF',
+          borderRadius: '16px',
+          border: '1px solid #E5E7EB',
+          boxShadow: '0 4px 20px rgba(99, 49, 148, 0.1)',
+          padding: '24px'
         }}>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '40px',
-            paddingBottom: '20px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+            marginBottom: '24px',
+            paddingBottom: '16px',
+            borderBottom: '1px solid #E5E7EB'
           }}>
             <div>
               <h1 style={{
-                fontSize: '28px',
-                fontWeight: '800',
-                color: '#10b981',
+                fontSize: '24px',
+                fontWeight: '600',
+                color: '#633194',
                 marginBottom: '8px',
-                textShadow: '0 0 20px rgba(16, 185, 129, 0.3)'
+                fontFamily: 'Inter, sans-serif'
               }}>
                 📚 Select Term - {selectedGrade.grade}-{selectedGrade.grade_part}
               </h1>
               <p style={{
-                fontSize: '16px',
-                color: '#94a3b8',
-                margin: 0
+                fontSize: '14px',
+                color: '#6B7280',
+                margin: 0,
+                fontFamily: 'Inter, sans-serif'
               }}>
                 {getGradeStudents().length} students assigned • Choose a term to manage marks
               </p>
@@ -141,15 +135,23 @@ const MarksManagement: React.FC = () => {
             <button
               onClick={closeTermSelection}
               style={{
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '12px 24px',
+                padding: '10px 20px',
                 fontSize: '14px',
-                fontWeight: '600',
+                fontWeight: '500',
                 cursor: 'pointer',
-                boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'
+                fontFamily: 'Inter, sans-serif',
+                boxShadow: '0 2px 8px rgba(99, 49, 148, 0.3)',
+                transition: 'transform 0.2s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
               ← Back to Grades
@@ -158,49 +160,42 @@ const MarksManagement: React.FC = () => {
 
           <div style={{
             textAlign: 'center',
-            padding: '60px 40px'
+            padding: '32px 16px'
           }}>
             <div style={{
-              fontSize: '64px',
-              marginBottom: '20px',
-              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              filter: 'drop-shadow(0 4px 8px rgba(99, 102, 241, 0.3))',
-              animation: 'float 3s ease-in-out infinite'
+              fontSize: '48px',
+              marginBottom: '16px',
+              color: '#633194',
+              filter: 'drop-shadow(0 2px 4px rgba(99, 49, 148, 0.2))'
             }}>
               📅
             </div>
             <h2 style={{
-              fontSize: '32px',
-              fontWeight: '800',
-              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              marginBottom: '16px',
-              margin: '0 0 16px 0',
-              letterSpacing: '-0.5px'
+              fontSize: '28px',
+              fontWeight: '600',
+              color: '#1F2937',
+              marginBottom: '12px',
+              fontFamily: 'Inter, sans-serif'
             }}>
               Select Academic Term
             </h2>
             <p style={{
-              fontSize: '18px',
-              color: '#94a3b8',
-              marginBottom: '50px',
+              fontSize: '14px',
+              color: '#6B7280',
+              marginBottom: '32px',
               maxWidth: '600px',
-              margin: '0 auto 50px',
-              lineHeight: '1.6'
+              margin: '0 auto 32px',
+              lineHeight: '1.6',
+              fontFamily: 'Inter, sans-serif'
             }}>
               Choose the academic term for which you want to manage marks and assessments
             </p>
             
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '30px',
-              maxWidth: '1000px',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '16px',
+              maxWidth: '850px',
               margin: '0 auto'
             }}>
               {[
@@ -208,142 +203,101 @@ const MarksManagement: React.FC = () => {
                   term: 'First Term', 
                   number: '01', 
                   icon: '🌱',
-                  color: '#10b981',
-                  bgColor: 'rgba(16, 185, 129, 0.1)',
-                  borderColor: 'rgba(16, 185, 129, 0.3)',
-                  description: 'Beginning of academic journey'
+                  color: '#633194',
+                  bgColor: '#F4F0FF',
+                  borderColor: '#633194',
+                  description: 'Start of year'
                 },
                 { 
                   term: 'Second Term', 
                   number: '02', 
                   icon: '🌿',
-                  color: '#f59e0b',
-                  bgColor: 'rgba(245, 158, 11, 0.1)',
-                  borderColor: 'rgba(245, 158, 11, 0.3)',
-                  description: 'Mid-term progress evaluation'
+                  color: '#633194',
+                  bgColor: '#F4F0FF',
+                  borderColor: '#633194',
+                  description: 'Mid-term eval'
                 },
                 { 
                   term: 'Third Term', 
                   number: '03', 
                   icon: '🌳',
-                  color: '#8b5cf6',
-                  bgColor: 'rgba(139, 92, 246, 0.1)',
-                  borderColor: 'rgba(139, 92, 246, 0.3)',
-                  description: 'Final term assessments'
+                  color: '#633194',
+                  bgColor: '#F4F0FF',
+                  borderColor: '#633194',
+                  description: 'Final assessments'
                 }
               ].map((termData) => (
                 <div
                   key={termData.term}
                   onClick={() => handleTermSelect(termData.term)}
                   style={{
-                    background: `linear-gradient(135deg, ${termData.bgColor} 0%, rgba(255, 255, 255, 0.02) 100%)`,
+                    background: termData.bgColor,
                     border: `2px solid ${termData.borderColor}`,
-                    borderRadius: '20px',
-                    padding: '40px 30px',
+                    borderRadius: '12px',
+                    padding: '16px',
                     cursor: 'pointer',
-                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 0.3s ease',
                     textAlign: 'center',
-                    position: 'relative',
-                    overflow: 'hidden'
+                    position: 'relative'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)';
-                    e.currentTarget.style.boxShadow = `0 20px 40px ${termData.borderColor}`;
-                    e.currentTarget.style.borderColor = termData.color;
-                    e.currentTarget.style.background = `linear-gradient(135deg, ${termData.bgColor} 0%, ${termData.borderColor} 100%)`;
+                    e.currentTarget.style.transform = 'translateY(-3px)';
+                    e.currentTarget.style.boxShadow = '0 6px 15px rgba(99, 49, 148, 0.12)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                    e.currentTarget.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.1)';
-                    e.currentTarget.style.borderColor = termData.borderColor;
-                    e.currentTarget.style.background = `linear-gradient(135deg, ${termData.bgColor} 0%, rgba(255, 255, 255, 0.02) 100%)`;
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  {/* Background decoration */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '-20px',
-                    right: '-20px',
-                    width: '100px',
-                    height: '100px',
-                    background: `linear-gradient(135deg, ${termData.color} 0%, transparent 70%)`,
-                    borderRadius: '50%',
-                    opacity: '0.1'
-                  }} />
-                  
-                  <div style={{ 
-                    position: 'absolute',
-                    bottom: '-20px',
-                    left: '-20px',
-                    width: '80px',
-                    height: '80px',
-                    background: `linear-gradient(135deg, ${termData.color} 0%, transparent 70%)`,
-                    borderRadius: '50%',
-                    opacity: '0.1'
-                  }} />
-
-                  <div style={{ position: 'relative', zIndex: 2 }}>
+                  <div>
                     <div style={{
-                      fontSize: '48px',
-                      marginBottom: '16px',
-                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))'
+                      fontSize: '32px',
+                      marginBottom: '8px'
                     }}>
                       {termData.icon}
                     </div>
                     
                     <div style={{
-                      fontSize: '14px',
+                      fontSize: '10px',
                       fontWeight: '700',
                       color: termData.color,
-                      marginBottom: '8px',
-                      letterSpacing: '2px',
-                      textTransform: 'uppercase',
-                      opacity: '0.8'
+                      marginBottom: '4px',
+                      textTransform: 'uppercase'
                     }}>
                       Term {termData.number}
                     </div>
                     
                     <h3 style={{
-                      fontSize: '24px',
-                      fontWeight: '800',
-                      color: termData.color,
-                      marginBottom: '12px',
-                      margin: '0 0 12px 0',
-                      textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      fontSize: '17px',
+                      fontWeight: '600',
+                      color: '#1F2937',
+                      marginBottom: '4px',
+                      margin: '0 0 4px 0'
                     }}>
                       {termData.term}
                     </h3>
                     
                     <p style={{
-                      fontSize: '15px',
-                      color: '#94a3b8',
-                      marginBottom: '24px',
-                      lineHeight: '1.5',
-                      fontStyle: 'italic'
+                      fontSize: '12px',
+                      color: '#6B7280',
+                      margin: '0 0 12px 0'
                     }}>
                       {termData.description}
                     </p>
                     
                     <div style={{
-                      background: `linear-gradient(135deg, ${termData.color} 0%, ${termData.color}dd 100%)`,
+                      background: termData.color,
                       color: 'white',
-                      padding: '14px 28px',
-                      borderRadius: '12px',
-                      fontSize: '15px',
-                      fontWeight: '700',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: '600',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '10px',
-                      boxShadow: `0 8px 20px ${termData.color}40`,
-                      transition: 'all 0.3s ease'
+                      gap: '4px'
                     }}>
                       <span>Select Term</span>
-                      <span style={{ 
-                        fontSize: '18px',
-                        transition: 'transform 0.3s ease'
-                      }}>
-                        →
-                      </span>
+                      <span style={{ fontSize: '14px' }}>→</span>
                     </div>
                   </div>
                 </div>
@@ -355,200 +309,66 @@ const MarksManagement: React.FC = () => {
     );
   }
 
-  // Show empty marks page when grade and term are selected
+  // Show marks entry page when grade and term are selected
   if (showMarksPage && selectedGrade && selectedTerm) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0f766e 0%, #134e4a 25%, #115e59 50%, #134e4a 75%, #0f766e 100%)',
-        padding: '40px',
-        fontFamily: 'Inter, sans-serif',
-        fontSize: '18px',
-        color: '#e2e8f0',
-        position: 'relative'
-      }}>
-        <div style={{
-          maxWidth: '1400px',
-          margin: '0 auto',
-          background: 'rgba(255, 255, 255, 0.03)',
-          borderRadius: '24px',
-          border: '3px solid #000000',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
-          backdropFilter: 'blur(10px)',
-          padding: '60px'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '40px',
-            paddingBottom: '20px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
-          }}>
-            <div>
-              <h1 style={{
-                fontSize: '28px',
-                fontWeight: '800',
-                color: '#10b981',
-                marginBottom: '8px',
-                textShadow: '0 0 20px rgba(16, 185, 129, 0.3)'
-              }}>
-                📝 Marks Entry - {selectedGrade.grade}-{selectedGrade.grade_part} • {selectedTerm}
-              </h1>
-              <p style={{
-                fontSize: '16px',
-                color: '#94a3b8',
-                margin: 0
-              }}>
-                {getGradeStudents().length} students assigned • Ready for marks implementation
-              </p>
-            </div>
-            <button
-              onClick={closeMarksPage}
-              style={{
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'
-              }}
-            >
-              ← Back to Grades
-            </button>
-          </div>
-
-          <div style={{
-            textAlign: 'center',
-            padding: '80px 40px',
-            background: 'rgba(99, 102, 241, 0.1)',
-            borderRadius: '16px',
-            border: '2px solid #6366f1'
-          }}>
-            <div style={{
-              fontSize: '72px',
-              marginBottom: '30px',
-              opacity: '0.8'
-            }}>
-              📝
-            </div>
-            <h2 style={{
-              fontSize: '24px',
-              fontWeight: '700',
-              color: '#6366f1',
-              marginBottom: '16px',
-              margin: '0 0 16px 0'
-            }}>
-              Empty Marks Page
-            </h2>
-            <p style={{
-              fontSize: '16px',
-              color: '#94a3b8',
-              marginBottom: '24px',
-              lineHeight: '1.6',
-              maxWidth: '600px',
-              margin: '0 auto 24px'
-            }}>
-              This is the empty page where marks entry functionality will be implemented.<br/>
-              You can add forms for entering marks, assessments, and evaluations here.
-            </p>
-            <div style={{
-              display: 'flex',
-              gap: '20px',
-              justifyContent: 'center',
-              flexWrap: 'wrap'
-            }}>
-              <div style={{
-                background: 'rgba(16, 185, 129, 0.1)',
-                border: '2px solid #10b981',
-                borderRadius: '12px',
-                padding: '20px',
-                minWidth: '200px'
-              }}>
-                <div style={{ fontSize: '24px', marginBottom: '12px' }}>📊</div>
-                <div style={{ fontSize: '14px', color: '#10b981', fontWeight: '600' }}>Assessment Types</div>
-                <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>Exams, Tests, Assignments</div>
-              </div>
-              <div style={{
-                background: 'rgba(245, 158, 11, 0.1)',
-                border: '2px solid #f59e0b',
-                borderRadius: '12px',
-                padding: '20px',
-                minWidth: '200px'
-              }}>
-                <div style={{ fontSize: '24px', marginBottom: '12px' }}>📈</div>
-                <div style={{ fontSize: '14px', color: '#f59e0b', fontWeight: '600' }}>Performance Tracking</div>
-                <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>Grades & Analytics</div>
-              </div>
-              <div style={{
-                background: 'rgba(139, 92, 246, 0.1)',
-                border: '2px solid #8b5cf6',
-                borderRadius: '12px',
-                padding: '20px',
-                minWidth: '200px'
-              }}>
-                <div style={{ fontSize: '24px', marginBottom: '12px' }}>📋</div>
-                <div style={{ fontSize: '14px', color: '#8b5cf6', fontWeight: '600' }}>Report Generation</div>
-                <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>Progress Reports</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <MarksEntry
+        grade={selectedGrade}
+        term={selectedTerm}
+        onBack={() => {
+          setShowMarksPage(false);
+          setSelectedTerm(null);
+          setSelectedGrade(null);
+        }}
+      />
     );
   }
 
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0f766e 0%, #134e4a 25%, #115e59 50%, #134e4a 75%, #0f766e 100%)',
-      padding: '40px',
+      background: '#F9FAFB',
+      padding: '12px',
       fontFamily: 'Inter, sans-serif',
-      fontSize: '18px',
-      color: '#e2e8f0',
       position: 'relative'
     }}>
       <div style={{
-        maxWidth: '1600px',
+        maxWidth: '1200px',
         margin: '0 auto',
-        background: 'rgba(255, 255, 255, 0.03)',
-        borderRadius: '24px',
-        border: '3px solid #000000',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
-        backdropFilter: 'blur(10px)',
-        padding: '60px'
+        background: '#FFFFFF',
+        borderRadius: '16px',
+        border: '1px solid #E5E7EB',
+        boxShadow: '0 4px 20px rgba(99, 49, 148, 0.1)',
+        padding: '24px'
       }}>
         <div style={{
           textAlign: 'center',
-          padding: '0px 40px 40px 40px'
+          padding: '0px 24px 24px 24px'
         }}>
           <div style={{
-            fontSize: '48px',
-            marginBottom: '20px',
-            filter: 'drop-shadow(0 0 20px rgba(16, 185, 129, 0.5))',
-            animation: 'pulse 2s infinite'
+            fontSize: '40px',
+            marginBottom: '16px',
+            color: '#633194',
+            filter: 'drop-shadow(0 2px 4px rgba(99, 49, 148, 0.2))'
           }}>
             📝
           </div>
           <h1 style={{
-            fontSize: '32px',
-            fontWeight: '800',
-            color: '#10b981',
-            marginBottom: '16px',
-            textShadow: '0 0 20px rgba(16, 185, 129, 0.3)',
-            letterSpacing: '-1px'
+            fontSize: '28px',
+            fontWeight: '600',
+            color: '#633194',
+            marginBottom: '12px',
+            fontFamily: 'Inter, sans-serif'
           }}>
             Marks Management
           </h1>
           <p style={{
-            fontSize: '16px',
-            color: '#94a3b8',
-            marginBottom: '30px',
+            fontSize: '14px',
+            color: '#6B7280',
+            marginBottom: '24px',
             maxWidth: '700px',
-            margin: '0 auto 30px',
+            fontFamily: 'Inter, sans-serif',
+            margin: '0 auto 24px',
             lineHeight: '1.6',
             fontWeight: '400'
           }}>
@@ -557,19 +377,20 @@ const MarksManagement: React.FC = () => {
           
           {/* Grades Grid */}
           <div style={{
-            background: 'rgba(99, 102, 241, 0.1)',
+            background: '#F4F0FF',
             borderRadius: '16px',
-            border: '2px solid #6366f1',
-            padding: '30px',
-            marginTop: '20px'
+            border: '1px solid #E5E7EB',
+            padding: '24px',
+            marginTop: '16px'
           }}>
             <h2 style={{
               fontSize: '20px',
-              fontWeight: '700',
-              color: '#6366f1',
-              marginBottom: '25px',
+              fontWeight: '600',
+              color: '#633194',
+              marginBottom: '20px',
               textAlign: 'center',
-              marginTop: 0
+              marginTop: 0,
+              fontFamily: 'Inter, sans-serif'
             }}>
               📚 Available Grades ({grades.length})
             </h2>
@@ -577,28 +398,29 @@ const MarksManagement: React.FC = () => {
             {grades.length === 0 ? (
               <div style={{
                 textAlign: 'center',
-                padding: '40px',
-                color: '#94a3b8'
+                padding: '32px',
+                color: '#6B7280',
+                fontFamily: 'Inter, sans-serif'
               }}>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>📚</div>
-                <div style={{ fontSize: '16px', marginBottom: '8px' }}>No grades found</div>
-                <div style={{ fontSize: '14px' }}>Please create grades in Grade Management first</div>
+                <div style={{ fontSize: '40px', marginBottom: '12px', color: '#633194' }}>📚</div>
+                <div style={{ fontSize: '16px', marginBottom: '6px', fontWeight: '600', color: '#1F2937' }}>No grades found</div>
+                <div style={{ fontSize: '13px' }}>Please create grades in Grade Management first</div>
               </div>
             ) : (
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '15px'
+                gap: '12px'
               }}>
                 {grades.map((grade, index) => (
                   <div
                     key={grade.id}
                     onClick={() => handleGradeSelect(grade)}
                     style={{
-                      background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)',
-                      border: '2px solid rgba(99, 102, 241, 0.3)',
-                      borderRadius: '16px',
-                      padding: '20px 25px',
+                      background: '#FFFFFF',
+                      border: '1px solid #E5E7EB',
+                      borderRadius: '12px',
+                      padding: '16px 20px',
                       cursor: 'pointer',
                       transition: 'all 0.3s ease',
                       position: 'relative',
@@ -608,57 +430,60 @@ const MarksManagement: React.FC = () => {
                       justifyContent: 'space-between'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateX(5px)';
-                      e.currentTarget.style.boxShadow = '0 15px 40px rgba(99, 102, 241, 0.3)';
-                      e.currentTarget.style.borderColor = '#6366f1';
+                      e.currentTarget.style.transform = 'translateX(4px)';
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 49, 148, 0.15)';
+                      e.currentTarget.style.borderColor = '#633194';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'translateX(0)';
-                      e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
-                      e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
+                      e.currentTarget.style.borderColor = '#E5E7EB';
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
                       <div style={{
-                        width: '50px',
-                        height: '50px',
-                        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                        borderRadius: '12px',
+                        width: '40px',
+                        height: '40px',
+                        background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
+                        borderRadius: '10px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '20px',
+                        fontSize: '16px',
                         color: 'white',
-                        fontWeight: '700',
-                        flexShrink: 0
+                        fontWeight: '600',
+                        flexShrink: 0,
+                        fontFamily: 'Inter, sans-serif'
                       }}>
                         {index + 1}
                       </div>
                       
                       <div style={{ flex: 1 }}>
                         <div style={{
-                          fontSize: '22px',
-                          fontWeight: '700',
-                          color: '#6366f1',
-                          marginBottom: '8px',
-                          textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                          fontSize: '18px',
+                          fontWeight: '600',
+                          color: '#1F2937',
+                          marginBottom: '6px',
+                          fontFamily: 'Inter, sans-serif'
                         }}>
                           Grade {grade.grade}-{grade.grade_part}
                         </div>
                         
                         <div style={{
-                          fontSize: '14px',
-                          color: '#94a3b8',
-                          marginBottom: '6px',
-                          lineHeight: '1.4'
+                          fontSize: '13px',
+                          color: '#6B7280',
+                          marginBottom: '4px',
+                          lineHeight: '1.4',
+                          fontFamily: 'Inter, sans-serif'
                         }}>
                           📅 Created: {new Date(grade.created_at || '').toLocaleDateString()}
                         </div>
                         
                         <div style={{
-                          fontSize: '15px',
+                          fontSize: '14px',
                           color: '#10b981',
-                          fontWeight: '600'
+                          fontWeight: '500',
+                          fontFamily: 'Inter, sans-serif'
                         }}>
                           👥 {grade.students?.length || 0} students assigned
                         </div>
@@ -666,21 +491,31 @@ const MarksManagement: React.FC = () => {
                     </div>
                     
                     <div style={{
-                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
                       color: 'white',
-                      padding: '12px 20px',
-                      borderRadius: '10px',
-                      fontSize: '14px',
-                      fontWeight: '600',
+                      padding: '10px 16px',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: '500',
                       textAlign: 'center',
-                      boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
+                      boxShadow: '0 2px 8px rgba(99, 49, 148, 0.3)',
                       flexShrink: 0,
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px'
+                      gap: '6px',
+                      fontFamily: 'Inter, sans-serif',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 49, 148, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(99, 49, 148, 0.3)';
                     }}>
-                      📝 Manage Marks
-                      <span style={{ fontSize: '16px' }}>→</span>
+                      📝 Manage
+                      <span style={{ fontSize: '14px' }}>→</span>
                     </div>
                   </div>
                 ))}

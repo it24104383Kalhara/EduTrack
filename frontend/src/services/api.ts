@@ -6,7 +6,7 @@
 // Description: Centralized API service for backend communication
 // ============================================================================
 
-const API_BASE_URL = 'http://localhost:5000/api';
+export const API_BASE_URL = 'http://localhost:5005/api';
 
 // ============================================================================
 // INTERFACES
@@ -57,8 +57,110 @@ export interface Attendance {
   marked_at?: string;
   notes?: string;
   created_at?: string;
-  updated_at?: string;
 }
+
+export interface StudentAssignment {
+  grade: Grade;
+  student: Student;
+  assigned_at: string;
+}
+
+export interface AttendanceMarkResponse {
+  grade_id: number;
+  date: string;
+  marked_students: number;
+  summary: AttendanceSummary;
+}
+
+export interface AttendanceByGradeResponse {
+  grade: {
+    id: number;
+    grade: number;
+    grade_part: string;
+  };
+  date: string;
+  summary: AttendanceSummary;
+  attendance: (Attendance & {
+    first_name: string;
+    last_name: string;
+    parent_phone: string;
+  })[];
+}
+
+export interface AttendanceStatistics {
+  total_students: number;
+  present_today: number;
+  absent_today: number;
+  average_attendance: number;
+}
+
+export interface GradeDatesResponse {
+  grade: Grade;
+  dates: string[];
+}
+
+export interface StudentReportResponse {
+  student_id: number;
+  date_range: {
+    start_date: string | null;
+    end_date: string | null;
+  };
+  report: AttendanceReport;
+}
+
+export interface GradeReportResponse {
+  grade: {
+    id: number;
+    grade: number;
+    grade_part: string;
+  };
+  date_range: {
+    start_date: string | null;
+    end_date: string | null;
+  };
+  report: AttendanceReport[];
+}
+
+export interface DeleteAttendanceResponse {
+  grade_id: number;
+  date: string;
+  deleted_at: string;
+}
+
+export interface StatisticsResponse {
+  totalRecords: number;
+  todayRecords: number;
+  presentToday: number;
+  absentToday: number;
+  lateToday: number;
+  averageAttendance: number;
+}
+
+export interface AttendanceMarkResponse {
+  grade: number;
+  section: string;
+  date: string;
+  total_students: number;
+  attendance_percentage: number;
+  attendance: AttendanceMark[];
+}
+
+export interface StudentAttendanceResponse {
+  student_id: number;
+  attendance: AttendanceMark[];
+}
+
+export interface AllAttendanceResponse {
+  date_range: { start_date: string | null; end_date: string | null } | null;
+  attendance: AttendanceMark[];
+}
+
+export interface DeleteAttendanceMarkResponse {
+  student_id: number;
+  date: string;
+  deleted_at: string;
+}
+
 
 export interface AttendanceSummary {
   grade_id: number;
@@ -109,8 +211,77 @@ export interface Subject {
   grades: string | string[];
   stream?: string | string[];
   type: '6-11' | '12-13';
+  category?: string;
+  is_optional?: boolean;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface StudentSubject {
+  id?: number;
+  student_id: number;
+  subject_id: string;
+  grade_id: number;
+  assigned_at?: string;
+  subject_name?: string;
+  subject_code?: string;
+  category?: string;
+  is_optional?: boolean;
+}
+
+export interface Mark {
+  id?: number;
+  student_id: number;
+  subject_id: string;
+  grade_id: number;
+  term: string;
+  exam_type: 'mid_term' | 'final_term' | 'assignment' | 'quiz' | 'practical';
+  marks_obtained: number | string; // Allow number for marks, string for "AB"
+  max_marks: number;
+  grade_obtained?: 'A' | 'B' | 'C' | 'S' | 'F'; // Make optional - backend calculates this
+  remarks?: string;
+  exam_date: string;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MarkWithDetails extends Mark {
+  student_name: string;
+  subject_name: string;
+  subject_code: string;
+  grade_name: string;
+  parent_email?: string;
+}
+
+export interface StudentResult {
+  student_id: number;
+  student_name: string;
+  grade_name: string;
+  term: string;
+  total_marks_obtained: number;
+  total_max_marks: number;
+  overall_percentage: number;
+  overall_grade: 'A' | 'B' | 'C' | 'S' | 'F';
+  result: 'PASS' | 'FAIL';
+  subject_marks: Array<{
+    subject_name: string;
+    subject_code: string;
+    marks_obtained: number;
+    max_marks: number;
+    percentage: number;
+    grade_obtained: string;
+    exam_type: string;
+  }>;
+  created_at?: string;
+}
+
+export interface RecentActivity {
+  type: 'Student' | 'Grade' | 'Subject' | 'Attendance' | 'Mark';
+  description: string;
+  timestamp: string;
+  time: string;
+  date: string;
 }
 
 export interface ApiResponse<T> {
@@ -131,21 +302,42 @@ async function apiRequest<T>(
 ): Promise<ApiResponse<T>> {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
-    console.log('🔵 [API_REQUEST]:', { method: options.method, url, endpoint });
+    console.log('🔵 [API_REQUEST]:', { method: options.method || 'GET', url, endpoint });
     
+    // Debug: Log the exact body being sent
+    if (options.body) {
+      console.log('📤 [API_REQUEST_BODY]:', options.body);
+      if (typeof options.body === 'string') {
+        const parsedBody = JSON.parse(options.body);
+        console.log('📤 [API_REQUEST_PARSED]:', parsedBody);
+        console.log('📤 [API_REQUEST_MARKS_OBTAINED]:', parsedBody.marks_obtained);
+      }
+    }
+    
+    const token = localStorage.getItem('edutrack_token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string>),
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
       ...options,
+      headers,
     });
+
 
     const data = await response.json();
     console.log('🟢 [API_RESPONSE]:', { status: response.status, ok: response.ok, data });
 
     if (!response.ok) {
-      throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      // Extract specific validation errors if present
+      const errorDetails = data.errors ? data.errors.map((e: any) => e.message).join(', ') : (data.error || '');
+      const errorMessage = errorDetails ? `${data.message}: ${errorDetails}` : (data.message || `HTTP error! status: ${response.status}`);
+      throw new Error(errorMessage);
     }
 
     return data;
@@ -229,15 +421,24 @@ export const gradeApi = {
   },
 
   // Get all student assignments with details
-  async getAllAssignments(): Promise<any[]> {
-    const response = await apiRequest<any[]>('/grades/assignments');
+  async getAllAssignments(): Promise<StudentAssignment[]> {
+    const response = await apiRequest<StudentAssignment[]>('/grades/assignments');
     return response.data;
   },
 
   // Get assignments for a specific grade
-  async getAssignmentsByGrade(gradeId: number): Promise<any[]> {
-    const response = await apiRequest<any[]>(`/grades/${gradeId}/assignments`);
+  async getAssignmentsByGrade(gradeId: number): Promise<StudentAssignment[]> {
+    const response = await apiRequest<StudentAssignment[]>(`/grades/${gradeId}/assignments`);
     return response.data;
+  },
+
+  // Transfer student between grades and move records
+  async transferStudent(studentId: number, oldGradeId: number, newGradeId: number): Promise<boolean> {
+    const response = await apiRequest<any>('/grades/transfer-student', {
+      method: 'POST',
+      body: JSON.stringify({ studentId, oldGradeId, newGradeId }),
+    });
+    return !!response.success;
   },
 };
 
@@ -312,7 +513,7 @@ export const attendanceApi = {
     marked_students: number;
     summary: AttendanceSummary;
   }> {
-    const response = await apiRequest<any>('/attendance/mark', {
+    const response = await apiRequest<AttendanceMarkResponse>('/attendance/mark', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -334,13 +535,13 @@ export const attendanceApi = {
       parent_phone: string;
     })[];
   }> {
-    const response = await apiRequest<any>(`/attendance/grade/${gradeId}/date/${date}`);
+    const response = await apiRequest<AttendanceByGradeResponse>(`/attendance/grade/${gradeId}/date/${date}`);
     return response.data;
   },
 
   // Get attendance dates for grade
   async getDates(gradeId: number): Promise<string[]> {
-    const response = await apiRequest<{ grade: any; dates: string[] }>(`/attendance/grade/${gradeId}/dates`);
+    const response = await apiRequest<GradeDatesResponse>(`/attendance/grade/${gradeId}/dates`);
     return response.data.dates;
   },
 
@@ -362,7 +563,7 @@ export const attendanceApi = {
     if (endDate) params.append('end_date', endDate);
     
     const url = `/attendance/student/${studentId}/report${params.toString() ? `?${params.toString()}` : ''}`;
-    const response = await apiRequest<any>(url);
+    const response = await apiRequest<StudentReportResponse>(url);
     return response.data;
   },
 
@@ -388,7 +589,7 @@ export const attendanceApi = {
     if (endDate) params.append('end_date', endDate);
     
     const url = `/attendance/grade/${gradeId}/report${params.toString() ? `?${params.toString()}` : ''}`;
-    const response = await apiRequest<any>(url);
+    const response = await apiRequest<GradeReportResponse>(url);
     return response.data;
   },
 
@@ -398,7 +599,7 @@ export const attendanceApi = {
     date: string;
     deleted_at: string;
   }> {
-    const response = await apiRequest<any>(`/attendance/grade/${gradeId}/date/${date}`, {
+    const response = await apiRequest<DeleteAttendanceResponse>(`/attendance/grade/${gradeId}/date/${date}`, {
       method: 'DELETE',
     });
     return response.data;
@@ -413,7 +614,13 @@ export const attendanceApi = {
     lateToday: number;
     averageAttendance: number;
   }> {
-    const response = await apiRequest<any>('/attendance/statistics');
+    const response = await apiRequest<StatisticsResponse>('/attendance/statistics');
+    return response.data;
+  },
+
+  // Get weekly attendance trends
+  async getWeeklyTrends(): Promise<{ day: string; attendance_percentage: number; date: string }[]> {
+    const response = await apiRequest<{ day: string; attendance_percentage: number; date: string }[]>('/attendance/weekly-trends');
     return response.data;
   },
 };
@@ -474,7 +681,7 @@ export const attendanceMarkApi = {
     };
     attendance: AttendanceMark[];
   }> {
-    const response = await apiRequest<any>(`/attendance-mark/grade/${grade}/section/${section}/date/${date}`);
+    const response = await apiRequest<AttendanceMarkResponse>(`/attendance-mark/grade/${grade}/section/${section}/date/${date}`);
     return response.data;
   },
 
@@ -483,7 +690,7 @@ export const attendanceMarkApi = {
     student_id: number;
     attendance: AttendanceMark[];
   }> {
-    const response = await apiRequest<any>(`/attendance-mark/student/${studentId}`);
+    const response = await apiRequest<StudentAttendanceResponse>(`/attendance-mark/student/${studentId}`);
     return response.data;
   },
 
@@ -497,7 +704,7 @@ export const attendanceMarkApi = {
     if (endDate) params.append('end_date', endDate);
     
     const url = `/attendance-mark/all${params.toString() ? `?${params.toString()}` : ''}`;
-    const response = await apiRequest<any>(url);
+    const response = await apiRequest<AllAttendanceResponse>(url);
     return response.data;
   },
 
@@ -521,7 +728,7 @@ export const attendanceMarkApi = {
     date: string;
     deleted_at: string;
   }> {
-    const response = await apiRequest<any>(`/attendance-mark/${studentId}/${date}`, {
+    const response = await apiRequest<DeleteAttendanceMarkResponse>(`/attendance-mark/${studentId}/${date}`, {
       method: 'DELETE',
     });
     return response.data;
@@ -535,7 +742,7 @@ export const attendanceMarkApi = {
     absentToday: number;
     lateToday: number;
   }> {
-    const response = await apiRequest<any>('/attendance-mark/statistics');
+    const response = await apiRequest<StatisticsResponse>('/attendance-mark/statistics');
     return response.data;
   },
 };
@@ -594,6 +801,290 @@ export const subjectApi = {
     const response = await apiRequest<Subject[]>(`/subjects/type/${type}`);
     return response.data;
   },
+
+  // Get subjects assigned to a student
+  async getStudentSubjects(studentId: number, gradeId: number): Promise<StudentSubject[]> {
+    const response = await apiRequest<StudentSubject[]>(`/subjects/student/${studentId}/grade/${gradeId}`);
+    return response.data;
+  },
+
+  // Assign subjects to a student
+  async assignStudentSubjects(studentId: number, gradeId: number, subjectIds: string[]): Promise<boolean> {
+    await apiRequest('/subjects/student-assignment', {
+      method: 'POST',
+      body: JSON.stringify({ studentId, gradeId, subjectIds }),
+    });
+    return true;
+  },
+
+  // Get students enrolled in a subject
+  async getSubjectEnrollment(subjectId: string, gradeId: number): Promise<any[]> {
+    const response = await apiRequest<any[]>(`/subjects/subject-enrollment/${subjectId}/grade/${gradeId}`);
+    return response.data;
+  },
+
+  // Bulk assign students to a subject
+  async bulkEnrollStudents(subjectId: string, gradeId: number, studentIds: number[]): Promise<boolean> {
+    await apiRequest('/subjects/bulk-student-assignment', {
+      method: 'POST',
+      body: JSON.stringify({ subjectId, gradeId, studentIds }),
+    });
+    return true;
+  },
 };
 
-export default { gradeApi, studentApi, subjectApi, attendanceApi, attendanceMarkApi };
+// ============================================================================
+// MARKS API SERVICE
+// ============================================================================
+export const marksApi = {
+  // Create new mark
+  async create(markData: Omit<Mark, 'id' | 'grade_obtained' | 'created_at' | 'updated_at'>): Promise<Mark> {
+    const response = await apiRequest<Mark>('/marks', {
+      method: 'POST',
+      body: JSON.stringify(markData),
+    });
+    return response.data;
+  },
+
+  // Bulk create marks
+  async bulkCreate(marksData: Array<Omit<Mark, 'id' | 'grade_obtained' | 'created_at' | 'updated_at'>>): Promise<{
+    created: Mark[];
+    errors: Array<{
+      student_id: number;
+      subject_id: string;
+      error: string;
+    }>;
+  }> {
+    const response = await apiRequest<{
+      created: Mark[];
+      errors: Array<{
+        student_id: number;
+        subject_id: string;
+        error: string;
+      }>;
+    }>('/marks/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ marks_data: marksData }),
+    });
+    return response.data;
+  },
+
+  // Get mark by ID
+  async getById(id: number): Promise<Mark | null> {
+    try {
+      const response = await apiRequest<Mark>(`/marks/${id}`);
+      return response.data;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('not found')) {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  // Get marks by student, grade, and term
+  async getByStudentGradeTerm(studentId: number, gradeId: number, term: string): Promise<MarkWithDetails[]> {
+    const response = await apiRequest<MarkWithDetails[]>(`/marks/student/${studentId}/grade/${gradeId}/term/${term}`);
+    return response.data;
+  },
+
+  // Get marks by grade, subject, and term
+  async getByGradeSubjectTerm(gradeId: number, subjectId: string, term: string): Promise<MarkWithDetails[]> {
+    const response = await apiRequest<MarkWithDetails[]>(`/marks/grade/${gradeId}/subject/${subjectId}/term/${term}`);
+    return response.data;
+  },
+
+  // Get all marks by grade and term
+  async getByGradeTerm(gradeId: number, term: string): Promise<MarkWithDetails[]> {
+    const response = await apiRequest<MarkWithDetails[]>(`/marks/grade/${gradeId}/term/${term}`);
+    return response.data;
+  },
+
+  // Update mark
+  async update(id: number, updates: Partial<Mark>): Promise<Mark | null> {
+    try {
+      const response = await apiRequest<Mark>(`/marks/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates),
+      });
+      return response.data;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('not found')) {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  // Delete mark
+  async delete(id: number): Promise<boolean> {
+    await apiRequest(`/marks/${id}`, {
+      method: 'DELETE',
+    });
+    return true;
+  },
+
+  // Calculate student result
+  async calculateStudentResult(studentId: number, gradeId: number, term: string): Promise<StudentResult> {
+    const response = await apiRequest<StudentResult>(`/marks/result/student/${studentId}/grade/${gradeId}/term/${term}`);
+    return response.data;
+  },
+
+  // Get low marks (below threshold)
+  async getLowMarks(threshold: number = 40): Promise<MarkWithDetails[]> {
+    const response = await apiRequest<MarkWithDetails[]>(`/marks/low-marks/threshold/${threshold}`);
+    return response.data;
+  },
+
+  // Get grade statistics
+  async getGradeStatistics(gradeId: number, term: string): Promise<{
+    total_students: number;
+    passed_students: number;
+    failed_students: number;
+    average_percentage: number;
+    highest_percentage: number;
+    lowest_percentage: number;
+    a_plus_count: number;
+    a_count: number;
+    b_plus_count: number;
+    b_count: number;
+    c_plus_count: number;
+    c_count: number;
+    d_count: number;
+    f_count: number;
+  }> {
+    const response = await apiRequest<any>(`/marks/statistics/grade/${gradeId}/term/${term}`);
+    return response.data;
+  },
+
+  // Get all grades performance statistics
+  async getAllGradesPerformance(term: string): Promise<{ grade_name: string, average_percentage: number }[]> {
+    const response = await apiRequest<{ grade_name: string, average_percentage: number }[]>(`/marks/statistics/all-grades/${term}`);
+    return response.data;
+  },
+};
+
+// Results API
+export const resultsApi = {
+  // Get merit list (class results with ranking)
+  async getMeritList(gradeId: number, term: string): Promise<{
+    student: Student;
+    result: StudentResult;
+    rank: number;
+    class_average: number;
+  }[]> {
+    const response = await apiRequest<any>(`/results/merit/${gradeId}/term/${term}`);
+    return response.data;
+  },
+
+  // Get individual student result with rank
+  async getStudentResultWithRank(studentId: number, gradeId: number, term: string): Promise<{
+    result: StudentResult;
+    rank: number;
+    total_students: number;
+    class_average: number;
+  }> {
+    const response = await apiRequest<any>(`/results/student/${studentId}/grade/${gradeId}/term/${term}/ranked`);
+    return response.data;
+  }
+};
+
+// ============================================================================
+// REPORT CARD API SERVICE
+// ============================================================================
+export const reportCardApi = {
+  // Download report card PDF
+  async downloadReportCard(studentId: number, gradeId: number, term: string): Promise<Blob> {
+    const BASE_URL = 'http://localhost:5000/api';
+    const response = await fetch(`${BASE_URL}/report-cards/student/${studentId}/grade/${gradeId}/term/${term}`);
+    if (!response.ok) {
+      throw new Error('Failed to download report card');
+    }
+    return await response.blob();
+  }
+};
+
+// ============================================================================
+// DASHBOARD API SERVICE
+// ============================================================================
+export const dashboardApi = {
+  // Get recent system activity
+  async getRecentActivity(): Promise<RecentActivity[]> {
+    const response = await apiRequest<RecentActivity[]>('/dashboard/recent-activity');
+    return response.data;
+  },
+};
+
+// ============================================================================
+// EMAIL ALERTS API SERVICE
+// ============================================================================
+export const emailAlertsApi = {
+  // Get all email logs with pagination and filters
+  async getLogs(params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    student_name?: string;
+  } = {}): Promise<EmailLogResponse['data']> {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.status && params.status !== 'all') queryParams.append('status', params.status);
+    if (params.student_name) queryParams.append('student_name', params.student_name);
+    
+    const url = `/email-alerts/logs${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await apiRequest<EmailLogResponse['data']>(url);
+    return response.data;
+  },
+
+  // Get email alert statistics
+  async getStatistics(): Promise<any> {
+    const response = await apiRequest<any>('/email-alerts/statistics');
+    return response.data;
+  },
+
+  // Send email alerts for low marks in a specific grade and term
+  async sendLowMarksAlerts(gradeId: number, term: string, threshold: number = 40): Promise<any> {
+    const response = await apiRequest<any>('/email-alerts/send-low-marks', {
+      method: 'POST',
+      body: JSON.stringify({ gradeId, term, threshold }),
+    });
+    return response.data;
+  }
+};
+
+interface EmailLogResponse {
+  success: boolean;
+  message: string;
+  data: {
+    logs: any[];
+    pagination: {
+      current_page: number;
+      per_page: number;
+      total: number;
+      total_pages: number;
+      has_next: boolean;
+      has_prev: boolean;
+    };
+    statistics?: {
+      total_sent: number;
+      total_failed: number;
+      success_rate: number;
+      total_students: number;
+      recent_activity: number;
+    };
+  };
+}
+
+export default { 
+  gradeApi, 
+  studentApi, 
+  subjectApi, 
+  attendanceApi, 
+  attendanceMarkApi, 
+  marksApi, 
+  resultsApi, 
+  reportCardApi,
+  dashboardApi,
+  emailAlertsApi
+};

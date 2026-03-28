@@ -1,0 +1,10 @@
+{
+  "css.validate": false,
+  "tailwindCSS.includeLanguages": {
+    "css": "css"
+  },
+  "tailwindCSS.experimental.classRegex": [],
+  "tailwindCSS.experimental.configFile": {
+    "tailwind.config.js": "tailwind.config.js"
+  }
+}

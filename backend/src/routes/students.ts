@@ -1,6 +1,8 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { StudentModel } from '../models/Student';
 import { validateStudentRegistration } from '../middleware/validation';
+import { AuthRequest } from '../middleware/auth';
+import pool from '../config/database';
 
 // ============================================================================
 // STUDENT API ROUTES
@@ -17,7 +19,7 @@ const router = Router();
 // PURPOSE: Register a new student in the system
 // ACCESS: Public (with validation middleware)
 // ============================================================================
-router.post('/register', validateStudentRegistration, async (req: Request, res: Response) => {
+router.post('/register', validateStudentRegistration, async (req: AuthRequest, res: Response) => {
   try {
     // Extract student data from request body
     const studentData = req.body;
@@ -57,13 +59,32 @@ router.post('/register', validateStudentRegistration, async (req: Request, res: 
 
 // ============================================================================
 // ENDPOINT: GET /api/students
-// PURPOSE: Retrieve all students from the database
-// ACCESS: Public
+// PURPOSE: Retrieve students from the database
+// ACCESS: Protected (filtered by role)
 // ============================================================================
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: AuthRequest, res: Response) => {
   try {
-    // Fetch all student records
-    const students = await StudentModel.findAll();
+    const userRole = req.user?.role;
+    const userId = req.user?.id;
+
+    let students;
+    if (userRole === 'admin') {
+      // Admins see all students
+      students = await StudentModel.findAll();
+    } else if (userRole === 'teacher') {
+      // Teachers only see students assigned to their class
+      const [rows] = await pool.execute(`
+        SELECT s.* 
+        FROM students s
+        INNER JOIN student_assignment sa ON s.id = sa.student_id
+        INNER JOIN grades g ON sa.grade_id = g.id
+        WHERE g.teacher_id = ?
+        ORDER BY s.first_name, s.last_name
+      `, [userId]);
+      students = rows as any[];
+    } else {
+      students = [];
+    }
     
     // Return success response with student data
     res.status(200).json({
@@ -95,7 +116,7 @@ router.get('/', async (req: Request, res: Response) => {
 // PURPOSE: Retrieve a specific student by ID
 // ACCESS: Public
 // ============================================================================
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
     // Extract and validate student ID
     const idParam = req.params.id;
@@ -155,7 +176,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 // PURPOSE: Update an existing student's information
 // ACCESS: Public (with validation middleware)
 // ============================================================================
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req: AuthRequest, res: Response) => {
   try {
     // Extract and validate student ID
     const idParam = req.params.id;
@@ -228,7 +249,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 // PURPOSE: Remove a student from the database
 // ACCESS: Public
 // ============================================================================
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
     // Extract and validate student ID
     const idParam = req.params.id;

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import GradeModel from '../models/Grade';
 import { validateGradeCreation } from '../middleware/validation';
+import { AuthRequest } from '../middleware/auth';
 
 // ============================================================================
 // GRADE API ROUTES
@@ -17,11 +18,11 @@ const router = Router();
 // PURPOSE: Create a new grade in the system
 // ACCESS: Public (with validation middleware)
 // ============================================================================
-router.post('/create', validateGradeCreation, async (req: Request, res: Response) => {
+router.post('/create', validateGradeCreation, async (req: AuthRequest, res: Response) => {
   try {
     // Extract grade data from request body
     const { grade, grade_part } = req.body;
-    
+
     // Check for duplicate grade
     const existingGrade = await GradeModel.findByGradeAndPart(grade, grade_part);
     if (existingGrade) {
@@ -33,13 +34,13 @@ router.post('/create', validateGradeCreation, async (req: Request, res: Response
         endpoint: '/create'
       });
     }
-    
+
     // Create new grade record in database
     const newGrade = await GradeModel.create({
       grade,
       grade_part
     });
-    
+
     // Return success response with grade details
     res.status(201).json({
       success: true,
@@ -53,11 +54,11 @@ router.post('/create', validateGradeCreation, async (req: Request, res: Response
       timestamp: new Date().toISOString(),
       endpoint: '/create'
     });
-    
+
   } catch (error) {
     // Log error for debugging
     console.error('🔴 [GRADE_CREATE_ERROR]:', error);
-    
+
     // Return error response
     res.status(500).json({
       success: false,
@@ -74,11 +75,20 @@ router.post('/create', validateGradeCreation, async (req: Request, res: Response
 // PURPOSE: Retrieve all grades from the database
 // ACCESS: Public
 // ============================================================================
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: AuthRequest, res: Response) => {
   try {
-    // Fetch all grade records
-    const grades = await GradeModel.findAll();
-    
+    const userRole = req.user?.role;
+    const userId = req.user?.id;
+
+    // Fetch grades based on role
+    let grades;
+    if (userRole === 'admin') {
+      grades = await GradeModel.findAll();
+    } else {
+      // If teacher, only fetch their assigned grades
+      grades = await GradeModel.findByTeacherId(userId as number);
+    }
+
     // Return success response with grade data
     res.status(200).json({
       success: true,
@@ -88,11 +98,11 @@ router.get('/', async (req: Request, res: Response) => {
       timestamp: new Date().toISOString(),
       endpoint: '/'
     });
-    
+
   } catch (error) {
     // Log error for debugging
     console.error('🔴 [GRADE_FETCH_ALL_ERROR]:', error);
-    
+
     // Return error response
     res.status(500).json({
       success: false,
@@ -108,10 +118,32 @@ router.get('/', async (req: Request, res: Response) => {
 // ENDPOINT: GET /api/grades/assignments
 // PURPOSE: Get all student assignments with detailed information
 // ============================================================================
-router.get('/assignments', async (req: Request, res: Response) => {
+router.get('/assignments', async (req: AuthRequest, res: Response) => {
+  console.log('HIT ENDPOINT: /api/grades/assignments');
   try {
-    const assignments = await GradeModel.getAllStudentAssignments();
-    
+    const userRole = req.user?.role;
+    const userId = req.user?.id;
+
+    let assignments;
+    if (userRole === 'admin') {
+      assignments = await GradeModel.getAllStudentAssignments();
+    } else {
+      // For teachers, filter the assignments list
+      // Optimization: We could add a specific model method, but for now we filter the results
+      const allAssignments = await GradeModel.getAllStudentAssignments();
+      const teacherGrades = await GradeModel.findByTeacherId(userId as number);
+      const teacherGradeIds = new Set(teacherGrades.map(g => g.id));
+      
+      // Note: student_assignment table in DatabaseQueries uses grade and section, not grade_id in some queries
+      // But GET_ALL_ASSIGNMENTS joins on grades g ON sa.grade_id = g.id
+      // Let's re-verify GET_ALL_ASSIGNMENTS in DatabaseQueries.ts line 243
+      assignments = allAssignments.filter((a: any) => {
+        // Find if this assignment belongs to a grade assigned to this teacher
+        return teacherGrades.some(tg => tg.grade === a.grade && tg.grade_part === a.section);
+      });
+    }
+    console.log(`Successfully fetched ${assignments.length} assignments`);
+
     res.json({
       success: true,
       message: 'Student assignments retrieved successfully',
@@ -120,7 +152,7 @@ router.get('/assignments', async (req: Request, res: Response) => {
       timestamp: new Date().toISOString(),
       endpoint: '/assignments'
     });
-    
+
   } catch (error) {
     console.error(' [GET_ASSIGNMENTS_ERROR]:', error);
     res.status(500).json({
@@ -137,11 +169,11 @@ router.get('/assignments', async (req: Request, res: Response) => {
 // ENDPOINT: GET /api/grades/:id/assignments
 // PURPOSE: Get student assignments for a specific grade
 // ============================================================================
-router.get('/:id/assignments', async (req: Request, res: Response) => {
+router.get('/:id/assignments', async (req: AuthRequest, res: Response) => {
   try {
     const gradeIdParam = req.params.id;
     const gradeId = parseInt(Array.isArray(gradeIdParam) ? gradeIdParam[0] : gradeIdParam);
-    
+
     if (isNaN(gradeId)) {
       return res.status(400).json({
         success: false,
@@ -150,9 +182,22 @@ router.get('/:id/assignments', async (req: Request, res: Response) => {
         endpoint: `/${req.params.id}/assignments`
       });
     }
-    
+
     const assignments = await GradeModel.getStudentAssignmentsByGrade(gradeId);
-    
+
+    // If teacher, verify they own this grade
+    if (req.user?.role === 'teacher') {
+      const grade = await GradeModel.findById(gradeId);
+      if (!grade || grade.teacher_id !== req.user.id) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied: You are not assigned to this class.',
+          timestamp: new Date().toISOString(),
+          endpoint: `/${gradeId}/assignments`
+        });
+      }
+    }
+
     res.json({
       success: true,
       message: `Student assignments for grade ${gradeId} retrieved successfully`,
@@ -161,7 +206,7 @@ router.get('/:id/assignments', async (req: Request, res: Response) => {
       timestamp: new Date().toISOString(),
       endpoint: `/${gradeId}/assignments`
     });
-    
+
   } catch (error) {
     console.error('🔴 [GET_ASSIGNMENTS_BY_GRADE_ERROR]:', error);
     res.status(500).json({
@@ -179,12 +224,12 @@ router.get('/:id/assignments', async (req: Request, res: Response) => {
 // PURPOSE: Retrieve a specific grade by ID
 // ACCESS: Public
 // ============================================================================
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
     // Extract and validate grade ID
     const idParam = req.params.id;
     const gradeId = parseInt(Array.isArray(idParam) ? idParam[0] : idParam);
-    
+
     // Validate ID format
     if (isNaN(gradeId)) {
       return res.status(400).json({
@@ -198,7 +243,17 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     // Fetch grade by ID
     const grade = await GradeModel.findById(gradeId);
-    
+
+    // If teacher, verify they own this grade
+    if (req.user?.role === 'teacher' && grade && grade.teacher_id !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: You are not assigned to this class.',
+        timestamp: new Date().toISOString(),
+        endpoint: `/${idParam}`
+      });
+    }
+
     // Check if grade exists
     if (!grade) {
       return res.status(404).json({
@@ -218,11 +273,11 @@ router.get('/:id', async (req: Request, res: Response) => {
       timestamp: new Date().toISOString(),
       endpoint: `/${idParam}`
     });
-    
+
   } catch (error) {
     // Log error for debugging
     console.error('🔴 [GRADE_FETCH_BY_ID_ERROR]:', error);
-    
+
     // Return error response
     res.status(500).json({
       success: false,
@@ -244,7 +299,7 @@ router.put('/:id', async (req: Request, res: Response) => {
     // Extract and validate grade ID
     const idParam = req.params.id;
     const gradeId = parseInt(Array.isArray(idParam) ? idParam[0] : idParam);
-    
+
     // Validate ID format
     if (isNaN(gradeId)) {
       return res.status(400).json({
@@ -255,7 +310,7 @@ router.put('/:id', async (req: Request, res: Response) => {
         endpoint: `/${idParam}`
       });
     }
-    
+
     // Basic validation for update data
     const updateData = req.body;
     if (!updateData || Object.keys(updateData).length === 0) {
@@ -267,7 +322,7 @@ router.put('/:id', async (req: Request, res: Response) => {
         endpoint: `/${idParam}`
       });
     }
-    
+
     // Check if grade exists
     const existingGrade = await GradeModel.findById(gradeId);
     if (!existingGrade) {
@@ -284,7 +339,7 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (updateData.grade !== undefined || updateData.grade_part !== undefined) {
       const newGrade = updateData.grade !== undefined ? updateData.grade : existingGrade.grade;
       const newGradePart = updateData.grade_part !== undefined ? updateData.grade_part : existingGrade.grade_part;
-      
+
       // Skip duplicate check if updating the same grade to the same values
       if (newGrade !== existingGrade.grade || newGradePart !== existingGrade.grade_part) {
         const duplicateGrade = await GradeModel.findByGradeAndPart(newGrade, newGradePart);
@@ -302,7 +357,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 
     // Update grade record
     const updatedGrade = await GradeModel.update(gradeId, updateData);
-    
+
     // Return success response with updated data
     res.status(200).json({
       success: true,
@@ -311,11 +366,11 @@ router.put('/:id', async (req: Request, res: Response) => {
       timestamp: new Date().toISOString(),
       endpoint: `/${idParam}`
     });
-    
+
   } catch (error) {
     // Log error for debugging
     console.error('🔴 [GRADE_UPDATE_ERROR]:', error);
-    
+
     // Return error response
     res.status(500).json({
       success: false,
@@ -336,7 +391,7 @@ router.delete('/clear', async (req: Request, res: Response) => {
   try {
     // Delete all grade records
     const deletedCount = await GradeModel.clearAll();
-    
+
     // Return success response with deletion count
     res.status(200).json({
       success: true,
@@ -348,11 +403,11 @@ router.delete('/clear', async (req: Request, res: Response) => {
       timestamp: new Date().toISOString(),
       endpoint: '/clear'
     });
-    
+
   } catch (error) {
     // Log error for debugging
     console.error('🔴 [GRADE_CLEAR_ALL_ERROR]:', error);
-    
+
     // Return error response
     res.status(500).json({
       success: false,
@@ -374,7 +429,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     // Extract and validate grade ID
     const idParam = req.params.id;
     const gradeId = parseInt(Array.isArray(idParam) ? idParam[0] : idParam);
-    
+
     // Validate ID format
     if (isNaN(gradeId)) {
       return res.status(400).json({
@@ -400,7 +455,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
     // Delete grade record
     const deleted = await GradeModel.delete(gradeId);
-    
+
     // Check deletion result
     if (deleted) {
       res.status(200).json({
@@ -422,11 +477,11 @@ router.delete('/:id', async (req: Request, res: Response) => {
         endpoint: `/${idParam}`
       });
     }
-    
+
   } catch (error) {
     // Log error for debugging
     console.error('🔴 [GRADE_DELETE_ERROR]:', error);
-    
+
     // Return error response
     res.status(500).json({
       success: false,
@@ -450,7 +505,7 @@ router.post('/:gradeId/assign-student/:studentId', async (req: Request, res: Res
     const studentIdParam = req.params.studentId;
     const gradeId = parseInt(Array.isArray(gradeIdParam) ? gradeIdParam[0] : gradeIdParam);
     const studentId = parseInt(Array.isArray(studentIdParam) ? studentIdParam[0] : studentIdParam);
-    
+
     // Validate ID formats
     if (isNaN(gradeId) || isNaN(studentId)) {
       return res.status(400).json({
@@ -464,10 +519,10 @@ router.post('/:gradeId/assign-student/:studentId', async (req: Request, res: Res
 
     // Check if student is already assigned to any grade
     const allGrades = await GradeModel.findAll();
-    const existingAssignment = allGrades.find(grade => 
+    const existingAssignment = allGrades.find(grade =>
       grade.students?.some(student => student.id === studentId)
     );
-    
+
     if (existingAssignment) {
       return res.status(409).json({
         success: false,
@@ -480,7 +535,7 @@ router.post('/:gradeId/assign-student/:studentId', async (req: Request, res: Res
 
     // Assign student to grade
     const assignment = await GradeModel.assignStudent(gradeId, studentId);
-    
+
     if (!assignment) {
       return res.status(404).json({
         success: false,
@@ -503,11 +558,11 @@ router.post('/:gradeId/assign-student/:studentId', async (req: Request, res: Res
       timestamp: new Date().toISOString(),
       endpoint: `/${gradeIdParam}/assign-student/${studentIdParam}`
     });
-    
+
   } catch (error) {
     // Log error for debugging
     console.error('🔴 [GRADE_ASSIGN_STUDENT_ERROR]:', error);
-    
+
     // Return error response
     res.status(500).json({
       success: false,
@@ -531,7 +586,7 @@ router.delete('/:gradeId/remove-student/:studentId', async (req: Request, res: R
     const studentIdParam = req.params.studentId;
     const gradeId = parseInt(Array.isArray(gradeIdParam) ? gradeIdParam[0] : gradeIdParam);
     const studentId = parseInt(Array.isArray(studentIdParam) ? studentIdParam[0] : studentIdParam);
-    
+
     // Validate ID formats
     if (isNaN(gradeId) || isNaN(studentId)) {
       return res.status(400).json({
@@ -545,7 +600,7 @@ router.delete('/:gradeId/remove-student/:studentId', async (req: Request, res: R
 
     // Remove student from grade
     const removal = await GradeModel.removeStudent(gradeId, studentId);
-    
+
     if (!removal) {
       return res.status(404).json({
         success: false,
@@ -568,11 +623,11 @@ router.delete('/:gradeId/remove-student/:studentId', async (req: Request, res: R
       timestamp: new Date().toISOString(),
       endpoint: `/${gradeIdParam}/remove-student/${studentIdParam}`
     });
-    
+
   } catch (error) {
     // Log error for debugging
     console.error('🔴 [GRADE_REMOVE_STUDENT_ERROR]:', error);
-    
+
     // Return error response
     res.status(500).json({
       success: false,
@@ -580,6 +635,62 @@ router.delete('/:gradeId/remove-student/:studentId', async (req: Request, res: R
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString(),
       endpoint: `/${req.params.gradeId}/remove-student/${req.params.studentId}`
+    });
+  }
+});
+
+// ============================================================================
+// ENDPOINT: POST /api/grades/transfer-student
+// PURPOSE: Transfer a student from one grade to another and move records
+// ACCESS: Public (should be protected in production)
+// ============================================================================
+router.post('/transfer-student', async (req: AuthRequest, res: Response) => {
+  try {
+    const { studentId, oldGradeId, newGradeId } = req.body;
+
+    if (!studentId || !oldGradeId || !newGradeId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields',
+        error: 'studentId, oldGradeId, and newGradeId are all required',
+        timestamp: new Date().toISOString(),
+        endpoint: '/transfer-student'
+      });
+    }
+
+    // 1. Remove from old grade
+    await GradeModel.removeStudent(oldGradeId, studentId);
+
+    // 2. Assign to new grade
+    const assigned = await GradeModel.assignStudent(newGradeId, studentId);
+    if (!assigned) {
+      throw new Error('Failed to assign student to new grade');
+    }
+
+    // 3. Transfer academic records (marks & attendance)
+    await GradeModel.transferRecords(studentId, oldGradeId, newGradeId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Student transferred and records moved successfully',
+      data: {
+        student_id: studentId,
+        from_grade_id: oldGradeId,
+        to_grade_id: newGradeId,
+        transferred_at: new Date().toISOString()
+      },
+      timestamp: new Date().toISOString(),
+      endpoint: '/transfer-student'
+    });
+
+  } catch (error) {
+    console.error('🔴 [GRADE_TRANSFER_ERROR]:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to transfer student',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString(),
+      endpoint: '/transfer-student'
     });
   }
 });
