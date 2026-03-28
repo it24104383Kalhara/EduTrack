@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { studentApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 interface Student {
   first_name: string;
@@ -22,6 +23,39 @@ interface Student {
 }
 
 const StudentRegistrationForm: React.FC = () => {
+  const { user } = useAuth();
+
+  if (user?.role !== 'admin') {
+    return (
+      <div style={{ padding: '48px 24px', display: 'flex', justifyContent: 'center' }}>
+        <div style={{
+          background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: '24px',
+          padding: '64px 48px', textAlign: 'center', maxWidth: '500px', width: '100%',
+          boxShadow: '0 15px 35px -5px rgba(99, 49, 148, 0.1)'
+        }}>
+          <div style={{ 
+            width: '80px', height: '80px', background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)', 
+            borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+            margin: '0 auto 24px', boxShadow: '0 8px 16px rgba(99, 49, 148, 0.25)' 
+          }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <h2 style={{ color: '#1E1B4B', margin: '0 0 12px', fontSize: '28px', fontWeight: 900, letterSpacing: '-0.02em' }}>Welcome to your account</h2>
+          <p style={{ color: '#6B7280', margin: 0, fontSize: '15px', lineHeight: 1.6 }}>
+            Hello, <strong>{user?.username}</strong>! This module is reserved for administrators, but you can continue using your dashboard and academic tools from the sidebar.
+          </p>
+          <div style={{ marginTop: '32px', background: 'white', padding: '16px', borderRadius: '16px', border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#633194' }}></div>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>Role: {user?.role?.charAt(0).toUpperCase()}{user?.role?.slice(1)} Access</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [formData, setFormData] = useState<Student>({
     first_name: '',
     last_name: '',
@@ -49,19 +83,37 @@ const StudentRegistrationForm: React.FC = () => {
     message?: string;
   } | null>(null);
 
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [step1Error, setStep1Error] = useState<string | null>(null);
+
+  // Parse 'YYYY-MM-DD' or 'YYYY.MM.DD' in local time to avoid UTC off-by-one bug
+  const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return new Date();
+
+    // Handle both YYYY-MM-DD and YYYY.MM.DD formats
+    let [year, month, day] = dateStr.includes('.')
+      ? dateStr.split('.').map(Number)
+      : dateStr.split('-').map(Number);
+
+    if (isNaN(year) || isNaN(month) || isNaN(day)) return new Date();
+    const date = new Date(year, month - 1, day);
+    return isNaN(date.getTime()) ? new Date() : date;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    if (step1Error) setStep1Error(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
-      // Create student object for API
       const newStudent = {
         first_name: formData.first_name,
         last_name: formData.last_name,
@@ -81,23 +133,24 @@ const StudentRegistrationForm: React.FC = () => {
         parent_ethnicity: formData.parent_ethnicity,
         parent_nationality: formData.parent_nationality
       };
-      
-      // Send to backend API
+
+      console.log('Student data being sent:', JSON.stringify(newStudent, null, 2));
+      setIsSubmitting(true);
+
       const createdStudent = await studentApi.create(newStudent);
-      
-      // Generate registration number
+
       const registrationNumber = `EDU-${new Date().getFullYear()}-${String(createdStudent.id).toString().padStart(6, '0')}`;
       const studentName = `${formData.first_name} ${formData.last_name}`;
-      
-      // Set registration state
+
       setRegistration({
         success: true,
         registrationNumber: registrationNumber,
         studentName: studentName,
         message: 'Student registered successfully!'
       });
-      
-      // Reset form
+      setIsSubmitting(false);
+      setCurrentStep(1);
+
       setFormData({
         first_name: '',
         last_name: '',
@@ -117,1041 +170,941 @@ const StudentRegistrationForm: React.FC = () => {
         parent_ethnicity: '',
         parent_nationality: ''
       });
-      
+
     } catch (error) {
       console.error('Error submitting form:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      // If the backend specifies exactly what failed (like age), show it directly
+      const displayMessage = errorMessage || 'Failed to register student';
+
       setRegistration({
         success: false,
-        registrationNumber: '',
-        studentName: '',
-        message: 'Error registering student. Please try again.'
+        message: displayMessage
       });
+      setIsSubmitting(false);
     }
   };
 
-  return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'transparent',
-      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      padding: '0',
-      position: 'relative',
-      boxSizing: 'border-box',
-      width: '100%',
-      height: '100%',
-      overflow: 'auto'
-    }}>
-      <div style={{ 
-        width: '100%',
-        height: '100%',
-        background: 'transparent',
-        position: 'relative',
-        boxSizing: 'border-box'
+  const validateStep1 = () => {
+    const requiredFields = ['first_name', 'last_name', 'date_of_birth', 'gender', 'religion', 'ethnicity', 'address', 'nationality'];
+    for (const field of requiredFields) {
+      if (!formData[field as keyof Student]) return false;
+    }
+    return true;
+  };
+
+  const nextStep = () => {
+    if (validateStep1()) {
+      setCurrentStep(2);
+      setStep1Error(null);
+    } else {
+      setStep1Error('Please fill in all required Student Information fields before proceeding.');
+    }
+  };
+
+  const prevStep = () => {
+    setCurrentStep(1);
+  };
+
+  if (registration && registration.success) {
+    return (
+      <div className="success-message registration-form" style={{
+        maxWidth: '500px',
+        margin: '50px auto',
+        padding: '30px',
+        background: '#F9FAFB',
+        borderRadius: '16px',
+        boxShadow: '0 4px 20px rgba(99, 49, 148, 0.1)',
+        textAlign: 'center',
+        fontFamily: 'Inter, sans-serif',
+        border: '1px solid #E5E7EB'
       }}>
-        {/* Background Pattern */}
         <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'url("data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cdefs%3E%3Cpattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"%3E%3Cpath d="M 0 10 L 10 0 M 0 20 L 20 20 M 10 10 L 30 10 M 10 30 L 40 30" stroke="rgba(99, 102, 241, 0.05)" stroke-width="0.5"/%3E%3C/pattern%3E%3C/defs%3E%3Crect width="100" height="100" fill="url(%23grid)"/%3E%3C/svg%3E")',
-          opacity: '0.3'
-        }} />
-
-        {/* Registration Success Display */}
-        {registration && registration.success && (
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.9) 100%)',
-            margin: '30px',
-            padding: '40px',
-            borderRadius: '24px',
-            textAlign: 'center',
-            color: 'white',
-            position: 'relative',
-            overflow: 'hidden',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            boxShadow: '0 20px 40px rgba(16, 185, 129, 0.3)',
-            backdropFilter: 'blur(10px)',
-            zIndex: '10'
-          }}>
-            <div style={{
-              position: 'absolute',
-              top: '0',
-              left: '0',
-              right: '0',
-              bottom: '0',
-              background: 'url("data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cdefs%3E%3Cpattern id="success-grid" width="40" height="40" patternUnits="userSpaceOnUse"%3E%3Cpath d="M 0 10 L 10 0 M 0 20 L 20 20 M 10 10 L 30 10 M 10 30 L 40 30" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/%3E%3C/pattern%3E%3C/defs%3E%3Crect width="100" height="100" fill="url(%23success-grid)"/%3E%3C/svg%3E")',
-              opacity: '0.1'
-            }}></div>
-            <div style={{ position: 'relative', zIndex: '1' }}>
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                backdropFilter: 'blur(10px)',
-                borderRadius: '50%',
-                width: '80px',
-                height: '80px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 25px',
-                fontSize: '2.5rem',
-                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)'
-              }}>
-                ✅
-              </div>
-              <h2 style={{
-                margin: '0 0 20px 0',
-                fontSize: '2.2rem',
-                fontWeight: '800',
-                textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)'
-              }}>
-                Registration Successful!
-              </h2>
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(10px)',
-                padding: '25px',
-                borderRadius: '16px',
-                margin: '25px 0',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
-              }}>
-                <p style={{
-                  margin: '0 0 15px 0',
-                  fontSize: '1.2rem',
-                  fontWeight: '600',
-                  opacity: '0.9'
-                }}>
-                  Registration Number:
-                </p>
-                <p style={{
-                  margin: '0',
-                  fontSize: '2rem',
-                  fontWeight: '800',
-                  letterSpacing: '2px',
-                  textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
-                  fontFamily: 'monospace'
-                }}>
-                  {registration.registrationNumber}
-                </p>
-              </div>
-              <p style={{
-                margin: '20px 0 0 0',
-                fontSize: '1.2rem',
-                opacity: '0.9'
-              }}>
-                Student: <strong>{registration.studentName}</strong>
-              </p>
-              <p style={{
-                margin: '10px 0 0 0',
-                fontSize: '1rem',
-                opacity: '0.8',
-                fontStyle: 'italic'
-              }}>
-                Please save this registration number for future reference
-              </p>
-              <button
-                onClick={() => setRegistration(null)}
-                style={{
-                  marginTop: '30px',
-                  padding: '15px 35px',
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  borderRadius: '25px',
-                  color: 'white',
-                  fontSize: '1.1rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 8px 25px rgba(0, 0, 0, 0.2)'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                Register Another Student
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div style={{ 
-          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
-          padding: '70px 30px',
-          textAlign: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-          borderBottom: '1px solid rgba(148, 163, 184, 0.1)',
-          width: '100%',
-          boxSizing: 'border-box'
+          width: '60px',
+          height: '60px',
+          background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 20px',
+          fontSize: '24px',
+          color: 'white',
+          boxShadow: '0 4px 15px rgba(99, 49, 148, 0.3)'
         }}>
-          <div style={{
-            position: 'absolute',
-            top: '0',
-            left: '0',
-            right: '0',
-            bottom: '0',
-            background: 'url("data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cdefs%3E%3Cpattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"%3E%3Cpath d="M 0 10 L 10 0 M 0 20 L 20 20 M 10 10 L 30 10 M 10 30 L 40 30" stroke="rgba(99, 102, 241, 0.05)" stroke-width="0.5"/%3E%3C/pattern%3E%3C/defs%3E%3Crect width="100" height="100" fill="url(%23grid)"/%3E%3C/svg%3E")',
-            opacity: '0.1'
-          }}></div>
-          <div style={{ position: 'relative', zIndex: '1' }}>
-            <div style={{
-              display: 'inline-block',
-              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-              padding: '10px 20px',
-              borderRadius: '16px',
-              boxShadow: '0 10px 30px rgba(99, 102, 241, 0.3)',
-              marginBottom: '25px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <div style={{
-                  width: '50px',
-                  height: '50px',
-                  borderRadius: '12px',
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  backdropFilter: 'blur(10px)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: 'rgba(99, 102, 241, 0.4) 0px 4px 15px',
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: '1.3rem'
-                }}>📝</div>
-                <h1 style={{
-                  background: 'linear-gradient(135deg, rgb(255, 255, 255) 0%, rgb(248, 249, 250) 50%, rgb(233, 236, 239) 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  margin: '0',
-                  fontSize: '2.8rem',
-                  fontWeight: '800',
-                  letterSpacing: '-0.8px',
-                  textShadow: 'rgba(255, 255, 255, 0.2) 0px 2px 4px'
-                }}>
-                  Student Registration Form
-                </h1>
-              </div>
-            </div>
-          </div>
+          ✓
         </div>
-
-        <form onSubmit={handleSubmit} style={{ 
-          padding: '40px 90px',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%)',
-          width: '100%',
-          boxSizing: 'border-box',
-          margin: '0'
+        <h2 style={{ margin: '0 0 15px 0', color: '#1F2937', fontSize: '24px', fontWeight: '600' }}>Registration Successful!</h2>
+        <div style={{
+          background: '#F4F0FF',
+          padding: '20px',
+          borderRadius: '12px',
+          margin: '20px 0',
+          border: '1px solid #E5E7EB'
         }}>
-          <div style={{ 
-            marginBottom: '40px', 
-            padding: '40px 90px', 
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)', 
-            borderRadius: '24px', 
-            border: '1px solid rgba(226, 232, 240, 0.8)', 
-            boxShadow: '0 15px 40px rgba(0, 0, 0, 0.1), 0 8px 25px rgba(0, 0, 0, 0.08)', 
-            position: 'relative', 
-            overflow: 'hidden',
-            width: '100%',
-            boxSizing: 'border-box'
-          }}>
-            <div style={{
-              display: 'flex', 
-              alignItems: 'center', 
-              marginBottom: '25px'
+          <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#6B7280', fontWeight: '500' }}>Registration Number:</p>
+          <p style={{ margin: '0', fontSize: '20px', fontWeight: '600', color: '#633194' }}>
+            {registration.registrationNumber}
+          </p>
+        </div>
+        <p style={{ margin: '10px 0', color: '#6B7280', fontSize: '16px' }}>
+          Student: <strong style={{ color: '#1F2937' }}>{registration.studentName}</strong>
+        </p>
+        <button
+          onClick={() => setRegistration(null)}
+          style={{
+            marginTop: '25px',
+            padding: '12px 24px',
+            background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '500',
+            fontFamily: 'Inter, sans-serif',
+            boxShadow: '0 2px 8px rgba(99, 49, 148, 0.3)',
+            transition: 'transform 0.2s'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+        >
+          Register Another Student
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="registration-form" style={{
+      maxWidth: '800px',
+      margin: '20px auto',
+      padding: '30px',
+      background: '#F9FAFB',
+      borderRadius: '16px',
+      boxShadow: '0 4px 20px rgba(99, 49, 148, 0.1)',
+      fontFamily: 'Inter, sans-serif',
+      border: '1px solid #E5E7EB'
+    }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .registration-form {
+            padding: 15px !important;
+            margin: 10px !important;
+          }
+          .form-grid-2 {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+          }
+          .form-grid-3 {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+          }
+          .form-title {
+            font-size: 20px !important;
+            margin-bottom: 20px !important;
+          }
+          .section-title {
+            font-size: 14px !important;
+            margin-bottom: 10px !important;
+          }
+          .form-input {
+            padding: 10px !important;
+            font-size: 16px !important;
+          }
+          .submit-button {
+            padding: 15px 25px !important;
+            font-size: 16px !important;
+            width: 100% !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .registration-form {
+            padding: 10px !important;
+            margin: 5px !important;
+          }
+          .success-message {
+            padding: 20px !important;
+            margin: 20px 10px !important;
+          }
+        }
+      `}</style>
+      <h1 className="form-title" style={{
+        textAlign: 'center',
+        margin: '0 0 20px 0',
+        color: '#633194',
+        fontSize: '28px',
+        fontWeight: '600'
+      }}>
+        Student Registration Form
+      </h1>
+
+      {/* Step Indicator */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '30px', gap: '15px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{
+            width: '32px', height: '32px', borderRadius: '50%',
+            background: currentStep >= 1 ? '#633194' : '#E5E7EB',
+            color: currentStep >= 1 ? 'white' : '#6B7280',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: '600', fontSize: '14px', transition: 'all 0.3s'
+          }}>1</div>
+          <span style={{ fontSize: '14px', fontWeight: currentStep >= 1 ? '600' : '400', color: currentStep >= 1 ? '#1F2937' : '#6B7280' }}>Student Information</span>
+        </div>
+        <div style={{ width: '40px', height: '2px', background: currentStep >= 2 ? '#633194' : '#E5E7EB', transition: 'all 0.3s' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{
+            width: '32px', height: '32px', borderRadius: '50%',
+            background: currentStep >= 2 ? '#633194' : '#E5E7EB',
+            color: currentStep >= 2 ? 'white' : '#6B7280',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: '600', fontSize: '14px', transition: 'all 0.3s'
+          }}>2</div>
+          <span style={{ fontSize: '14px', fontWeight: currentStep >= 2 ? '600' : '400', color: currentStep >= 2 ? '#1F2937' : '#6B7280' }}>Parent / Guardian</span>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        {/* Student Information */}
+        {currentStep === 1 && (
+          <div style={{ marginBottom: '25px' }}>
+            <h2 className="section-title" style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#374151',
+              marginBottom: '15px',
+              borderBottom: '1px solid #e5e7eb',
+              paddingBottom: '5px'
             }}>
-              <div style={{
-                width: '50px', 
-                height: '50px', 
-                borderRadius: '50%', 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)', 
-                color: 'white', 
-                fontWeight: 'bold', 
-                fontSize: '1.2rem'
-              }}>1</div>
-              <h2 style={{ 
-                color: '#2c3e50', 
-                margin: '0', 
-                fontSize: '1.8rem', 
-                fontWeight: '700', 
-                flexGrow: '1'
-              }}>
-                Student Details
-              </h2>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', marginBottom: '30px', width: '100%' }}>
+              Student Information
+            </h2>
+
+            <div className="form-grid-2" style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '15px',
+              marginBottom: '15px'
+            }}>
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '10px', 
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '1.1rem'
-                }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
                   First Name *
                 </label>
                 <input
+                  className="form-input"
                   type="text"
                   name="first_name"
                   value={formData.first_name}
                   onChange={handleInputChange}
                   required
-                  placeholder="Enter first name"
-                  style={{ 
-                    width: '100%', 
-                    padding: '16px 18px', 
-                    border: '2px solid #3b82f6',
-                    borderRadius: '12px',
-                    fontSize: '1.1rem',
-                    transition: 'all 0.3s ease',
-                    background: '#f8fafc',
-                    outline: 'none',
-                    color: '#2c3e50'
-                  }}
-                  onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
-                    e.target.style.borderColor = '#2563eb';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)';
-                  }}
-                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.boxShadow = 'none';
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
                   }}
                 />
               </div>
+
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '8px', 
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '0.95rem'
-                }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
                   Last Name *
                 </label>
                 <input
+                  className="form-input"
                   type="text"
                   name="last_name"
                   value={formData.last_name}
                   onChange={handleInputChange}
                   required
-                  placeholder="Enter last name"
-                  style={{ 
-                    width: '100%', 
-                    padding: '12px 15px', 
-                    border: '2px solid #3b82f6',
-                    borderRadius: '10px',
-                    fontSize: '1rem',
-                    transition: 'all 0.3s ease',
-                    background: '#f8fafc',
-                    outline: 'none',
-                    color: '#000000'
-                  }}
-                  onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
-                    e.target.style.borderColor = '#2563eb';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)';
-                  }}
-                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.boxShadow = 'none';
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
                   }}
                 />
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-              <div style={{ position: 'relative' }}>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '8px', 
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '0.95rem'
-                }}>
+            <div className="form-grid-3" style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr',
+              gap: '15px',
+              marginBottom: '15px'
+            }}>
+              <div>
+                <label style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', fontSize: '14px', color: '#374151', gap: '8px' }}>
                   Date of Birth *
+                  {formData.date_of_birth && !isNaN(parseLocalDate(formData.date_of_birth).getTime()) && (() => {
+                    const dob = parseLocalDate(formData.date_of_birth);
+                    const diffMs = Date.now() - dob.getTime();
+                    const age = diffMs >= 0 ? Math.abs(new Date(diffMs).getUTCFullYear() - 1970) : 0;
+                    return (
+                      <span style={{ 
+                        fontSize: '11px', 
+                        background: '#F4F0FF', 
+                        color: '#633194', 
+                        padding: '2px 8px', 
+                        borderRadius: '10px', 
+                        fontWeight: '700' 
+                      }}>
+                        {age} yrs
+                      </span>
+                    );
+                  })()}
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="date"
-                    name="date_of_birth"
-                    value={formData.date_of_birth}
-                    onChange={handleInputChange}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <select
+                    name="day"
+                    value={(() => {
+                      if (!formData.date_of_birth) return '';
+                      const date = parseLocalDate(formData.date_of_birth);
+                      return isNaN(date.getTime()) ? '' : date.getDate();
+                    })()}
+                    onChange={(e) => {
+                      const day = e.target.value;
+                      const currentDate = formData.date_of_birth ? parseLocalDate(formData.date_of_birth) : new Date();
+                      const month = currentDate.getMonth();
+                      const year = currentDate.getFullYear();
+                      const newDate = new Date(year, month, parseInt(day));
+                      const pad = (n: number) => String(n).padStart(2, '0');
+                      setFormData(prev => ({
+                        ...prev,
+                        date_of_birth: `${newDate.getFullYear()}-${pad(newDate.getMonth() + 1)}-${pad(newDate.getDate())}`
+                      }));
+                    }}
                     required
-                    style={{ 
-                      width: '100%', 
-                      padding: '12px 15px 12px 45px', 
-                      border: '2px solid #28a745',
-                      borderRadius: '10px',
-                      fontSize: '1rem',
-                      transition: 'all 0.3s ease',
-                      background: '#f0fff4',
-                      outline: 'none',
-                      color: '#000000'
+                    style={{
+                      flex: '1',
+                      padding: '10px 8px',
+                      border: '2px solid #d1d5db',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      backgroundColor: '#ffffff'
                     }}
-                    onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
-                      e.target.style.borderColor = '#1e7e34';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(34, 197, 94, 0.1)';
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#633194';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(99, 49, 148, 0.1)';
                     }}
-                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                      e.target.style.borderColor = '#28a745';
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#d1d5db';
                       e.target.style.boxShadow = 'none';
                     }}
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    right: '15px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    pointerEvents: 'none',
-                    color: '#28a745'
-                  }}>
-                    📅
-                  </div>
+                  >
+                    <option value="">Day</option>
+                    {Array.from({ length: 31 }, (_, i) => (
+                      <option key={i + 1} value={i + 1}>{i + 1}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    name="month"
+                    value={(() => {
+                      if (!formData.date_of_birth) return '';
+                      const date = parseLocalDate(formData.date_of_birth);
+                      return isNaN(date.getTime()) ? '' : date.getMonth() + 1;
+                    })()}
+                    onChange={(e) => {
+                      const month = parseInt(e.target.value) - 1;
+                      const currentDate = formData.date_of_birth ? parseLocalDate(formData.date_of_birth) : new Date();
+                      const day = currentDate.getDate();
+                      const year = currentDate.getFullYear();
+                      const newDate = new Date(year, month, day);
+                      const pad = (n: number) => String(n).padStart(2, '0');
+                      setFormData(prev => ({
+                        ...prev,
+                        date_of_birth: `${newDate.getFullYear()}-${pad(newDate.getMonth() + 1)}-${pad(newDate.getDate())}`
+                      }));
+                    }}
+                    required
+                    style={{
+                      flex: '1.5',
+                      padding: '10px 8px',
+                      border: '2px solid #d1d5db',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      backgroundColor: '#ffffff'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#633194';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(99, 49, 148, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#d1d5db';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  >
+                    <option value="">Month</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                  </select>
+
+                  <select
+                    name="year"
+                    value={(() => {
+                      if (!formData.date_of_birth) return '';
+                      const date = parseLocalDate(formData.date_of_birth);
+                      return isNaN(date.getTime()) ? '' : date.getFullYear();
+                    })()}
+                    onChange={(e) => {
+                      const year = parseInt(e.target.value);
+                      const currentDate = formData.date_of_birth ? parseLocalDate(formData.date_of_birth) : new Date();
+                      const day = currentDate.getDate();
+                      const month = currentDate.getMonth();
+                      const newDate = new Date(year, month, day);
+                      const pad = (n: number) => String(n).padStart(2, '0');
+                      setFormData(prev => ({
+                        ...prev,
+                        date_of_birth: `${newDate.getFullYear()}-${pad(newDate.getMonth() + 1)}-${pad(newDate.getDate())}`
+                      }));
+                    }}
+                    required
+                    style={{
+                      flex: '1.2',
+                      padding: '10px 8px',
+                      border: '2px solid #d1d5db',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      backgroundColor: '#ffffff'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#633194';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(99, 49, 148, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#d1d5db';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  >
+                    <option value="">Year</option>
+                    {Array.from({ length: 100 }, (_, i) => {
+                      const year = new Date().getFullYear() - i;
+                      return (
+                        <option key={year} value={year}>{year}</option>
+                      );
+                    })}
+                  </select>
                 </div>
               </div>
+
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '8px', 
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '0.95rem'
-                }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
                   Gender *
                 </label>
                 <select
+                  className="form-input"
                   name="gender"
                   value={formData.gender}
                   onChange={handleInputChange}
                   required
-                  style={{ 
-                    width: '100%', 
-                    padding: '12px 15px', 
-                    border: '2px solid #e74c3c',
-                    borderRadius: '10px',
-                    fontSize: '1rem',
-                    transition: 'all 0.3s ease',
-                    background: '#fff5f5',
-                    outline: 'none',
-                    cursor: 'pointer',
-                    color: '#000000'
-                  }}
-                  onFocus={(e: React.FocusEvent<HTMLSelectElement>) => {
-                    e.target.style.borderColor = '#c0392b';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(231, 76, 60, 0.1)';
-                  }}
-                  onBlur={(e: React.FocusEvent<HTMLSelectElement>) => {
-                    e.target.style.borderColor = '#e74c3c';
-                    e.target.style.boxShadow = 'none';
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
                   }}
                 >
-                  <option value="">Select Gender</option>
+                  <option value="">Select gender</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
-                  <option value="other">Other</option>
                 </select>
               </div>
-            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '8px', 
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '0.95rem'
-                }}>
-                  Religion *
-                </label>
-                <input
-                  type="text"
-                  name="religion"
-                  value={formData.religion}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="Enter religion"
-                  style={{ 
-                    width: '100%', 
-                    padding: '12px 15px', 
-                    border: '2px solid #3b82f6',
-                    borderRadius: '10px',
-                    fontSize: '1rem',
-                    transition: 'all 0.3s ease',
-                    background: '#f8fafc',
-                    color: '#2c3e50'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#667eea';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '8px', 
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '0.95rem'
-                }}>
-                  Ethnicity *
-                </label>
-                <input
-                  type="text"
-                  name="ethnicity"
-                  value={formData.ethnicity}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="Enter ethnicity"
-                  style={{ 
-                    width: '100%', 
-                    padding: '12px 15px', 
-                    border: '2px solid #3b82f6',
-                    borderRadius: '10px',
-                    fontSize: '1rem',
-                    transition: 'all 0.3s ease',
-                    background: '#f8fafc',
-                    color: '#2c3e50'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#667eea';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '8px', 
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '0.95rem'
-                }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
                   Nationality *
                 </label>
                 <input
+                  className="form-input"
                   type="text"
                   name="nationality"
                   value={formData.nationality}
                   onChange={handleInputChange}
                   required
-                  placeholder="Enter nationality"
-                  style={{ 
-                    width: '100%', 
-                    padding: '12px 15px', 
-                    border: '2px solid #3b82f6',
-                    borderRadius: '10px',
-                    fontSize: '1rem',
-                    transition: 'all 0.3s ease',
-                    background: '#f8fafc',
-                    outline: 'none',
-                    color: '#000000'
-                  }}
-                  onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
-                    e.target.style.borderColor = '#2563eb';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)';
-                  }}
-                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.boxShadow = 'none';
+                  placeholder="e.g., American"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
                   }}
                 />
               </div>
             </div>
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '8px', 
-                fontWeight: '600',
-                color: '#2c3e50',
-                fontSize: '0.95rem'
-              }}>
+            <div className="form-grid-3" style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr',
+              gap: '15px',
+              marginBottom: '15px'
+            }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
+                  Religion *
+                </label>
+                <input
+                  className="form-input"
+                  type="text"
+                  name="religion"
+                  value={formData.religion}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="e.g., Christianity"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
+                  Ethnicity *
+                </label>
+                <input
+                  className="form-input"
+                  type="text"
+                  name="ethnicity"
+                  value={formData.ethnicity}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="e.g., Asian"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
                 Address *
               </label>
               <textarea
+                className="form-input"
                 name="address"
                 value={formData.address}
                 onChange={handleInputChange}
                 required
-                rows={3}
-                placeholder="Enter complete address"
-                style={{ 
-                  width: '100%', 
-                  padding: '12px 15px', 
-                  border: '2px solid #3b82f6',
-                  borderRadius: '10px',
-                  fontSize: '1rem',
-                  transition: 'all 0.3s ease',
-                  background: '#f8fafc',
-                  outline: 'none',
-                  resize: 'vertical',
-                  fontFamily: 'inherit',
-                  color: '#1e293b'
-                }}
-                onFocus={(e: React.FocusEvent<HTMLTextAreaElement>) => {
-                  e.target.style.borderColor = '#2563eb';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)';
-                }}
-                onBlur={(e: React.FocusEvent<HTMLTextAreaElement>) => {
-                  e.target.style.borderColor = '#3b82f6';
-                  e.target.style.boxShadow = 'none';
+                rows={2}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                  resize: 'vertical'
                 }}
               />
             </div>
-          </div>
 
-          <div style={{ 
-            marginBottom: '40px', 
-            padding: '35px', 
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)', 
-            borderRadius: '20px', 
-            border: '1px solid rgba(226, 232, 240, 0.8)', 
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08), 0 4px 15px rgba(0, 0, 0, 0.05)', 
-            position: 'relative', 
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              display: 'flex', 
-              alignItems: 'center', 
-              marginBottom: '25px'
-            }}>
-              <div style={{
-                width: '50px', 
-                height: '50px', 
-                borderRadius: '50%', 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)', 
-                color: 'white', 
-                fontWeight: 'bold', 
-                fontSize: '1.2rem'
-              }}>2</div>
-              <h2 style={{ 
-                color: '#2c3e50', 
-                margin: '0', 
-                fontSize: '1.8rem', 
-                fontWeight: '700', 
-                flexGrow: '1'
-              }}>
-                Parent/Guardian Details
-              </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
+              <div style={{ flex: 1 }}>
+                {step1Error && (
+                  <div style={{
+                    background: '#fef2f2',
+                    color: '#dc2626',
+                    padding: '10px 14px',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    border: '1px solid #fee2e2'
+                  }}>
+                    <span style={{ fontSize: '16px' }}>⚠️</span>
+                    {step1Error}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={nextStep}
+                style={{
+                  padding: '12px 28px',
+                  background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '15px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  fontFamily: 'Inter, sans-serif',
+                  boxShadow: '0 2px 8px rgba(99, 49, 148, 0.3)',
+                  transition: 'transform 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 49, 148, 0.4)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(99, 49, 148, 0.3)';
+                }}
+              >
+                Continue to Parent Details →
+              </button>
             </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', marginBottom: '30px', width: '100%' }}>
+          </div>
+        )}
+
+        {/* Parent/Guardian Information */}
+        {currentStep === 2 && (
+          <div style={{ marginBottom: '25px' }}>
+            <h2 className="section-title" style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#374151',
+              marginBottom: '15px',
+              borderBottom: '1px solid #e5e7eb',
+              paddingBottom: '5px'
+            }}>
+              Parent/Guardian Information
+            </h2>
+
+            <div className="form-grid-2" style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '15px',
+              marginBottom: '15px'
+            }}>
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '10px', 
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '1.1rem'
-                }}>
-                  Parent/Guardian Type *
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
+                  Parent Type *
                 </label>
                 <select
+                  className="form-input"
                   name="parent_type"
                   value={formData.parent_type}
                   onChange={handleInputChange}
                   required
-                  style={{ 
-                    width: '100%', 
-                    padding: '16px 18px', 
-                    border: '2px solid #3b82f6',
-                    borderRadius: '12px',
-                    fontSize: '1.1rem',
-                    transition: 'all 0.3s ease',
-                    background: '#f8fafc',
-                    color: '#2c3e50',
-                    cursor: 'pointer'
-                  }}
-                  onFocus={(e: React.FocusEvent<HTMLSelectElement>) => {
-                    e.target.style.borderColor = '#1e7e34';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(34, 197, 94, 0.1)';
-                  }}
-                  onBlur={(e: React.FocusEvent<HTMLSelectElement>) => {
-                    e.target.style.borderColor = '#28a745';
-                    e.target.style.boxShadow = 'none';
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
                   }}
                 >
+                  <option value="">Select type</option>
                   <option value="father">Father</option>
                   <option value="mother">Mother</option>
                   <option value="guardian">Guardian</option>
                 </select>
               </div>
+
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '8px', 
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '0.95rem'
-                }}>
-                  Parent/Guardian Name *
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
+                  Parent Name *
                 </label>
                 <input
+                  className="form-input"
                   type="text"
                   name="parent_name"
                   value={formData.parent_name}
                   onChange={handleInputChange}
                   required
-                  placeholder="Enter parent/guardian name"
-                  style={{ 
-                    width: '100%', 
-                    padding: '12px 15px', 
-                    border: '2px solid #3b82f6',
-                    borderRadius: '10px',
-                    fontSize: '1rem',
-                    transition: 'all 0.3s ease',
-                    background: '#f8fafc',
-                    outline: 'none',
-                    color: '#000000'
-                  }}
-                  onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
-                    e.target.style.borderColor = '#2563eb';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)';
-                  }}
-                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.boxShadow = 'none';
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
                   }}
                 />
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+            <div className="form-grid-3" style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr',
+              gap: '15px',
+              marginBottom: '15px'
+            }}>
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '8px', 
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '0.95rem'
-                }}>
-                  Phone Number *
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
+                  Parent Phone *
                 </label>
                 <input
+                  className="form-input"
                   type="tel"
                   name="parent_phone"
                   value={formData.parent_phone}
                   onChange={handleInputChange}
                   required
-                  placeholder="Enter phone number"
-                  style={{ 
-                    width: '100%', 
-                    padding: '12px 15px', 
-                    border: '2px solid #3b82f6',
-                    borderRadius: '10px',
-                    fontSize: '1rem',
-                    transition: 'all 0.3s ease',
-                    background: '#f8fafc',
-                    outline: 'none',
-                    color: '#000000'
-                  }}
-                  onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
-                    e.target.style.borderColor = '#2563eb';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)';
-                  }}
-                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.boxShadow = 'none';
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
                   }}
                 />
               </div>
+
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '8px', 
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '0.95rem'
-                }}>
-                  Email
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
+                  Parent Email
                 </label>
                 <input
+                  className="form-input"
                   type="email"
                   name="parent_email"
                   value={formData.parent_email}
                   onChange={handleInputChange}
-                  placeholder="Enter email address"
-                  style={{ 
-                    width: '100%', 
-                    padding: '12px 15px', 
-                    border: '2px solid #3b82f6',
-                    borderRadius: '10px',
-                    fontSize: '1rem',
-                    transition: 'all 0.3s ease',
-                    background: '#f8fafc',
-                    outline: 'none',
-                    color: '#000000'
-                  }}
-                  onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
-                    e.target.style.borderColor = '#2563eb';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)';
-                  }}
-                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.boxShadow = 'none';
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
                   }}
                 />
               </div>
-            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '8px', 
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '0.95rem'
-                }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
                   Parent Gender *
                 </label>
                 <select
+                  className="form-input"
                   name="parent_gender"
                   value={formData.parent_gender}
                   onChange={handleInputChange}
                   required
-                  style={{ 
-                    width: '100%', 
-                    padding: '12px 15px', 
-                    border: '2px solid #e74c3c',
-                    borderRadius: '10px',
-                    fontSize: '1rem',
-                    transition: 'all 0.3s ease',
-                    background: '#fff5f5',
-                    outline: 'none',
-                    cursor: 'pointer',
-                    color: '#000000'
-                  }}
-                  onFocus={(e: React.FocusEvent<HTMLSelectElement>) => {
-                    e.target.style.borderColor = '#c0392b';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(231, 76, 60, 0.1)';
-                  }}
-                  onBlur={(e: React.FocusEvent<HTMLSelectElement>) => {
-                    e.target.style.borderColor = '#e74c3c';
-                    e.target.style.boxShadow = 'none';
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
                   }}
                 >
-                  <option value="">Select Parent Gender</option>
+                  <option value="">Select</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
-                  <option value="other">Other</option>
                 </select>
               </div>
+            </div>
+
+            <div className="form-grid-3" style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr',
+              gap: '15px',
+              marginBottom: '15px'
+            }}>
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '8px', 
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '0.95rem'
-                }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
                   Parent Religion *
                 </label>
                 <input
+                  className="form-input"
                   type="text"
                   name="parent_religion"
                   value={formData.parent_religion}
                   onChange={handleInputChange}
                   required
-                  placeholder="Enter parent religion"
-                  style={{ 
-                    width: '100%', 
-                    padding: '12px 15px', 
-                    border: '2px solid #3b82f6',
-                    borderRadius: '10px',
-                    fontSize: '1rem',
-                    transition: 'all 0.3s ease',
-                    background: '#f8fafc',
-                    color: '#2c3e50'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#667eea';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.boxShadow = 'none';
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
                   }}
                 />
               </div>
+
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '8px', 
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  fontSize: '0.95rem'
-                }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
                   Parent Ethnicity *
                 </label>
                 <input
+                  className="form-input"
                   type="text"
                   name="parent_ethnicity"
                   value={formData.parent_ethnicity}
                   onChange={handleInputChange}
                   required
-                  placeholder="Enter parent ethnicity"
-                  style={{ 
-                    width: '100%', 
-                    padding: '12px 15px', 
-                    border: '2px solid #3b82f6',
-                    borderRadius: '10px',
-                    fontSize: '1rem',
-                    transition: 'all 0.3s ease',
-                    background: '#f8fafc',
-                    color: '#2c3e50'
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
                   }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#667eea';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.boxShadow = 'none';
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
+                  Parent Nationality *
+                </label>
+                <input
+                  className="form-input"
+                  type="text"
+                  name="parent_nationality"
+                  value={formData.parent_nationality}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
                   }}
                 />
               </div>
             </div>
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '8px', 
-                fontWeight: '600',
-                color: '#2c3e50',
-                fontSize: '0.95rem'
-              }}>
-                Parent Nationality *
-              </label>
-              <input
-                type="text"
-                name="parent_nationality"
-                value={formData.parent_nationality}
-                onChange={handleInputChange}
-                required
-                placeholder="Enter parent nationality"
-                style={{ 
-                  width: '100%', 
-                  padding: '12px 15px', 
-                  border: '2px solid #3b82f6',
-                  borderRadius: '10px',
-                  fontSize: '1rem',
-                  transition: 'all 0.3s ease',
-                  background: '#f8fafc',
-                  outline: 'none',
-                  color: '#1e293b'
-                }}
-                onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
-                  e.target.style.borderColor = '#2563eb';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)';
-                }}
-                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                  e.target.style.borderColor = '#3b82f6';
-                  e.target.style.boxShadow = 'none';
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '8px', 
-                fontWeight: '600',
-                color: '#2c3e50',
-                fontSize: '0.95rem'
-              }}>
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
                 Parent Address *
               </label>
               <textarea
+                className="form-input"
                 name="parent_address"
                 value={formData.parent_address}
                 onChange={handleInputChange}
                 required
-                rows={3}
-                placeholder="Enter parent complete address"
-                style={{ 
-                  width: '100%', 
-                  padding: '12px 15px', 
-                  border: '2px solid #3b82f6',
-                  borderRadius: '10px',
-                  fontSize: '1rem',
-                  transition: 'all 0.3s ease',
-                  background: '#f8fafc',
-                  outline: 'none',
-                  resize: 'vertical',
-                  fontFamily: 'inherit',
-                  color: '#1e293b'
-                }}
-                onFocus={(e: React.FocusEvent<HTMLTextAreaElement>) => {
-                  e.target.style.borderColor = '#2563eb';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)';
-                }}
-                onBlur={(e: React.FocusEvent<HTMLTextAreaElement>) => {
-                  e.target.style.borderColor = '#3b82f6';
-                  e.target.style.boxShadow = 'none';
+                rows={2}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                  resize: 'vertical'
                 }}
               />
             </div>
           </div>
+        )}
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '30px' }}>
+        {registration && !registration.success && (
+          <div style={{
+            background: '#fef2f2',
+            color: '#dc2626',
+            padding: '10px',
+            borderRadius: '4px',
+            marginBottom: '15px',
+            fontSize: '14px'
+          }}>
+            {registration.message}
+          </div>
+        )}
+
+        {currentStep === 2 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
             <button
-              type="submit"
-              style={{ 
-                padding: '20px 50px', 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
-                color: 'white', 
-                border: 'none', 
-                borderRadius: '50px', 
+              type="button"
+              onClick={prevStep}
+              style={{
+                padding: '12px 24px',
+                background: '#F3F4F6',
+                color: '#4B5563',
+                border: '1px solid #D1D5DB',
+                borderRadius: '8px',
+                fontSize: '15px',
+                fontWeight: '500',
                 cursor: 'pointer',
-                fontSize: '1.3rem',
-                fontWeight: '700',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 15px 35px rgba(102, 126, 234, 0.4)',
-                position: 'relative',
-                overflow: 'hidden'
+                fontFamily: 'Inter, sans-serif',
+                transition: 'all 0.2s'
               }}
-              onMouseOver={(e: React.MouseEvent<HTMLButtonElement>) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 15px 35px rgba(102, 126, 234, 0.4)';
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = '#E5E7EB';
+                e.currentTarget.style.color = '#1F2937';
               }}
-              onMouseOut={(e: React.MouseEvent<HTMLButtonElement>) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 10px 25px rgba(102, 126, 234, 0.3)';
-              }}
-              onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => {
-                e.currentTarget.style.transform = 'translateY(0)';
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = '#F3F4F6';
+                e.currentTarget.style.color = '#4B5563';
               }}
             >
-              Register Student
+              ← Back
+            </button>
+            <button
+              className="submit-button"
+              type="submit"
+              disabled={isSubmitting}
+              style={{
+                padding: '14px 32px',
+                background: isSubmitting ? '#9CA3AF' : 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: '500',
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                fontFamily: 'Inter, sans-serif',
+                boxShadow: isSubmitting ? 'none' : '0 2px 8px rgba(99, 49, 148, 0.3)',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => {
+                if (!isSubmitting) {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 49, 148, 0.4)';
+                }
+              }}
+              onMouseOut={(e) => {
+                if (!isSubmitting) {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(99, 49, 148, 0.3)';
+                }
+              }}
+            >
+              {isSubmitting ? 'Registering...' : 'Register Student ✓'}
             </button>
           </div>
-        </form>
-      </div>
+        )}
+      </form>
     </div>
   );
 };
