@@ -1,26 +1,38 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+
+// Load environment variables first
+dotenv.config();
+
 import gradeRoutes from './routes/grades';
 import studentRoutes from './routes/students';
 import subjectRoutes from './routes/subjects';
 import attendanceRoutes from './routes/attendance';
 import attendanceMarkRoutes from './routes/attendanceMark';
+import marksRoutes from './routes/marks';
+import emailAlertsRoutes from './routes/email-alerts';
+import resultsRoutes from './routes/results';
+import reportCardRoutes from './routes/reportCards';
+import dashboardRoutes from './routes/dashboard';
+import authRoutes from './routes/auth';
+import usersRoutes from './routes/users';
+import { authenticateToken } from './middleware/auth';
 import { testConnection } from './config/database';
-import { StudentModel } from './models/Student';
-import { GradeModel } from './models/Grade';
-import { SubjectModel } from './models/Subject';
-import { AttendanceModel } from './models/Attendance';
-import { AttendanceMarkModel } from './models/AttendanceMark';
-
-dotenv.config();
+import { DatabaseSchema } from './models/DatabaseSchema';
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5005;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Request logger
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -30,12 +42,24 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes
-app.use('/api/grades', gradeRoutes);
-app.use('/api/students', studentRoutes);
-app.use('/api/subjects', subjectRoutes);
-app.use('/api/attendance', attendanceRoutes);
-app.use('/api/attendance-mark', attendanceMarkRoutes);
+// Public API Routes
+app.get('/api/ping', (req, res) => {
+  res.json({ message: 'pong', timestamp: new Date().toISOString() });
+});
+app.use('/api/auth', authRoutes);
+
+// Protected API Routes
+app.use('/api/users', authenticateToken, usersRoutes);
+app.use('/api/dashboard', authenticateToken, dashboardRoutes);
+app.use('/api/grades', authenticateToken, gradeRoutes);
+app.use('/api/students', authenticateToken, studentRoutes);
+app.use('/api/subjects', authenticateToken, subjectRoutes);
+app.use('/api/attendance', authenticateToken, attendanceRoutes);
+app.use('/api/attendance-mark', authenticateToken, attendanceMarkRoutes);
+app.use('/api/marks', authenticateToken, marksRoutes);
+app.use('/api/email-alerts', authenticateToken, emailAlertsRoutes);
+app.use('/api/results', authenticateToken, resultsRoutes);
+app.use('/api/report-cards', authenticateToken, reportCardRoutes);
 
 // Initialize database and start server
 const initializeDatabase = async () => {
@@ -46,15 +70,11 @@ const initializeDatabase = async () => {
       throw new Error('Database connection failed');
     }
     
-    // Create tables
-    await StudentModel.createTable();
-    await GradeModel.createTable();
-    await SubjectModel.createTable();
-    await AttendanceModel.createTable();
-    await AttendanceMarkModel.createTable();
+    // Initialize Database Schema from single source of truth
+    await DatabaseSchema.initializeDatabase();
     
     console.log('✅ Database initialized successfully');
-    console.log('📊 Tables: students, grades, student_assignment, subjects, attendance, attendance_mark');
+    console.log('📊 Tables: students, grades, student_assignment, subjects, attendance_mark, marks, email_logs');
     
   } catch (error) {
     console.error('❌ Database initialization failed:', error);
@@ -87,6 +107,17 @@ const startServer = async () => {
     console.log('  - PUT  /api/subjects/:id - Update subject');
     console.log('  - DELETE /api/subjects/:id - Delete subject');
     console.log('  - GET  /api/subjects/type/:type - Get subjects by type');
+    console.log('  - POST /api/marks - Create new mark');
+    console.log('  - POST /api/marks/bulk - Bulk create marks');
+    console.log('  - GET  /api/marks/:id - Get mark by ID');
+    console.log('  - GET  /api/marks/student/:studentId/grade/:gradeId/term/:term - Get marks by student, grade, and term');
+    console.log('  - GET  /api/marks/grade/:gradeId/subject/:subjectId/term/:term - Get marks by grade, subject, and term');
+    console.log('  - GET  /api/marks/grade/:gradeId/term/:term - Get all marks by grade and term');
+    console.log('  - PUT  /api/marks/:id - Update mark');
+    console.log('  - DELETE /api/marks/:id - Delete mark');
+    console.log('  - GET  /api/marks/result/student/:studentId/grade/:gradeId/term/:term - Calculate student result');
+    console.log('  - GET  /api/marks/low-marks/threshold/:threshold - Get low marks');
+    console.log('  - GET  /api/marks/statistics/grade/:gradeId/term/:term - Get grade statistics');
     console.log('  - POST /api/attendance/mark - Mark attendance for students');
     console.log('  - GET  /api/attendance/grade/:grade_id/date/:date - Get attendance by grade and date');
     console.log('  - GET  /api/attendance/grade/:grade_id/dates - Get attendance dates for grade');
