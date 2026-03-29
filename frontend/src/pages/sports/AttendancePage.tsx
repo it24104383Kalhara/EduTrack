@@ -42,6 +42,7 @@ export default function AttendancePage() {
     const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, sessionId: number | null, dateStr: string}>({ isOpen: false, sessionId: null, dateStr: '' });
     const [saved, setSaved] = useState(false);
     const [activePopover, setActivePopover] = useState<number | null>(null);
+    const [saveModal, setSaveModal] = useState(false);
 
     // -- Data Fetching --
     const { data: activities } = useQuery({ queryKey: ['activities'], queryFn: activityService.getAll });
@@ -114,6 +115,12 @@ export default function AttendancePage() {
             alert('Failed to delete session: ' + (err.response?.data?.error || err.message));
         }
     });
+
+    const handleConfirmSave = () => {
+        bulkMarkMutation.mutate(undefined, {
+            onSuccess: () => setSaveModal(false)
+        });
+    };
 
     // -- Handlers --
 
@@ -427,12 +434,12 @@ export default function AttendancePage() {
                     {/* Sticky Save Button */}
                     <div className="sticky bottom-4">
                         <button
-                            onClick={() => bulkMarkMutation.mutate()}
-                            disabled={bulkMarkMutation.isPending || Object.keys(localStatus).length === 0}
+                            onClick={() => setSaveModal(true)}
+                            disabled={bulkMarkMutation.isPending || Object.keys(localStatus).length === 0 || saved}
                             className={clsx(
                                 'w-full py-4 rounded-2xl font-bold text-sm shadow-lg transition-all',
                                 saved
-                                    ? 'bg-emerald-500 text-white'
+                                    ? 'bg-emerald-500 text-white cursor-default'
                                     : 'text-white hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed'
                             )}
                             style={saved ? {} : { background: 'linear-gradient(135deg, #633194 0%, #9b59b6 100%)' }}
@@ -441,7 +448,7 @@ export default function AttendancePage() {
                                 ? 'Saving…'
                                 : saved
                                     ? '✓ Attendance Saved!'
-                                    : `Save Attendance (${members.length} students)`}
+                                    : `Save Attendance (${members?.length || 0} students)`}
                         </button>
                     </div>
                 </>
@@ -475,6 +482,16 @@ export default function AttendancePage() {
                 onConfirm={confirmDeleteSession}
                 onCancel={() => setDeleteModal({ ...deleteModal, isOpen: false })}
                 isLoading={deleteSessionMutation.isPending}
+            />
+
+            <ConfirmationModal
+                isOpen={saveModal}
+                title="Save Attendance Changes?"
+                message={`Are you sure you want to save the attendance markings for ${members?.length || 0} students? This will update the official session records.`}
+                confirmText="Yes, Save Records"
+                onConfirm={handleConfirmSave}
+                onCancel={() => setSaveModal(false)}
+                isLoading={bulkMarkMutation.isPending}
             />
         </div>
     );
