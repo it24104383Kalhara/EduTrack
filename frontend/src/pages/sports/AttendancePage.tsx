@@ -400,12 +400,15 @@ export default function AttendancePage() {
                                                                     key={s}
                                                                     onClick={() => setIndividualStatus(member.student_id, s)}
                                                                     className={clsx(
-                                                                        'flex-1 flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all',
-                                                                        status === s ? `${scfg.bg} ${scfg.color} ring-2 ring-offset-1 ${scfg.ring}` : 'hover:bg-gray-50 grayscale hover:grayscale-0 opacity-60 hover:opacity-100'
+                                                                        'flex-1 flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all border-2',
+                                                                        scfg.bg, scfg.color,
+                                                                        status === s 
+                                                                            ? `${scfg.border} shadow-sm scale-110 z-10` 
+                                                                            : 'border-transparent opacity-40 hover:opacity-100 hover:scale-105'
                                                                     )}
                                                                 >
                                                                     <SIco className="h-6 w-6" />
-                                                                    <span className="text-[10px] font-bold uppercase tracking-tight">{scfg.label}</span>
+                                                                    <span className="text-[9px] font-black uppercase tracking-tight">{scfg.label}</span>
                                                                 </button>
                                                             );
                                                         })}
