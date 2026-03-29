@@ -187,7 +187,7 @@ const StudentList: React.FC<StudentListProps> = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showInlineDetails, setShowInlineDetails] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [deletingStudentId, setDeletingStudentId] = useState<number | null>(null);
+  const [deletingStudent, setDeletingStudent] = useState<Student | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -245,8 +245,8 @@ const StudentList: React.FC<StudentListProps> = () => {
     setShowEditModal(true);
   };
 
-  const handleDeleteStudent = (studentId: number) => {
-    setDeletingStudentId(studentId);
+  const handleDeleteStudent = (student: Student) => {
+    setDeletingStudent(student);
     setShowDeleteModal(true);
   };
 
@@ -350,12 +350,13 @@ const StudentList: React.FC<StudentListProps> = () => {
   };
 
   const handleConfirmDelete = () => {
-    if (deletingStudentId) {
+    if (deletingStudent) {
       // Delete student from database
-      studentApi.delete(deletingStudentId)
+      studentApi.delete(deletingStudent.id)
         .then(() => {
           // Refresh students list from database
           fetchStudents();
+          setNotification({ message: `Student ${deletingStudent.first_name} ${deletingStudent.last_name} deleted successfully.`, type: 'success' });
         })
         .catch(error => {
           console.error('Error deleting student:', error);
@@ -363,7 +364,7 @@ const StudentList: React.FC<StudentListProps> = () => {
         });
 
       setShowDeleteModal(false);
-      setDeletingStudentId(null);
+      setDeletingStudent(null);
     }
   };
 
@@ -1420,7 +1421,7 @@ const StudentList: React.FC<StudentListProps> = () => {
                             📄
                           </button>
                           <button
-                            onClick={() => handleDeleteStudent(student.id)}
+                            onClick={() => handleDeleteStudent(student)}
                             style={{
                               width: '32px',
                               height: '32px',
@@ -2087,14 +2088,15 @@ const StudentList: React.FC<StudentListProps> = () => {
               Confirm Deletion
             </h2>
             <p style={{ color: '#6B7280', fontSize: '13px', margin: '0 0 24px 0', lineHeight: '1.5' }}>
-              Are you sure you want to remove this record? This action is <strong style={{ color: '#EF4444' }}>permanent</strong> and cannot be undone.
+              Are you sure you want to remove <strong style={{ color: '#1E1B4B' }}>{deletingStudent?.first_name} {deletingStudent?.last_name}</strong>? 
+              This action is <strong style={{ color: '#EF4444' }}>permanent</strong> and cannot be undone.
             </p>
             
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button
                 onClick={() => {
                   setShowDeleteModal(false);
-                  setDeletingStudentId(null);
+                  setDeletingStudent(null);
                 }}
                 style={{
                   flex: 1,
