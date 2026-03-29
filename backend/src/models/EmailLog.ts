@@ -121,6 +121,7 @@ export class EmailLogModel {
     total_sent: number;
     total_failed: number;
     success_rate: number;
+    total_students: number;
     recent_sent: number;
     recent_failed: number;
   }> {
@@ -134,7 +135,8 @@ export class EmailLogModel {
             COUNT(CASE WHEN el.status = 'sent' THEN 1 END) as total_sent,
             COUNT(CASE WHEN el.status = 'failed' THEN 1 END) as total_failed,
             COUNT(CASE WHEN el.status = 'sent' AND el.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) THEN 1 END) as recent_sent,
-            COUNT(CASE WHEN el.status = 'failed' AND el.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) THEN 1 END) as recent_failed
+            COUNT(CASE WHEN el.status = 'failed' AND el.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) THEN 1 END) as recent_failed,
+            COUNT(DISTINCT el.student_id) as total_students
           FROM email_logs el
           JOIN marks m ON el.mark_id = m.id
           JOIN grades g ON m.grade_id = g.id
@@ -153,6 +155,7 @@ export class EmailLogModel {
         total_sent: row.total_sent || 0,
         total_failed: row.total_failed || 0,
         success_rate: parseFloat(success_rate.toFixed(2)),
+        total_students: row.total_students || 0,
         recent_sent: row.recent_sent || 0,
         recent_failed: row.recent_failed || 0
       };

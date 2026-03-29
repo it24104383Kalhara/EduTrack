@@ -303,11 +303,32 @@ export class MarksModel {
     }
   }
 
+  static async sendBulkConsolidatedReports(gradeId: number, term: string, examType: string): Promise<void> {
+    try {
+      const emailService = new EmailService();
+      
+      // Get all unique student IDs who have marks in this grade/term
+      const [rows] = await pool.execute(
+        'SELECT DISTINCT student_id FROM marks WHERE grade_id = ? AND term = ? AND exam_type = ?',
+        [gradeId, term, examType]
+      ) as [any[], any];
+      
+      for (const row of rows) {
+        await emailService.sendConsolidatedLowMarksAlert(row.student_id, gradeId, term, examType, true);
+      }
+    } catch (error) {
+      console.error('❌ Error sending bulk consolidated reports:', error);
+      throw error;
+    }
+  }
+
   private static triggerCompletionCheck(studentId: number, gradeId: number, term: string, examType: string, force: boolean = false): void {
     const key = `${studentId}|${gradeId}|${term}|${examType}`;
     if (this.completionChecksInProgress.has(key)) return;
     this.completionChecksInProgress.add(key);
 
+    // Increase throttle window to 2000ms to ensure all marks in a bulk save are processed
+    // before sending the consolidated alert.
     setTimeout(async () => {
       this.completionChecksInProgress.delete(key);
       try {
@@ -315,7 +336,7 @@ export class MarksModel {
       } catch (error) {
         console.error(`⚠️ Failed to trigger completion check for student ${studentId}:`, error);
       }
-    }, 500);
+    }, 2000);
   }
 
   static async checkTermCompletionAndAlert(studentId: number, gradeId: number, term: string, examType: string, force: boolean = false): Promise<void> {

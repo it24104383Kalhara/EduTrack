@@ -924,6 +924,15 @@ export const marksApi = {
     return true;
   },
 
+  // Send bulk consolidated low mark reports for an entire grade and term
+  async sendTermReports(gradeId: number, term: string): Promise<boolean> {
+    const response = await apiRequest(`/marks/grade/${gradeId}/term/${term}/send-reports`, {
+      method: 'POST',
+      body: JSON.stringify({ examType: 'final_term' }),
+    });
+    return response.success;
+  },
+
   // Calculate student result
   async calculateStudentResult(studentId: number, gradeId: number, term: string): Promise<StudentResult> {
     const response = await apiRequest<StudentResult>(`/marks/result/student/${studentId}/grade/${gradeId}/term/${term}`);

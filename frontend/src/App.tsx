@@ -44,6 +44,16 @@ function MainApp() {
     }
   }, [user]);
 
+  // Security enforcement: Restrict teachers from accessing admin-only views
+  useEffect(() => {
+    if (user?.role === 'teacher') {
+      const adminOnlyViews = ['register', 'list', 'grades', 'subjects', 'approvals', 'teachers'];
+      if (adminOnlyViews.includes(currentView)) {
+        setCurrentView('dashboard');
+      }
+    }
+  }, [user, currentView]);
+
   const fetchCounts = async () => {
     try {
       setLoading(true);

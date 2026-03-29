@@ -135,6 +135,32 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/auth/reset-password
+router.post('/reset-password', async (req: Request, res: Response) => {
+  const { username, newPassword } = req.body;
+
+  if (!username || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Username and new password are required' });
+  }
+
+  try {
+    const user = await UserModel.findByUsername(username);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(newPassword, salt);
+
+    await UserModel.updatePassword(username, password_hash);
+
+    res.json({ success: true, message: 'Password reset successful! You can now sign in.' });
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ success: false, message: 'Failed to reset password' });
+  }
+});
+
 // GET /api/auth/me (Verify token and get user info)
 router.get('/me', async (req: any, res: Response) => {
   const authHeader = req.headers['authorization'];

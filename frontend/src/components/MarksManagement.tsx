@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import { gradeApi, studentApi } from '../services/api';
 import type { Grade, Student } from '../services/api';
 import MarksEntry from './MarksEntry';

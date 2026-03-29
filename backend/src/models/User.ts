@@ -149,4 +149,12 @@ export class UserModel {
     );
     return (result as any).affectedRows > 0;
   }
+
+  static async updatePassword(username: string, password_hash: string): Promise<boolean> {
+    const [result] = await pool.execute(
+      'UPDATE users SET password_hash = ? WHERE username = ?',
+      [password_hash, username]
+    );
+    return (result as any).affectedRows > 0;
+  }
 }

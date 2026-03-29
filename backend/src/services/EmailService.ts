@@ -54,19 +54,7 @@ export class EmailService {
     error?: string;
   }> {
     try {
-      // Check if email was already sent for this mark using the proper method
-      const alreadySent = await EmailLogModel.hasEmailBeenSent(alertData.id);
-      if (alreadySent) {
-        console.log(`ℹ️ Email already sent for mark ID ${alertData.id}, skipping...`);
-        
-        // Get the existing log to return
-        const existingLog = await EmailLogModel.getEmailLogForMark(alertData.id);
-        return {
-          success: true,
-          emailLog: existingLog || undefined,
-          error: 'Email already sent for this mark'
-        };
-      }
+      // Deduplication check removed per user request. individual alerts sent on every trigger.
 
       const subject = `📚 Urgent: Low Marks Alert - ${alertData.student_name} - ${alertData.subject_name}`;
       
@@ -194,17 +182,7 @@ export class EmailService {
         };
       }
 
-      // Database-level deduplication check
-      if (!force) {
-        const alreadySent = await EmailLogModel.hasEmailBeenSent(markId);
-        if (alreadySent) {
-          console.log(`ℹ️ Skipping duplicate email: Alert already sent for mark ${markId}`);
-          return {
-            alertSent: false,
-            error: 'Low mark alert was already sent for this exam'
-          };
-        }
-      }
+      // Database-level deduplication check removed per user request.
 
       // Get mark with student details for email
       const marksWithDetails = await MarksModel.findByStudentGradeTerm(
@@ -361,26 +339,8 @@ export class EmailService {
 
       if (failedMarks.length === 0) return;
 
-      // 3. Deduplication check (Smart Fingerprint)
-      // Create a unique fingerprint for this specific set of failed subjects and their scores
-      // SubjectID:Mark,SubjectID:Mark...
-      const marksFingerprint = failedMarks
-        .sort((a, b) => a.subject_id.localeCompare(b.subject_id))
-        .map(m => `${m.subject_id}:${m.marks_obtained}`)
-        .join('|');
-      
-      const consolidatedTag = `CONSOLIDATED:${term}:${examType}:${marksFingerprint}`;
-      
-      if (!force) {
-        const [existingLogs] = await pool.execute<any>(
-          "SELECT id FROM email_logs WHERE student_id = ? AND error_message = ? AND status = 'sent' LIMIT 1",
-          [studentId, consolidatedTag]
-        );
-        if (existingLogs.length > 0) {
-          console.log(`ℹ️ Skipping duplicate consolidated email. Fingerprint matches for student ${studentId} (${term} ${examType})`);
-          return;
-        }
-      }
+      // 3. Consolidated tag generation (deduplication check removed)
+      const consolidatedTag = `CONSOLIDATED:${term}:${examType}`;
 
       // 4. Send email
       const student = failedMarks[0];

@@ -4,9 +4,11 @@ import { API_BASE_URL } from '../services/api';
 
 const LoginPage: React.FC = () => {
   const [isRegister, setIsRegister] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [gender, setGender] = useState('female');
@@ -25,7 +27,33 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      if (isRegister) {
+      if (isForgotPassword) {
+        if (password !== confirmPassword) {
+          setError('Passwords do not match.');
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, newPassword: password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          setSuccessMsg(data.message || 'Password reset successful!');
+          setIsForgotPassword(false);
+          setUsername('');
+          setPassword('');
+          setConfirmPassword('');
+        } else {
+          setError(data.message || 'Password reset failed.');
+        }
+      } else if (isRegister) {
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
           method: 'POST',
           headers: {
@@ -203,7 +231,7 @@ const LoginPage: React.FC = () => {
         <div style={{ width: '100%', maxWidth: '380px' }}>
           <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#1F2937', marginBottom: '8px' }}>EduTrack Portal</h1>
           <p style={{ color: '#6B7280', fontSize: '14px', marginBottom: '32px' }}>
-            {isRegister ? 'Register for a new teacher account' : 'Sign in to access the dashboard'}
+            {isForgotPassword ? 'Reset your password' : isRegister ? 'Register for a new teacher account' : 'Sign in to access the dashboard'}
           </p>
 
           {successMsg && (
@@ -286,7 +314,7 @@ const LoginPage: React.FC = () => {
               />
             </div>
 
-            {isRegister && (
+            {!isForgotPassword && isRegister && (
               <>
                 <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
                   <div style={{ flex: 1 }}>
@@ -387,8 +415,10 @@ const LoginPage: React.FC = () => {
               </>
             )}
 
-            <div style={{ marginBottom: '32px' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#4B5563', marginBottom: '8px' }}>Password</label>
+            <div style={{ marginBottom: isForgotPassword ? '20px' : '32px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#4B5563', marginBottom: '8px' }}>
+                {isForgotPassword ? 'New Password' : 'Password'}
+              </label>
               <input
                 type="password"
                 value={password}
@@ -419,6 +449,66 @@ const LoginPage: React.FC = () => {
               />
             </div>
 
+            {isForgotPassword && (
+              <div style={{ marginBottom: '32px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#4B5563', marginBottom: '8px' }}>Confirm New Password</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    background: '#FFFFFF',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '12px',
+                    color: '#1F2937',
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'all 0.2s',
+                    boxSizing: 'border-box',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#7A43B6';
+                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(122, 67, 182, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = '#E5E7EB';
+                    e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
+                  }}
+                  required
+                />
+              </div>
+            )}
+
+            {!isRegister && !isForgotPassword && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px', marginTop: '-12px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotPassword(true);
+                    setError('');
+                    setSuccessMsg('');
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#7A43B6',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                  onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={isLoading}
@@ -448,16 +538,20 @@ const LoginPage: React.FC = () => {
                   <svg style={{ animation: 'spin 1s linear infinite' }} width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  {isRegister ? 'Creating Account...' : 'Signing In...'}
+                  {isForgotPassword ? 'Resetting...' : isRegister ? 'Creating Account...' : 'Signing In...'}
                 </>
-              ) : (isRegister ? 'Create Account' : 'Sign In')}
+              ) : (isForgotPassword ? 'Change Password' : isRegister ? 'Create Account' : 'Sign In')}
             </button>
 
             <div style={{ marginTop: '24px', textAlign: 'center' }}>
               <button
                 type="button"
                 onClick={() => {
-                  setIsRegister(!isRegister);
+                  if (isForgotPassword) {
+                    setIsForgotPassword(false);
+                  } else {
+                    setIsRegister(!isRegister);
+                  }
                   setError('');
                   setSuccessMsg('');
                 }}
@@ -473,7 +567,7 @@ const LoginPage: React.FC = () => {
                 onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
                 onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
               >
-                {isRegister ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+                {isForgotPassword ? 'Back to Sign In' : isRegister ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
               </button>
             </div>
           </form>

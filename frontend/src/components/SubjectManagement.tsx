@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { subjectApi } from '../services/api';
 import type { Subject } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const SubjectManagement: React.FC = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -34,6 +35,18 @@ const SubjectManagement: React.FC = () => {
     category: '',
     is_optional: false
   });
+
+  const { user } = useAuth();
+
+  if (user?.role !== 'admin') {
+    return (
+      <div style={{ padding: '48px 24px', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '12px', padding: '24px', textAlign: 'center', color: '#B91C1C' }}>
+          Restricted Access. Admins only.
+        </div>
+      </div>
+    );
+  }
 
   const commonCategories = [
     'Aesthetics',
@@ -265,8 +278,11 @@ const SubjectManagement: React.FC = () => {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
               <div>
-                <label style={labelStyle}>Subject Name</label>
+                <label htmlFor="subject-name" style={labelStyle}>Subject Name</label>
                 <input
+                  id="subject-name"
+                  name="name"
+                  type="text"
                   className="edu-input"
                   placeholder="e.g. Mathematics"
                   value={formData.name}
@@ -276,8 +292,11 @@ const SubjectManagement: React.FC = () => {
               </div>
 
               <div>
-                <label style={labelStyle}>Subject Code</label>
+                <label htmlFor="subject-code" style={labelStyle}>Subject Code</label>
                 <input
+                  id="subject-code"
+                  name="code"
+                  type="text"
                   className="edu-input"
                   placeholder="e.g. MATH6"
                   value={formData.code}
@@ -502,7 +521,7 @@ const SubjectManagement: React.FC = () => {
                         {subject.category && (
                           <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <span style={{ fontWeight: '600' }}>Bucket:</span> {subject.category}
-                            {subject.is_optional && <span style={{ color: '#8B5CF6', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', fontSize: '10px', marginLeft: '4px' }}>Optional</span>}
+                            {subject.is_optional ? <span style={{ color: '#8B5CF6', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', fontSize: '10px', marginLeft: '4px' }}>Optional</span> : null}
                           </div>
                         )}
                       </div>
@@ -561,12 +580,12 @@ const SubjectManagement: React.FC = () => {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#4B5563', marginBottom: '10px' }}>Subject Name</label>
-                <input className="edu-input" value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} style={inputStyle} />
+                <label htmlFor="edit-name" style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#4B5563', marginBottom: '10px' }}>Subject Name</label>
+                <input id="edit-name" name="name" type="text" className="edu-input" value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} style={inputStyle} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#4B5563', marginBottom: '10px' }}>Subject Code</label>
-                <input className="edu-input" value={editForm.code} onChange={e => setEditForm(p => ({ ...p, code: e.target.value }))} style={inputStyle} />
+                <label htmlFor="edit-code" style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#4B5563', marginBottom: '10px' }}>Subject Code</label>
+                <input id="edit-code" name="code" type="text" className="edu-input" value={editForm.code} onChange={e => setEditForm(p => ({ ...p, code: e.target.value }))} style={inputStyle} />
               </div>
               <div style={{ display: 'flex', gap: '16px' }}>
                 <div style={{ flex: 1 }}>

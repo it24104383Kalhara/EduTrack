@@ -602,7 +602,8 @@ export const EMAIL_LOG_QUERIES = {
             COUNT(CASE WHEN status = 'sent' THEN 1 END) as total_sent,
             COUNT(CASE WHEN status = 'failed' THEN 1 END) as total_failed,
             COUNT(CASE WHEN status = 'sent' AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) THEN 1 END) as recent_sent,
-            COUNT(CASE WHEN status = 'failed' AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) THEN 1 END) as recent_failed
+            COUNT(CASE WHEN status = 'failed' AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) THEN 1 END) as recent_failed,
+            COUNT(DISTINCT student_id) as total_students
         FROM email_logs
     `,
     DELETE: 'DELETE FROM email_logs WHERE id = ?',

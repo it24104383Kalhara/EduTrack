@@ -201,8 +201,7 @@ router.post('/bulk', async (req: AuthRequest, res) => {
         }
         
         results.push(savedMark!);
-
-        // Removed redundant low mark alert trigger; MarksModel handles it asynchronously.
+        
       } catch (error) {
         console.error(`Error saving mark for student ${markData.student_id}:`, error);
         errors.push({
@@ -699,6 +698,44 @@ router.get('/statistics/all-grades/:term', async (req: AuthRequest, res) => {
       data: null,
       timestamp: new Date().toISOString(),
       endpoint: `/api/marks/statistics/all-grades/${req.params.term}`
+    });
+  }
+});
+
+// Send consolidated term reports
+router.post('/grade/:gradeId/term/:term/send-reports', async (req, res) => {
+  try {
+    const gradeId = parseInt(req.params.gradeId);
+    const term = req.params.term;
+    const { examType } = req.body;
+    
+    if (isNaN(gradeId) || !term) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid grade ID or term',
+        data: null,
+        timestamp: new Date().toISOString(),
+        endpoint: `/api/marks/grade/${gradeId}/term/${term}/send-reports`
+      });
+    }
+
+    await MarksModel.sendBulkConsolidatedReports(gradeId, term, examType || 'final_term');
+    
+    res.json({
+      success: true,
+      message: 'Consolidated reports sent successfully',
+      data: null,
+      timestamp: new Date().toISOString(),
+      endpoint: `/api/marks/grade/${gradeId}/term/${term}/send-reports`
+    });
+  } catch (error) {
+    console.error('Error sending reports:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send reports',
+      data: null,
+      timestamp: new Date().toISOString(),
+      endpoint: `/api/marks/grade/${req.params.gradeId}/term/${req.params.term}/send-reports`
     });
   }
 });
