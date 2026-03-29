@@ -215,7 +215,6 @@ export default function DashBoardPage() {
                     <div className="bg-white rounded-2xl border border-gray-100 p-6">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-base font-semibold text-gray-800">Recent Updates</h3>
-                            <button className="text-xs font-semibold text-[#633194] hover:text-[#4a2370] transition-colors">See all</button>
                         </div>
                         <div className="space-y-3">
                             {[
