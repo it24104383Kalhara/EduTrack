@@ -374,10 +374,10 @@ const StudentList: React.FC<StudentListProps> = () => {
   };
 
   const handleDownloadPDF = (student: Student) => {
-    // Create a beautiful HTML document for PDF that matches the inline details view exactly
+    // Create a beautiful HTML document for PDF
     const registrationNumber = `#${student.id}`;
 
-    // Create beautiful HTML content matching the inline details view
+    // Create beautiful HTML content matching the premium inline details view
     const htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -385,446 +385,202 @@ const StudentList: React.FC<StudentListProps> = () => {
     <meta charset="UTF-8">
     <title>Student Details - ${student.first_name} ${student.last_name}</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 15px;
-            background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
-            min-height: 100vh;
-            font-size: 12px;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #F9FAFB;
+            padding: 20px;
+            color: #1E1B4B;
+            font-size: 11px;
+            line-height: 1.5;
         }
         .container {
-            max-width: 100%;
+            max-width: 800px;
             margin: 0 auto;
-        }
-        .details-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            padding: 0;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            background: white;
+            border-radius: 20px;
             overflow: hidden;
+            border: 1px solid #E5E7EB;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
         .header {
             background: linear-gradient(135deg, #633194 0%, #4B2380 100%);
             color: white;
-            padding: 25px;
-            border-radius: 16px 16px 0 0;
+            padding: 30px;
             text-align: center;
             position: relative;
         }
         .header h1 {
-            margin: 0 0 5px 0;
-            font-size: 1.8rem;
-            font-weight: 700;
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
         }
         .header p {
-            margin: 0 0 10px 0;
-            font-size: 0.9rem;
-            opacity: 0.9;
+            font-size: 13px;
+            opacity: 0.8;
+            font-weight: 500;
         }
-        .registration-date {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 6px 15px;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: 600;
+        .id-badge {
             display: inline-block;
-            backdrop-filter: blur(10px);
-        }
-        .student-id-badge {
-            text-align: center;
-            margin: -15px 0 15px 0;
-            position: relative;
-            z-index: 10;
-        }
-        .student-id-badge div {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
             color: white;
-            padding: 8px 20px;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            display: inline-block;
-            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+            padding: 6px 20px;
+            border-radius: 12px;
+            font-weight: 800;
+            margin-top: 15px;
             border: 2px solid white;
+            font-size: 12px;
         }
         .content {
-            padding: 0 20px 20px 20px;
+            padding: 25px;
         }
         .section {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid rgba(99, 102, 241, 0.1);
-            margin-bottom: 15px;
+            margin-bottom: 25px;
         }
-        .section.parent {
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
-            border: 1px solid rgba(34, 197, 94, 0.1);
-        }
-        .section h3 {
-            color: #6366f1;
-            font-size: 1rem;
-            font-weight: 700;
-            margin: 0 0 12px 0;
+        .section-title {
             display: flex;
             align-items: center;
-            gap: 8px;
-        }
-        .section.parent h3 {
-            color: #22c55e;
+            gap: 10px;
+            font-size: 15px;
+            font-weight: 800;
+            color: #633194;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #F3F4F6;
         }
         .info-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 12px;
         }
-        .info-item {
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(99, 102, 241, 0.1);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        .info-card {
+            background: #F9FAFB;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #F3F4F6;
         }
-        .section.parent .info-item {
-            border: 1px solid rgba(34, 197, 94, 0.1);
-        }
-        .info-label {
-            color: #64748b;
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-bottom: 3px;
+        .label {
+            font-size: 9px;
+            font-weight: 800;
+            color: #6B7280;
             text-transform: uppercase;
+            margin-bottom: 4px;
+            display: block;
         }
-        .info-value {
-            color: #1e293b;
-            font-size: 0.9rem;
-            font-weight: 600;
+        .value {
+            font-size: 12px;
+            font-weight: 700;
+            color: #1E1B4B;
         }
-        .address-item {
-            grid-column: 1 / -1;
+        .address-card {
+            grid-column: span 3;
         }
         .footer {
-            text-align: center;
-            margin-top: 15px;
+            background: #F9FAFB;
             padding: 15px;
-            color: #64748b;
-            font-size: 0.7rem;
-            border-top: 1px solid rgba(148, 163, 184, 0.2);
+            text-align: center;
+            font-size: 10px;
+            color: #6B7280;
+            border-top: 1px solid #E5E7EB;
         }
         @media print {
-            body { 
-                background: white !important; 
-                padding: 8px !important;
-                font-size: 10px !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .container {
-                max-width: 100% !important;
-                margin: 0 auto !important;
-            }
-            .details-card {
-                box-shadow: none !important;
-                border: 1px solid #ddd !important;
-                background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%) !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .header {
-                background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
-                padding: 20px !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .header h1 {
-                font-size: 1.5rem !important;
-                margin: 0 0 3px 0 !important;
-            }
-            .header p {
-                font-size: 0.8rem !important;
-                margin: 0 0 8px 0 !important;
-            }
-            .student-id-badge div {
-                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-                padding: 6px 15px !important;
-                font-size: 0.7rem !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .student-id-badge {
-                margin: -12px 0 12px 0 !important;
-            }
-            .content {
-                padding: 0 15px 15px 15px !important;
-            }
-            .section {
-                background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%) !important;
-                padding: 12px !important;
-                margin-bottom: 12px !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-                page-break-inside: avoid;
-            }
-            .section.parent {
-                background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%) !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .section h3 {
-                font-size: 0.9rem !important;
-                margin: 0 0 8px 0 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .info-grid {
-                grid-template-columns: repeat(3, 1fr) !important;
-                gap: 8px !important;
-            }
-            .info-item {
-                background: white !important;
-                padding: 8px !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .section.parent .info-item {
-                background: white !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .info-label {
-                font-size: 0.6rem !important;
-                margin-bottom: 2px !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .info-value {
-                font-size: 0.8rem !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .registration-date {
-                background: rgba(255, 255, 255, 0.15) !important;
-                padding: 4px 12px !important;
-                font-size: 0.7rem !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .section h3 {
-                color: #633194 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .section.parent h3 {
-                color: #8B5CF6 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .info-label {
-                color: #64748b !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .info-value {
-                color: #1e293b !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            .footer {
-                margin-top: 10px !important;
-                padding: 10px !important;
-                font-size: 0.6rem !important;
-                color: #64748b !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border: 1px solid #eee; }
+            .header { -webkit-print-color-adjust: exact !important; }
+            .id-badge { -webkit-print-color-adjust: exact !important; }
+            .info-card { -webkit-print-color-adjust: exact !important; background: #F9FAFB !important; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="details-card">
-            <div class="header">
-                <h1>Student Profile</h1>
-                <p>EduTrack Academic Record</p>
-                <div class="registration-date">
-                    📅 Registered: ${student.created_at ? new Date(student.created_at).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }) : 'Not available'}
-                </div>
-            </div>
-
-            <div class="student-id-badge">
-                <div>🎓 Student ID: ${registrationNumber}</div>
-            </div>
-
-            <div class="content">
-                <div class="section">
-                    <h3><span style="font-size: 1.5rem;">👤</span> Student Information</h3>
-                    
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <div class="info-label">Full Name</div>
-                            <div class="info-value">${student.first_name} ${student.last_name}</div>
-                        </div>
-
-                        <div class="info-item">
-                            <div class="info-label">Date of Birth</div>
-                            <div class="info-value">${(() => {
-        let dateInput: any = student.date_of_birth;
-        if (!dateInput) return 'Not specified';
-
-        // Handle timezone issue for PDF
-        let dateStr: string;
-
-        // If it's a Date object (with timezone), convert to local date string
-        if (dateInput instanceof Date) {
-          const pad = (n: number) => String(n).padStart(2, '0');
-          const year = dateInput.getFullYear();
-          const month = dateInput.getMonth() + 1;
-          const day = dateInput.getDate();
-          dateStr = `${year}-${pad(month)}-${pad(day)}`;
-        }
-        // If it's an ISO string with timezone, extract local date
-        else if (typeof dateInput === 'string' && dateInput.includes('T')) {
-          const localDate = new Date(dateInput);
-          const pad = (n: number) => String(n).padStart(2, '0');
-          const year = localDate.getFullYear();
-          const month = localDate.getMonth() + 1;
-          const day = localDate.getDate();
-          dateStr = `${year}-${pad(month)}-${pad(day)}`;
-        }
-        else {
-          dateStr = String(dateInput);
-        }
-
-        // Handle both YYYY-MM-DD and YYYY.MM.DD formats
-        let [year, month, day] = dateStr.includes('.')
-          ? dateStr.split('.').map(Number)
-          : dateStr.split('-').map(Number);
-
-        if (isNaN(year) || isNaN(month) || isNaN(day)) return 'Invalid Date';
-
-        // Format directly without using Date object to avoid timezone issues
-        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        return `${monthNames[month - 1]} ${day}, ${year}`;
-      })()}</div>
-                        </div>
-
-                        <div class="info-item">
-                            <div class="info-label">Gender</div>
-                            <div class="info-value">${student.gender.charAt(0).toUpperCase() + student.gender.slice(1)}</div>
-                        </div>
-
-                        <div class="info-item">
-                            <div class="info-label">Religion</div>
-                            <div class="info-value">${student.religion}</div>
-                        </div>
-
-                        <div class="info-item">
-                            <div class="info-label">Ethnicity</div>
-                            <div class="info-value">${student.ethnicity || 'Not specified'}</div>
-                        </div>
-
-                        <div class="info-item">
-                            <div class="info-label">Nationality</div>
-                            <div class="info-value">${student.nationality}</div>
-                        </div>
+        <div class="header">
+            <h1>Student Official Record</h1>
+            <p>EduTrack Academic Information System</p>
+            <div class="id-badge">🎓 REG NO: ${registrationNumber}</div>
+        </div>
+        
+        <div class="content">
+            <!-- Student Information -->
+            <div class="section">
+                <h3 class="section-title">👤 Personal information</h3>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <span class="label">Full Name</span>
+                        <div class="value">${student.first_name} ${student.last_name}</div>
                     </div>
-
-                    <div class="info-item address-item">
-                        <div class="info-label">Address</div>
-                        <div class="info-value" style="line-height: 1.5;">${student.address}</div>
+                    <div class="info-card">
+                        <span class="label">Date of Birth</span>
+                        <div class="value">${student.date_of_birth} (${calculateAge(student.date_of_birth)} Yrs)</div>
                     </div>
-                </div>
-
-                <div class="section parent">
-                    <h3><span style="font-size: 1.5rem;">👨‍👩‍👧‍👦</span> Parent/Guardian Information</h3>
-                    
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <div class="info-label">Parent Type</div>
-                            <div class="info-value">${student.parent_type.charAt(0).toUpperCase() + student.parent_type.slice(1)}</div>
-                        </div>
-
-                        <div class="info-item">
-                            <div class="info-label">Parent Name</div>
-                            <div class="info-value">${student.parent_name}</div>
-                        </div>
-
-                        <div class="info-item">
-                            <div class="info-label">Parent Phone</div>
-                            <div class="info-value">${student.parent_phone}</div>
-                        </div>
-
-
-                        <div class="info-item">
-                            <div class="info-label">Parent Email</div>
-                            <div class="info-value">${student.parent_email || 'Not provided'}</div>
-                        </div>
-
-                        <div class="info-item">
-                            <div class="info-label">Parent Religion</div>
-                            <div class="info-value">${student.parent_religion}</div>
-                        </div>
-
-                        <div class="info-item">
-                            <div class="info-label">Parent Ethnicity</div>
-                            <div class="info-value">${student.parent_ethnicity || 'Not specified'}</div>
-                        </div>
-
-                        <div class="info-item">
-                            <div class="info-label">Parent Nationality</div>
-                            <div class="info-value">${student.parent_nationality}</div>
-                        </div>
+                    <div class="info-card">
+                        <span class="label">Gender</span>
+                        <div class="value">${student.gender.toUpperCase()}</div>
                     </div>
-
-                    <div class="info-item address-item">
-                        <div class="info-label">Parent Address</div>
-                        <div class="info-value" style="line-height: 1.5;">${student.parent_address}</div>
+                    <div class="info-card">
+                        <span class="label">Religion</span>
+                        <div class="value">${student.religion}</div>
+                    </div>
+                    <div class="info-card">
+                        <span class="label">Ethnicity</span>
+                        <div class="value">${student.ethnicity || 'Not specified'}</div>
+                    </div>
+                    <div class="info-card">
+                        <span class="label">Nationality</span>
+                        <div class="value">${student.nationality}</div>
+                    </div>
+                    <div class="info-card address-card">
+                        <span class="label">Home Address</span>
+                        <div class="value">${student.address}</div>
                     </div>
                 </div>
             </div>
 
-            <div class="footer">
-                <div><strong>EduTrack Student Management System</strong></div>
-                <div>Generated on ${new Date().toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })}</div>
-                <div style="margin-top: 5px; font-size: 0.8rem;">© 2026 All rights reserved</div>
+            <!-- Parent Information -->
+            <div class="section">
+                <h3 class="section-title" style="color: #4B2380; border-color: #EDE9FE;">👨‍👩‍👧‍👦 Guardian Details</h3>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <span class="label">Guardian Type</span>
+                        <div class="value">${student.parent_type.toUpperCase()}</div>
+                    </div>
+                    <div class="info-card">
+                        <span class="label">Guardian Name</span>
+                        <div class="value">${student.parent_name}</div>
+                    </div>
+                    <div class="info-card">
+                        <span class="label">Contact Phone</span>
+                        <div class="value">${student.parent_phone}</div>
+                    </div>
+                    <div class="info-card">
+                        <span class="label">Email Address</span>
+                        <div class="value">${student.parent_email || 'N/A'}</div>
+                    </div>
+                    <div class="info-card">
+                        <span class="label">Religion</span>
+                        <div class="value">${student.parent_religion || 'N/A'}</div>
+                    </div>
+                    <div class="info-card">
+                        <span class="label">Nationality</span>
+                        <div class="value">${student.parent_nationality || 'N/A'}</div>
+                    </div>
+                    <div class="info-card address-card">
+                        <span class="label">Guardian Address</span>
+                        <div class="value">${student.parent_address}</div>
+                    </div>
+                </div>
             </div>
+        </div>
+
+        <div class="footer">
+            Generated on ${new Date().toLocaleString()} • This is an electronically generated report.
         </div>
     </div>
 </body>
@@ -860,8 +616,6 @@ const StudentList: React.FC<StudentListProps> = () => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-
-      alert('Please open the downloaded HTML file and use Ctrl+P to save as PDF.');
     }
   };
 
