@@ -133,6 +133,15 @@ const StudentRegistrationForm: React.FC = () => {
       return;
     }
 
+    // Email validation
+    if (formData.parent_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.parent_email)) {
+      setRegistration({
+        success: false,
+        message: 'Please enter a valid email address (e.g., parent@example.com).'
+      });
+      return;
+    }
+
     try {
       const newStudent = {
         first_name: formData.first_name,

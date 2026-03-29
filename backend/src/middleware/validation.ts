@@ -138,6 +138,16 @@ export const validateStudentRegistration = (req: Request, res: Response, next: N
     });
   }
 
+  // Validate parent email (optional, but must be valid if provided)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (student.parent_email && String(student.parent_email).trim() !== '' && !emailRegex.test(String(student.parent_email).trim())) {
+    errors.push({
+      field: 'parent_email',
+      message: 'Invalid email format'
+    });
+  }
+
+  // Basic name validation (letters allowed)
   if (student.first_name && student.first_name.trim().length < 2) {
     errors.push({
       field: 'first_name',
