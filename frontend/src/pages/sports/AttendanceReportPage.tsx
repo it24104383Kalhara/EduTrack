@@ -12,6 +12,7 @@ import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
 import DateTimePicker from '../../components/ui/DateTimePicker';
 import CustomSelect from '../../components/ui/CustomSelect';
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
 
 const statusBadge = (status: string) => {
     if (status === 'Pending') return { cls: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-400' };
@@ -32,6 +33,7 @@ export default function AttendanceReportPage() {
     const [notes, setNotes] = useState('');
     const [submitted, setSubmitted] = useState(false);
     const [selectedReport, setSelectedReport] = useState<any | null>(null);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     const { data: activities } = useQuery({
         queryKey: ['activities'],
@@ -59,10 +61,16 @@ export default function AttendanceReportPage() {
         },
     });
 
+    const handleConfirmSubmit = () => {
+        generateMutation.mutate(undefined, {
+            onSuccess: () => setShowConfirmModal(false)
+        });
+    };
+
     const handleGenerate = (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedActivityId) { alert('Please select an activity'); return; }
-        generateMutation.mutate();
+        setShowConfirmModal(true);
     };
 
     const pendingCount = myReports?.filter(r => r.status === 'Pending').length ?? 0;
@@ -357,6 +365,16 @@ export default function AttendanceReportPage() {
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={showConfirmModal}
+                title="Submit Official Report?"
+                message={`Are you sure you want to submit the attendance report for ${activities?.find(a => a.id === selectedActivityId)?.name || 'this activity'} on ${new Date(reportDate).toLocaleDateString()}? Once submitted, it will be sent to the Principal for review.`}
+                confirmText="Yes, Submit Report"
+                onConfirm={handleConfirmSubmit}
+                onCancel={() => setShowConfirmModal(false)}
+                isLoading={generateMutation.isPending}
+            />
         </div>
     );
 }
