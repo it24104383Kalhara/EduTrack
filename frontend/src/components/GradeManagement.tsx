@@ -20,6 +20,7 @@ import {
   CheckCircle,
   AlertTriangle
 } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 import { gradeApi, studentApi, subjectApi } from '../services/api';
 import type { Subject, Student, Grade } from '../services/api';
 
@@ -86,6 +87,7 @@ const GradeManagement: React.FC = () => {
   const [hoveredSubjectId, setHoveredSubjectId] = useState<string | null>(null);
   const [bucketEnrollments, setBucketEnrollments] = useState<Record<number, string>>({});
   const [validationError, setValidationError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const showValidationError = (msg: string) => {
     setValidationError(msg);
@@ -144,16 +146,17 @@ const GradeManagement: React.FC = () => {
 
   const handleAddGrade = async () => {
     if (!newGrade.grade || !newGrade.grade_part) {
-      alert('Please enter both a grade number and a stream/section.');
+      showToast('Please enter both a grade number and a section.', 'warning');
       return;
     }
     try {
       await gradeApi.create(newGrade);
+      showToast(`Grade ${newGrade.grade}-${newGrade.grade_part} initialized successfully!`, 'success');
       setNewGrade({ grade: 0, grade_part: '' });
       await fetchGrades();
     } catch (error) {
       console.error('Failed to create grade:', error);
-      alert('Failed to create grade');
+      showToast('Failed to initialize grade. Please try again.', 'error');
     }
   };
 
@@ -191,9 +194,10 @@ const GradeManagement: React.FC = () => {
       
       await fetchGrades();
       await fetchStudents();
+      showToast('Student assignment updated successfully.', 'success');
     } catch (error: any) {
       console.error('Failed to update student assignment:', error);
-      alert(error.message || 'Failed to update assignment');
+      showToast(error.message || 'Failed to update assignment', 'error');
     }
   };
 
@@ -251,7 +255,7 @@ const GradeManagement: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching subject enrollment:', error);
-      alert('Failed to load enrollment data.');
+      showToast('Failed to load enrollment data.', 'error');
     } finally {
       setSavingBulk(false);
     }
@@ -278,10 +282,10 @@ const GradeManagement: React.FC = () => {
     try {
       setSavingBulk(true);
       await subjectApi.bulkEnrollStudents(selectedEnrollmentSubject.id, selectedGrade, bulkEnrolledStudentIds);
-      alert('Enrollment updated successfully');
+      showToast('Enrollment updated successfully', 'success');
     } catch (error) {
       console.error('Failed to save bulk enrollment:', error);
-      alert('Failed to save enrollment');
+      showToast('Failed to save enrollment', 'error');
     } finally {
       setSavingBulk(false);
     }
@@ -312,22 +316,24 @@ const GradeManagement: React.FC = () => {
           grade_part: editingGrade.grade_part
         });
         await fetchGrades();
+        showToast('Grade updated successfully', 'success');
         setShowEditModal(false);
       } catch (error) {
         console.error('Failed to update grade:', error);
-        alert('Failed to update grade');
+        showToast('Failed to update grade', 'error');
       }
     }
   };
 
   const handleDeleteGrade = async (gradeId: number) => {
-    if (confirm('Are you sure you want to delete this grade?')) {
+    if (confirm('Are you sure you want to delete this grade? All student assignments for this grade will be removed.')) {
       try {
         await gradeApi.delete(gradeId);
         await fetchGrades();
+        showToast('Grade deleted successfully', 'success');
       } catch (error) {
         console.error('Failed to delete grade:', error);
-        alert('Failed to delete grade');
+        showToast('Failed to delete grade', 'error');
       }
     }
   };
@@ -1168,11 +1174,11 @@ const GradeManagement: React.FC = () => {
               <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: '11px', color: '#64748B' }}>Grade</label>
-                  <input type="number" value={newGrade.grade || ''} onChange={(e) => setNewGrade({...newGrade, grade: parseInt(e.target.value) || 0})} style={{ width: '100%', padding: '10px', border: '1px solid #EDE9FE', borderRadius: '10px' }} />
+                  <input type="number" placeholder="e.g. 6" value={newGrade.grade || ''} onChange={(e) => setNewGrade({...newGrade, grade: parseInt(e.target.value) || 0})} style={{ width: '100%', padding: '10px', border: '1px solid #EDE9FE', borderRadius: '10px' }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '11px', color: '#64748B' }}>Stream</label>
-                  <input type="text" value={newGrade.grade_part} onChange={(e) => setNewGrade({...newGrade, grade_part: e.target.value})} style={{ width: '100%', padding: '10px', border: '1px solid #EDE9FE', borderRadius: '10px' }} />
+                  <label style={{ fontSize: '11px', color: '#64748B' }}>Section</label>
+                  <input type="text" placeholder="e.g. A" value={newGrade.grade_part} onChange={(e) => setNewGrade({...newGrade, grade_part: e.target.value})} style={{ width: '100%', padding: '10px', border: '1px solid #EDE9FE', borderRadius: '10px' }} />
                 </div>
                 <button 
                   onClick={handleAddGrade} 
@@ -1276,8 +1282,14 @@ const GradeManagement: React.FC = () => {
               <Pencil size={24} /> Edit Grade
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <input type="number" value={editingGrade.grade} onChange={(e) => setEditingGrade({...editingGrade, grade: parseInt(e.target.value) || 0})} style={{ padding: '10px', border: '1px solid #E5E7EB', borderRadius: '8px' }} />
-              <input type="text" value={editingGrade.grade_part} onChange={(e) => setEditingGrade({...editingGrade, grade_part: e.target.value})} style={{ padding: '10px', border: '1px solid #E5E7EB', borderRadius: '8px' }} />
+              <div>
+                <label style={{ fontSize: '11px', color: '#64748B', display: 'block', marginBottom: '4px' }}>Grade</label>
+                <input type="number" value={editingGrade.grade} onChange={(e) => setEditingGrade({...editingGrade, grade: parseInt(e.target.value) || 0})} style={{ width: '100%', padding: '10px', border: '1px solid #E5E7EB', borderRadius: '8px' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '11px', color: '#64748B', display: 'block', marginBottom: '4px' }}>Section</label>
+                <input type="text" value={editingGrade.grade_part} onChange={(e) => setEditingGrade({...editingGrade, grade_part: e.target.value})} style={{ width: '100%', padding: '10px', border: '1px solid #E5E7EB', borderRadius: '8px' }} />
+              </div>
               <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                 <button onClick={handleUpdateGrade} style={{ flex: 1, padding: '12px', background: '#633194', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}>Update</button>
                 <button onClick={() => setShowEditModal(false)} style={{ flex: 1, padding: '12px', background: '#F3F4F6', color: '#4B5563', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
