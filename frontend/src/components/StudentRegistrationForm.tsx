@@ -313,9 +313,9 @@ const StudentRegistrationForm: React.FC = () => {
 
   return (
     <div className="registration-form" style={{
-      maxWidth: '800px',
+      maxWidth: '720px',
       margin: '20px auto',
-      padding: '30px',
+      padding: '20px',
       background: '#F9FAFB',
       borderRadius: '16px',
       boxShadow: '0 4px 20px rgba(99, 49, 148, 0.1)',
@@ -509,7 +509,7 @@ const StudentRegistrationForm: React.FC = () => {
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#374151' }}>
                   Last Name *
                 </label>
                 <input
@@ -521,10 +521,10 @@ const StudentRegistrationForm: React.FC = () => {
                   required
                   style={{
                     width: '100%',
-                    padding: '8px 12px',
+                    padding: '6px 10px',
                     border: '1px solid #d1d5db',
                     borderRadius: '4px',
-                    fontSize: '14px',
+                    fontSize: '13px',
                     boxSizing: 'border-box'
                   }}
                 />
@@ -534,11 +534,11 @@ const StudentRegistrationForm: React.FC = () => {
             <div className="form-grid-3" style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr 1fr',
-              gap: '15px',
-              marginBottom: '15px'
+              gap: '12px',
+              marginBottom: '12px'
             }}>
               <div>
-                <label style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', fontSize: '14px', color: '#374151', gap: '8px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', marginBottom: '4px', fontSize: '13px', color: '#374151', gap: '8px' }}>
                   Date of Birth *
                   {formData.date_of_birth && !isNaN(parseLocalDate(formData.date_of_birth).getTime()) && (() => {
                     const dob = parseLocalDate(formData.date_of_birth);
@@ -900,11 +900,11 @@ const StudentRegistrationForm: React.FC = () => {
             <div className="form-grid-2" style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
-              gap: '15px',
-              marginBottom: '15px'
+              gap: '12px',
+              marginBottom: '12px'
             }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#374151' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#374151' }}>
                   Parent Type *
                 </label>
                 <select
@@ -915,10 +915,10 @@ const StudentRegistrationForm: React.FC = () => {
                   required
                   style={{
                     width: '100%',
-                    padding: '8px 12px',
+                    padding: '6px 10px',
                     border: '1px solid #d1d5db',
                     borderRadius: '4px',
-                    fontSize: '14px',
+                    fontSize: '13px',
                     boxSizing: 'border-box'
                   }}
                 >
@@ -1144,13 +1144,13 @@ const StudentRegistrationForm: React.FC = () => {
               type="button"
               onClick={prevStep}
               style={{
-                padding: '12px 24px',
+                padding: '8px 18px',
                 background: '#F3F4F6',
                 color: '#4B5563',
                 border: '1px solid #D1D5DB',
                 borderRadius: '8px',
-                fontSize: '15px',
-                fontWeight: '500',
+                fontSize: '13px',
+                fontWeight: '600',
                 cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif',
                 transition: 'all 0.2s'
@@ -1171,16 +1171,16 @@ const StudentRegistrationForm: React.FC = () => {
               type="submit"
               disabled={isSubmitting}
               style={{
-                padding: '14px 32px',
+                padding: '10px 24px',
                 background: isSubmitting ? '#9CA3AF' : 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '500',
+                fontSize: '14px',
+                fontWeight: '700',
                 cursor: isSubmitting ? 'not-allowed' : 'pointer',
                 fontFamily: 'Inter, sans-serif',
-                boxShadow: isSubmitting ? 'none' : '0 2px 8px rgba(99, 49, 148, 0.3)',
+                boxShadow: isSubmitting ? 'none' : '0 2px 8px rgba(99, 49, 148, 0.2)',
                 transition: 'all 0.2s'
               }}
               onMouseOver={(e) => {

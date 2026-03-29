@@ -1048,16 +1048,16 @@ const StudentList: React.FC<StudentListProps> = () => {
             <button
               onClick={fetchStudents}
               style={{
-                padding: '12px 24px',
+                padding: '8px 20px',
                 background: '#633194',
                 color: 'white',
                 border: 'none',
-                borderRadius: '12px',
-                fontSize: '14px',
+                borderRadius: '10px',
+                fontSize: '13px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif',
-                boxShadow: '0 4px 12px rgba(99, 49, 148, 0.2)',
+                boxShadow: '0 4px 12px rgba(99, 49, 148, 0.15)',
                 transition: 'all 0.2s ease',
                 display: 'flex',
                 alignItems: 'center',
@@ -1065,14 +1065,14 @@ const StudentList: React.FC<StudentListProps> = () => {
                 whiteSpace: 'nowrap'
               }}
               onMouseOver={(e: React.MouseEvent<HTMLButtonElement>) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
                 e.currentTarget.style.background = '#4B2380';
-                e.currentTarget.style.boxShadow = '0 6px 16px rgba(99, 49, 148, 0.3)';
+                e.currentTarget.style.boxShadow = '0 6px 16px rgba(99, 49, 148, 0.25)';
               }}
               onMouseOut={(e: React.MouseEvent<HTMLButtonElement>) => {
                 e.currentTarget.style.transform = 'translateY(0)';
                 e.currentTarget.style.background = '#633194';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 49, 148, 0.2)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 49, 148, 0.15)';
               }}
             >
               🔄 Refresh
@@ -1124,22 +1124,22 @@ const StudentList: React.FC<StudentListProps> = () => {
                 boxShadow: '0 25px 50px -12px rgba(99, 49, 148, 0.15)',
                 overflow: 'hidden',
                 animation: 'fadeInUp 0.5s ease-out',
-                marginBottom: '32px'
+                marginBottom: '24px'
               }}>
-                {/* Premium Header */}
+                {/* Premium Header - Smaller */}
                 <div style={{
                   background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
                   color: 'white',
-                  padding: '40px 30px',
+                  padding: '24px 30px',
                   textAlign: 'center',
                   position: 'relative'
                 }}>
                   <div style={{
                     position: 'absolute',
-                    top: '20px',
-                    left: '20px',
+                    top: '16px',
+                    left: '16px',
                     display: 'flex',
-                    gap: '12px'
+                    gap: '10px'
                   }}>
                     <button
                       onClick={() => setShowInlineDetails(false)}
@@ -1147,9 +1147,9 @@ const StudentList: React.FC<StudentListProps> = () => {
                         background: 'rgba(255, 255, 255, 0.15)',
                         color: 'white',
                         border: '1px solid rgba(255, 255, 255, 0.2)',
-                        borderRadius: '12px',
-                        padding: '8px 18px',
-                        fontSize: '14px',
+                        borderRadius: '10px',
+                        padding: '6px 14px',
+                        fontSize: '12px',
                         fontWeight: '700',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
@@ -1168,9 +1168,9 @@ const StudentList: React.FC<StudentListProps> = () => {
                         background: 'rgba(255, 255, 255, 0.15)',
                         color: 'white',
                         border: '1px solid rgba(255, 255, 255, 0.2)',
-                        borderRadius: '12px',
-                        padding: '8px 18px',
-                        fontSize: '14px',
+                        borderRadius: '10px',
+                        padding: '6px 14px',
+                        fontSize: '12px',
                         fontWeight: '700',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
@@ -1186,21 +1186,21 @@ const StudentList: React.FC<StudentListProps> = () => {
                   </div>
                   
                   <h2 style={{
-                    margin: '0 0 10px 0',
-                    fontSize: '32px',
+                    margin: '0 0 8px 0',
+                    fontSize: '24px',
                     fontWeight: '900',
-                    letterSpacing: '-1px'
+                    letterSpacing: '-0.5px'
                   }}>
                     Student Profile
                   </h2>
                   <div style={{
                     background: 'rgba(255, 255, 255, 0.1)',
-                    padding: '8px 24px',
+                    padding: '6px 20px',
                     borderRadius: '20px',
-                    fontSize: '14px',
+                    fontSize: '13px',
                     fontWeight: '600',
                     display: 'inline-block',
-                    border: '1px solid rgba(255, 255, 255, 0.2)'
+                    border: '1px solid rgba(255, 255, 255, 0.15)'
                   }}>
                     Registered: {selectedStudent.created_at ? new Date(selectedStudent.created_at).toLocaleDateString('en-US', {
                       year: 'numeric',
@@ -1210,51 +1210,51 @@ const StudentList: React.FC<StudentListProps> = () => {
                   </div>
                 </div>
 
-                {/* ID Badge Overlay */}
-                <div style={{ textAlign: 'center', marginTop: '-22px', position: 'relative', zIndex: 10 }}>
+                {/* ID Badge Overlay - Smaller */}
+                <div style={{ textAlign: 'center', marginTop: '-18px', position: 'relative', zIndex: 10 }}>
                   <div style={{
                     background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
                     color: 'white',
-                    padding: '10px 32px',
-                    borderRadius: '24px',
-                    fontSize: '16px',
+                    padding: '8px 24px',
+                    borderRadius: '16px',
+                    fontSize: '14px',
                     fontWeight: '800',
                     display: 'inline-block',
-                    boxShadow: '0 10px 25px rgba(217, 119, 6, 0.3)',
-                    border: '4px solid white',
+                    boxShadow: '0 8px 20px rgba(217, 119, 6, 0.25)',
+                    border: '3px solid white',
                     textTransform: 'uppercase'
                   }}>
                     🎓 REG NO: #{selectedStudent.id}
                   </div>
                 </div>
 
-                {/* Profile Grid */}
-                <div style={{ padding: '30px 40px 40px', display: 'grid', gap: '32px' }}>
+                {/* Profile Grid - High Density */}
+                <div style={{ padding: '20px 32px 32px', display: 'grid', gap: '20px' }}>
                   
                   {/* General Info */}
                   <div style={{
                     background: '#F9FAFB',
-                    padding: '30px',
+                    padding: '20px',
                     borderRadius: '20px',
                     border: '1px solid #F3F4F6'
                   }}>
                     <h3 style={{
                       color: '#633194',
-                      fontSize: '18px',
+                      fontSize: '16px',
                       fontWeight: '800',
-                      margin: '0 0 24px 0',
+                      margin: '0 0 16px 0',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '12px'
+                      gap: '10px'
                     }}>
-                      <span style={{ fontSize: '24px' }}>👤</span>
+                      <span style={{ fontSize: '20px' }}>👤</span>
                       Personal Information
                     </h3>
 
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                      gap: '24px'
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                      gap: '16px'
                     }}>
                       {[
                         { label: 'Full Name', value: `${selectedStudent.first_name} ${selectedStudent.last_name}` },
@@ -1267,13 +1267,13 @@ const StudentList: React.FC<StudentListProps> = () => {
                       ].map((info, i) => (
                         <div key={i} style={{ 
                           background: 'white', 
-                          padding: '16px', 
-                          borderRadius: '16px', 
+                          padding: '12px', 
+                          borderRadius: '12px', 
                           border: '1px solid #F3F4F6',
                           gridColumn: info.full ? '1 / -1' : 'auto'
                         }}>
-                          <div style={{ color: '#6B7280', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '6px' }}>{info.label}</div>
-                          <div style={{ color: '#1E1B4B', fontSize: '15px', fontWeight: '700' }}>{info.value}</div>
+                          <div style={{ color: '#6B7280', fontSize: '10px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '4px' }}>{info.label}</div>
+                          <div style={{ color: '#1E1B4B', fontSize: '13px', fontWeight: '700' }}>{info.value}</div>
                         </div>
                       ))}
                     </div>
@@ -1282,44 +1282,44 @@ const StudentList: React.FC<StudentListProps> = () => {
                   {/* Parent Info */}
                   <div style={{
                     background: '#F5F3FF',
-                    padding: '30px',
+                    padding: '20px',
                     borderRadius: '20px',
                     border: '1px solid #EDE9FE'
                   }}>
                     <h3 style={{
                       color: '#8B5CF6',
-                      fontSize: '18px',
+                      fontSize: '16px',
                       fontWeight: '800',
-                      margin: '0 0 24px 0',
+                      margin: '0 0 16px 0',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '12px'
+                      gap: '10px'
                     }}>
-                      <span style={{ fontSize: '24px' }}>👨‍👩‍👧‍👦</span>
+                      <span style={{ fontSize: '20px' }}>👨‍👩‍👧‍👦</span>
                       Guardian Information
                     </h3>
 
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                      gap: '24px'
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                      gap: '16px'
                     }}>
                       {[
-                        { label: 'Relation', value: selectedStudent.parent_type },
-                        { label: 'Guardian Name', value: selectedStudent.parent_name },
+                        { label: 'Parent Type', value: selectedStudent.parent_type },
+                        { label: 'Parent Name', value: selectedStudent.parent_name },
                         { label: 'Contact Phone', value: selectedStudent.parent_phone },
                         { label: 'Email Address', value: selectedStudent.parent_email || 'Not provided' },
-                        { label: 'Residential Address', value: selectedStudent.parent_address, full: true }
+                        { label: 'Parent Address', value: selectedStudent.parent_address, full: true }
                       ].map((info, i) => (
                         <div key={i} style={{ 
                           background: 'white', 
-                          padding: '16px', 
-                          borderRadius: '16px', 
+                          padding: '12px', 
+                          borderRadius: '12px', 
                           border: '1px solid #EDE9FE',
                           gridColumn: info.full ? '1 / -1' : 'auto'
                         }}>
-                          <div style={{ color: '#7C3AED', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '6px', opacity: 0.7 }}>{info.label}</div>
-                          <div style={{ color: '#1E1B4B', fontSize: '15px', fontWeight: '700' }}>{info.value}</div>
+                          <div style={{ color: '#8B5CF6', fontSize: '10px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '4px' }}>{info.label}</div>
+                          <div style={{ color: '#1E1B4B', fontSize: '13px', fontWeight: '700' }}>{info.value}</div>
                         </div>
                       ))}
                     </div>
@@ -1778,20 +1778,20 @@ const StudentList: React.FC<StudentListProps> = () => {
           position: 'fixed',
           inset: 0,
           backgroundColor: 'rgba(30, 27, 75, 0.4)',
-          backdropFilter: 'blur(10px)',
+          backdropFilter: 'blur(8px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 2500,
-          padding: '24px',
+          padding: '16px',
           animation: 'fadeIn 0.3s ease-out'
         }}>
           <div style={{
             background: '#FFFFFF',
             borderRadius: '24px',
             width: '100%',
-            maxWidth: '1000px',
-            maxHeight: '94vh',
+            maxWidth: '900px',
+            maxHeight: '90vh',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
@@ -1801,7 +1801,7 @@ const StudentList: React.FC<StudentListProps> = () => {
           }}>
             {/* Professional Header */}
             <div style={{
-              padding: '24px 40px',
+              padding: '16px 32px',
               background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
               color: 'white',
               display: 'flex',
@@ -1811,17 +1811,17 @@ const StudentList: React.FC<StudentListProps> = () => {
             }}>
               <div>
                 <h2 style={{
-                  fontSize: '24px',
+                  fontSize: '20px',
                   fontWeight: 800,
                   margin: 0,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px'
+                  gap: '10px'
                 }}>
-                  <span style={{ fontSize: '28px' }}>👤</span>
+                  <span style={{ fontSize: '24px' }}>👤</span>
                   Edit Student Profile
                 </h2>
-                <p style={{ color: 'rgba(255, 255, 255, 0.7)', margin: '4px 0 0', fontSize: '13px', fontWeight: 500 }}>
+                <p style={{ color: 'rgba(255, 255, 255, 0.7)', margin: '2px 0 0', fontSize: '12px', fontWeight: 500 }}>
                   ID: #{editingStudent.id} • Registered Student Record
                 </p>
               </div>
@@ -1834,14 +1834,14 @@ const StudentList: React.FC<StudentListProps> = () => {
                   background: 'rgba(255, 255, 255, 0.1)',
                   border: 'none',
                   color: 'white',
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '12px',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '10px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '20px',
+                  fontSize: '18px',
                   transition: 'all 0.2s'
                 }}
                 onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)')}
@@ -1853,42 +1853,42 @@ const StudentList: React.FC<StudentListProps> = () => {
 
             {/* Form Content - High Density Scrollable */}
             <div style={{
-              padding: '32px 40px',
+              padding: '20px 32px',
               overflowY: 'auto',
               flex: 1,
               background: '#F9FAFB'
             }}>
               {/* Information Cards */}
-              <div style={{ display: 'grid', gap: '32px' }}>
+              <div style={{ display: 'grid', gap: '20px' }}>
                 
                 {/* SECTION 1: STUDENT INFORMATION */}
                 <div style={{
                   background: 'white',
                   borderRadius: '20px',
-                  padding: '24px',
+                  padding: '20px',
                   border: '1px solid #F3F4F6',
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-                    <div style={{ width: '4px', height: '20px', background: '#633194', borderRadius: '4px' }}></div>
-                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1E1B4B', margin: 0 }}>Student Information</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <div style={{ width: '3px', height: '16px', background: '#633194', borderRadius: '4px' }}></div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1E1B4B', margin: 0 }}>Student Information</h3>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
                     <div>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>First Name</label>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>First Name</label>
                       <input
                         type="text"
                         value={editingStudent.first_name}
                         onChange={(e) => setEditingStudent({ ...editingStudent, first_name: e.target.value })}
                         style={{
                           width: '100%',
-                          padding: '12px 16px',
-                          borderRadius: '12px',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
                           border: '1px solid #E5E7EB',
                           background: '#FFFFFF',
                           color: '#1E1B4B',
-                          fontSize: '14px',
+                          fontSize: '13px',
                           outline: 'none',
                           transition: 'border-color 0.2s'
                         }}
@@ -1898,19 +1898,19 @@ const StudentList: React.FC<StudentListProps> = () => {
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Last Name</label>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>Last Name</label>
                       <input
                         type="text"
                         value={editingStudent.last_name}
                         onChange={(e) => setEditingStudent({ ...editingStudent, last_name: e.target.value })}
                         style={{
                           width: '100%',
-                          padding: '12px 16px',
-                          borderRadius: '12px',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
                           border: '1px solid #E5E7EB',
                           background: '#FFFFFF',
                           color: '#1E1B4B',
-                          fontSize: '14px',
+                          fontSize: '13px',
                           outline: 'none',
                           transition: 'border-color 0.2s'
                         }}
@@ -1920,7 +1920,7 @@ const StudentList: React.FC<StudentListProps> = () => {
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>
                         Date of Birth
                         {editingStudent.date_of_birth && !isNaN(parseLocalDateSafe(editingStudent.date_of_birth).getTime()) && (() => {
                           const age = calculateAge(editingStudent.date_of_birth);
@@ -1956,11 +1956,11 @@ const StudentList: React.FC<StudentListProps> = () => {
                           }}
                           style={{
                             flex: 1,
-                            padding: '12px',
-                            borderRadius: '12px',
+                            padding: '8px',
+                            borderRadius: '10px',
                             border: '1px solid #E5E7EB',
                             background: '#FFFFFF',
-                            fontSize: '14px'
+                            fontSize: '13px'
                           }}
                         >
                           <option value="">Day</option>
@@ -1984,11 +1984,11 @@ const StudentList: React.FC<StudentListProps> = () => {
                           }}
                           style={{
                             flex: 1.5,
-                            padding: '12px',
-                            borderRadius: '12px',
+                            padding: '8px',
+                            borderRadius: '10px',
                             border: '1px solid #E5E7EB',
                             background: '#FFFFFF',
-                            fontSize: '14px'
+                            fontSize: '13px'
                           }}
                         >
                           <option value="">Month</option>
@@ -2012,11 +2012,11 @@ const StudentList: React.FC<StudentListProps> = () => {
                           }}
                           style={{
                             flex: 1.2,
-                            padding: '12px',
-                            borderRadius: '12px',
+                            padding: '8px',
+                            borderRadius: '10px',
                             border: '1px solid #E5E7EB',
                             background: '#FFFFFF',
-                            fontSize: '14px'
+                            fontSize: '13px'
                           }}
                         >
                           <option value="">Year</option>
@@ -2029,17 +2029,17 @@ const StudentList: React.FC<StudentListProps> = () => {
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Gender</label>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>Gender</label>
                       <select
                         value={editingStudent.gender}
                         onChange={(e) => setEditingStudent({ ...editingStudent, gender: e.target.value as 'male' | 'female' | 'other' })}
                         style={{
                           width: '100%',
-                          padding: '12px 16px',
-                          borderRadius: '12px',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
                           border: '1px solid #E5E7EB',
                           background: '#FFFFFF',
-                          fontSize: '14px'
+                          fontSize: '13px'
                         }}
                       >
                         <option value="male">Male</option>
@@ -2049,49 +2049,49 @@ const StudentList: React.FC<StudentListProps> = () => {
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Religion</label>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>Religion</label>
                       <input
                         type="text"
                         value={editingStudent.religion}
                         onChange={(e) => setEditingStudent({ ...editingStudent, religion: e.target.value })}
                         style={{
                           width: '100%',
-                          padding: '12px 16px',
-                          borderRadius: '12px',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
                           border: '1px solid #E5E7EB',
-                          fontSize: '14px'
+                          fontSize: '13px'
                         }}
                       />
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Ethnicity</label>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>Ethnicity</label>
                       <input
                         type="text"
                         value={editingStudent.ethnicity || ''}
                         onChange={(e) => setEditingStudent({ ...editingStudent, ethnicity: e.target.value })}
                         style={{
                           width: '100%',
-                          padding: '12px 16px',
-                          borderRadius: '12px',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
                           border: '1px solid #E5E7EB',
-                          fontSize: '14px'
+                          fontSize: '13px'
                         }}
                       />
                     </div>
 
                     <div style={{ gridColumn: 'span 2' }}>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Home Address</label>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>Home Address</label>
                       <textarea
                         value={editingStudent.address}
                         onChange={(e) => setEditingStudent({ ...editingStudent, address: e.target.value })}
                         rows={2}
                         style={{
                           width: '100%',
-                          padding: '12px 16px',
-                          borderRadius: '12px',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
                           border: '1px solid #E5E7EB',
-                          fontSize: '14px',
+                          fontSize: '13px',
                           resize: 'none'
                         }}
                       />
@@ -2103,27 +2103,27 @@ const StudentList: React.FC<StudentListProps> = () => {
                 <div style={{
                   background: 'white',
                   borderRadius: '20px',
-                  padding: '24px',
+                  padding: '20px',
                   border: '1px solid #F3F4F6',
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-                    <div style={{ width: '4px', height: '20px', background: '#8B5CF6', borderRadius: '4px' }}></div>
-                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1E1B4B', margin: 0 }}>Parent / Guardian Details</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <div style={{ width: '3px', height: '16px', background: '#8B5CF6', borderRadius: '4px' }}></div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1E1B4B', margin: 0 }}>Parent / Guardian Details</h3>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
                     <div>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Parent Type</label>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>Parent Type</label>
                       <select
                         value={editingStudent.parent_type}
                         onChange={(e) => setEditingStudent({ ...editingStudent, parent_type: e.target.value as 'father' | 'mother' | 'guardian' })}
                         style={{
                           width: '100%',
-                          padding: '12px 16px',
-                          borderRadius: '12px',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
                           border: '1px solid #E5E7EB',
-                          fontSize: '14px'
+                          fontSize: '13px'
                         }}
                       >
                         <option value="father">Father</option>
@@ -2133,23 +2133,23 @@ const StudentList: React.FC<StudentListProps> = () => {
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Parent Name</label>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>Parent Name</label>
                       <input
                         type="text"
                         value={editingStudent.parent_name}
                         onChange={(e) => setEditingStudent({ ...editingStudent, parent_name: e.target.value })}
                         style={{
                           width: '100%',
-                          padding: '12px 16px',
-                          borderRadius: '12px',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
                           border: '1px solid #E5E7EB',
-                          fontSize: '14px'
+                          fontSize: '13px'
                         }}
                       />
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Contact Phone</label>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>Contact Phone</label>
                       <input
                         type="text"
                         value={editingStudent.parent_phone}
@@ -2160,16 +2160,16 @@ const StudentList: React.FC<StudentListProps> = () => {
                         placeholder="10 Digits"
                         style={{
                           width: '100%',
-                          padding: '12px 16px',
-                          borderRadius: '12px',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
                           border: '1px solid #E5E7EB',
-                          fontSize: '14px'
+                          fontSize: '13px'
                         }}
                       />
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Email Address</label>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>Email Address</label>
                       <input
                         type="email"
                         value={editingStudent.parent_email || ''}
@@ -2177,26 +2177,26 @@ const StudentList: React.FC<StudentListProps> = () => {
                         placeholder="parent@example.com"
                         style={{
                           width: '100%',
-                          padding: '12px 16px',
-                          borderRadius: '12px',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
                           border: '1px solid #E5E7EB',
-                          fontSize: '14px'
+                          fontSize: '13px'
                         }}
                       />
                     </div>
 
                     <div style={{ gridColumn: 'span 2' }}>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Parent Address</label>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>Parent Address</label>
                       <textarea
                         value={editingStudent.parent_address}
                         onChange={(e) => setEditingStudent({ ...editingStudent, parent_address: e.target.value })}
                         rows={2}
                         style={{
                           width: '100%',
-                          padding: '12px 16px',
-                          borderRadius: '12px',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
                           border: '1px solid #E5E7EB',
-                          fontSize: '14px',
+                          fontSize: '13px',
                           resize: 'none'
                         }}
                       />
@@ -2206,13 +2206,13 @@ const StudentList: React.FC<StudentListProps> = () => {
               </div>
             </div>
 
-            {/* Redesigned Actions Bar */}
+            {/* Actions Bar */}
             <div style={{
-              padding: '24px 40px',
+              padding: '16px 32px',
               borderTop: '1px solid #E5E7EB',
               display: 'flex',
               justifyContent: 'flex-end',
-              gap: '16px',
+              gap: '12px',
               background: '#FFFFFF'
             }}>
               <button
@@ -2221,12 +2221,12 @@ const StudentList: React.FC<StudentListProps> = () => {
                   setEditingStudent(null);
                 }}
                 style={{
-                  padding: '12px 28px',
+                  padding: '8px 18px',
                   background: 'transparent',
                   color: '#6B7280',
                   border: '1px solid #E5E7EB',
-                  borderRadius: '12px',
-                  fontSize: '14px',
+                  borderRadius: '10px',
+                  fontSize: '13px',
                   fontWeight: 600,
                   cursor: 'pointer',
                   transition: 'all 0.2s'
@@ -2245,31 +2245,31 @@ const StudentList: React.FC<StudentListProps> = () => {
               <button
                 onClick={() => handleUpdateStudent(editingStudent)}
                 style={{
-                  padding: '12px 32px',
+                  padding: '8px 22px',
                   background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '12px',
-                  fontSize: '14px',
+                  borderRadius: '10px',
+                  fontSize: '13px',
                   fontWeight: 700,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
-                  boxShadow: '0 4px 12px rgba(99, 49, 148, 0.2)',
+                  boxShadow: '0 4px 12px rgba(99, 49, 148, 0.15)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px'
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(99, 49, 148, 0.3)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(99, 49, 148, 0.25)';
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 49, 148, 0.2)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 49, 148, 0.15)';
                 }}
               >
                 <span>Update Changes</span>
-                <span style={{ fontSize: '16px' }}>✔️</span>
+                <span style={{ fontSize: '14px' }}>✔️</span>
               </button>
             </div>
           </div>
@@ -2287,14 +2287,14 @@ const StudentList: React.FC<StudentListProps> = () => {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 3000,
-          padding: '20px',
+          padding: '16px',
           animation: 'fadeIn 0.2s ease-out'
         }}>
           <div style={{
             background: '#FFFFFF',
             borderRadius: '24px',
-            padding: '40px',
-            maxWidth: '450px',
+            padding: '24px',
+            maxWidth: '380px',
             width: '100%',
             border: '1px solid #FEE2E2',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
@@ -2308,20 +2308,20 @@ const StudentList: React.FC<StudentListProps> = () => {
               top: 0,
               left: 0,
               right: 0,
-              height: '6px',
+              height: '4px',
               background: 'linear-gradient(90deg, #EF4444 0%, #DC2626 100%)'
             }} />
 
             <div style={{
-              width: '80px',
-              height: '80px',
-              borderRadius: '24px',
+              width: '60px',
+              height: '60px',
+              borderRadius: '16px',
               background: '#FEF2F2',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 24px',
-              fontSize: '32px',
+              margin: '0 auto 16px',
+              fontSize: '24px',
               color: '#EF4444',
               transform: 'rotate(10deg)',
               boxShadow: '0 8px 16px rgba(239, 68, 68, 0.1)'
@@ -2329,14 +2329,14 @@ const StudentList: React.FC<StudentListProps> = () => {
               ⚠️
             </div>
             
-            <h2 style={{ color: '#1E1B4B', fontSize: '24px', fontWeight: '800', margin: '0 0 12px 0' }}>
+            <h2 style={{ color: '#1E1B4B', fontSize: '18px', fontWeight: '800', margin: '0 0 8px 0' }}>
               Confirm Deletion
             </h2>
-            <p style={{ color: '#6B7280', fontSize: '15px', margin: '0 0 32px 0', lineHeight: '1.6' }}>
-              Are you sure you want to remove this student record? This action is <strong style={{ color: '#EF4444' }}>permanent</strong> and cannot be restored.
+            <p style={{ color: '#6B7280', fontSize: '13px', margin: '0 0 24px 0', lineHeight: '1.5' }}>
+              Are you sure you want to remove this record? This action is <strong style={{ color: '#EF4444' }}>permanent</strong> and cannot be undone.
             </p>
             
-            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button
                 onClick={() => {
                   setShowDeleteModal(false);
@@ -2344,12 +2344,12 @@ const StudentList: React.FC<StudentListProps> = () => {
                 }}
                 style={{
                   flex: 1,
-                  padding: '14px 24px',
+                  padding: '10px 20px',
                   background: '#F9FAFB',
                   color: '#6B7280',
                   border: '1px solid #E5E7EB',
-                  borderRadius: '12px',
-                  fontSize: '15px',
+                  borderRadius: '10px',
+                  fontSize: '13px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s'
@@ -2363,20 +2363,20 @@ const StudentList: React.FC<StudentListProps> = () => {
                 onClick={handleConfirmDelete}
                 style={{
                   flex: 1,
-                  padding: '14px 24px',
+                  padding: '10px 20px',
                   background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '12px',
-                  fontSize: '15px',
+                  borderRadius: '10px',
+                  fontSize: '13px',
                   fontWeight: '700',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   boxShadow: '0 8px 16px rgba(239, 68, 68, 0.2)'
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 12px 20px rgba(239, 68, 68, 0.3)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 10px 18px rgba(239, 68, 68, 0.3)';
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
