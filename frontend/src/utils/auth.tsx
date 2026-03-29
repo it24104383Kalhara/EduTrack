@@ -1,5 +1,4 @@
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import React from 'react';
 
 export const useAuth = () => {
@@ -26,15 +25,11 @@ import RestrictedPage from "../pages/error/RestrictedPage";
 
 export const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
     const { user, isAuthenticated } = useAuth();
-    const navigate = useNavigate();
+    const location = useLocation();
 
-    useEffect(() => {
-        if (!isAuthenticated) {
-            navigate("/login");
-        }
-    }, [isAuthenticated, navigate]);
-
-    if (!isAuthenticated) return null;
+    if (!isAuthenticated) {
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
 
     if (allowedRoles && !allowedRoles.includes(user.role)) {
         return <RestrictedPage />;

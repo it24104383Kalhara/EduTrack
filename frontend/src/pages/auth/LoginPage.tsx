@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../../utils/auth";
 import { motion } from "framer-motion";
@@ -9,10 +9,15 @@ const LoginPage = () => {
     const { login } = useAuth();
     const navigate = useNavigate();
 
+    const location = useLocation();
+
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         login(role, name);
-        navigate("/dashboard");
+        
+        // Redirect to the page they tried to visit, or dashboard
+        const from = (location.state as any)?.from?.pathname || "/dashboard";
+        navigate(from, { replace: true });
     };
 
     return (

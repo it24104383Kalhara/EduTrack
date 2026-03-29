@@ -18,6 +18,28 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+// Response interceptor to handle auth failures and backend down
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        // Handle connection errors (backend down) or 401 Unauthorized
+        const isNetworkError = !error.response && error.code !== 'ERR_CANCELED';
+        const isUnauthorized = error.response?.status === 401;
+
+        if (isNetworkError || isUnauthorized) {
+            // Only clear and redirect if we're not on the landing page or login page
+            const publicPaths = ['/', '/login'];
+            const isPublicRoute = publicPaths.includes(window.location.pathname);
+            
+            if (!isPublicRoute) {
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 export interface Activity {
     id: number;
     name: string;
