@@ -847,6 +847,97 @@ const AttendanceManagement: React.FC = () => {
     }
   };
 
+  const downloadLeaveReportPDF = async () => {
+    const currentMonth = new Date(selectedDate).getMonth();
+    const currentYear = new Date(selectedDate).getFullYear();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const leaveDays: any[] = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      const leaveDate = new Date(currentYear, currentMonth, d);
+      const dateStr = leaveDate.toLocaleDateString('en-CA');
+      if (checkIsLeaveDay(dateStr)) {
+        const day = leaveDate.getDay();
+        const isWeekend = day === 0 || day === 6;
+        leaveDays.push({
+          date: dateStr,
+          type: isWeekend ? (day === 0 ? 'Sunday' : 'Saturday') : 'Public Holiday',
+          dayName: leaveDate.toLocaleDateString('en-US', { weekday: 'long' })
+        });
+      }
+    }
+
+    if (leaveDays.length === 0) {
+      showToast('No school leave days found for this month', 'warning');
+      return;
+    }
+
+    const monthName = new Date(selectedDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    let pdfContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>School Leave Report - ${monthName}</title>
+          <style>
+            @page { margin: 0.5in; size: A4; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+            * { box-sizing: border-box; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 16px; background: #F8F7FF; color: #1e1b4b; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .header { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; border-radius: 10px; padding: 12px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+            .header-left { display: flex; align-items: center; gap: 10px; }
+            .header-logo { width: 36px; height: 36px; background: rgba(255,255,255,0.18) !important; border-radius: 8px; display: flex; align-items: center; justify-content: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .header h1 { color: white !important; font-size: 18px; margin: 0; font-weight: 800; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .header-sub { color: rgba(255,255,255,0.8) !important; font-size: 10px; margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .header-right { text-align: right; }
+            .header-chip { background: rgba(255,255,255,0.18) !important; color: white !important; border-radius: 6px; padding: 3px 8px; font-size: 10px; font-weight: 700; display: inline-block; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .summary-banner { background: #EEF2FF !important; border: 1px solid #C7D2FE; border-radius: 8px; padding: 10px 14px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .summary-title { font-size: 11px; font-weight: 800; color: #4338CA !important; text-transform: uppercase; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .summary-val { font-size: 20px; font-weight: 900; color: #4338CA !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            th { background: #1F2937 !important; color: white !important; padding: 10px; text-align: left; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            td { padding: 9px 10px; font-size: 11px; border-bottom: 1px solid #EDE9FE; vertical-align: middle; color: #1E293B !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            tr:nth-child(even) td { background: #FAFAFA !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .type-badge { font-weight: 700; padding: 2px 8px; border-radius: 5px; font-size: 9px; display: inline-block; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .holiday { background: #FEE2E2 !important; color: #991B1B !important; }
+            .weekend { background: #F1F5F9 !important; color: #475569 !important; }
+            .footer { margin-top: 24px; text-align: center; border-top: 1px solid #EDE9FE; padding-top: 12px; font-size: 10px; color: #94A3B8 !important; }
+            .footer strong { color: #633194 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="header-left">
+              <div class="header-logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg></div>
+              <div><h1>EduTrack</h1><p class="header-sub">Monthly School Leave Report</p></div>
+            </div>
+            <div class="header-right"><div class="header-chip">${monthName}</div></div>
+          </div>
+          <div class="summary-banner"><span class="summary-title">Total School Leave Days</span><span class="summary-val">${leaveDays.length}</span></div>
+          <table>
+            <thead><tr><th style="width:25%;">Date</th><th style="width:25%;">Day</th><th style="width:50%;">Leave Category</th></tr></thead>
+            <tbody>
+              ${leaveDays.map(ld => `
+                <tr>
+                  <td style="font-weight:700; color:#633194;">${ld.date}</td>
+                  <td>${ld.dayName}</td>
+                  <td><span class="type-badge ${ld.type.includes('Holiday') ? 'holiday' : 'weekend'}">${ld.type}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="footer"><strong>EduTrack</strong> — Student Management System &nbsp;|&nbsp; Generated: ${new Date().toLocaleString()}</div>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(pdfContent);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
   const handleViewSummaryReport = async () => {
     if (!selectedGrade) return;
 
@@ -1575,6 +1666,29 @@ const AttendanceManagement: React.FC = () => {
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div className="am-modal-footer" style={{ marginTop: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '12px' }}>
+              <button 
+                className="am-btn-primary" 
+                onClick={downloadLeaveReportPDF} 
+                style={{ 
+                  background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)', 
+                  color: 'white', 
+                  padding: '8px 16px', 
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 600, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 10px rgba(99, 49, 148, 0.2)'
+                }}
+              >
+                <Download size={16} /> Download School Leaves PDF
+              </button>
             </div>
           </div>
         );
