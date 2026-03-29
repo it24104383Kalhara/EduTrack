@@ -42,6 +42,11 @@ const GradeManagement: React.FC = () => {
   const [transferHistory, setTransferHistory] = useState<Record<number, number>>({});
   const [filterByAge, setFilterByAge] = useState(true);
   
+  // Custom Confirmation Modal State
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [gradeToDelete, setGradeToDelete] = useState<Grade | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   // Age Calculation Helper
   const calculateRecommendedGrade = (dob: string) => {
     if (!dob) return null;
@@ -326,15 +331,28 @@ const GradeManagement: React.FC = () => {
   };
 
   const handleDeleteGrade = async (gradeId: number) => {
-    if (confirm('Are you sure you want to delete this grade? All student assignments for this grade will be removed.')) {
-      try {
-        await gradeApi.delete(gradeId);
-        await fetchGrades();
-        showToast('Grade deleted successfully', 'success');
-      } catch (error) {
-        console.error('Failed to delete grade:', error);
-        showToast('Failed to delete grade', 'error');
-      }
+    const grade = grades.find(g => g.id === gradeId);
+    if (grade) {
+      setGradeToDelete(grade);
+      setShowDeleteConfirm(true);
+    }
+  };
+
+  const confirmDeleteGrade = async () => {
+    if (!gradeToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      await gradeApi.delete(gradeToDelete.id);
+      await fetchGrades();
+      showToast('Grade deleted successfully', 'success');
+      setShowDeleteConfirm(false);
+      setGradeToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete grade:', error);
+      showToast('Failed to delete grade', 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -1301,6 +1319,85 @@ const GradeManagement: React.FC = () => {
 
 
 
+      {/* Beautiful Custom Deletion Confirmation Modal */}
+      {showDeleteConfirm && gradeToDelete && (
+        <div style={{ 
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+          background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(12px)', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', 
+          zIndex: 3000, padding: '20px',
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <style>{`
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes popIn { 
+              from { opacity: 0; transform: scale(0.9) translateY(10px); } 
+              to { opacity: 1; transform: scale(1) translateY(0); } 
+            }
+            .confirm-btn-delete:hover { transform: translateY(-1px); filter: brightness(1.1); box-shadow: 0 10px 25px rgba(239, 68, 68, 0.2); }
+            .cancel-btn-delete:hover { background: #F1F5F9; color: #1E293B; }
+          `}</style>
+          
+          <div style={{ 
+            background: '#FFFFFF', borderRadius: '28px', width: '100%', maxWidth: '440px', 
+            padding: '32px', boxShadow: '0 25px 60px -12px rgba(0, 0, 0, 0.15)',
+            border: '1px solid rgba(255, 255, 255, 0.5)',
+            animation: 'popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ 
+                width: '80px', height: '80px', background: '#FEF2F2', borderRadius: '24px', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                margin: '0 auto 24px', color: '#EF4444'
+              }}>
+                <Trash size={40} strokeWidth={2.5} />
+              </div>
+              
+              <h2 style={{ fontSize: '24px', fontWeight: '850', color: '#1E293B', marginBottom: '12px' }}>Confirm Deletion?</h2>
+              
+              <div style={{ 
+                background: '#F8FAFC', padding: '16px', borderRadius: '16px', 
+                marginBottom: '24px', border: '1px solid #F1F5F9'
+              }}>
+                <p style={{ margin: 0, color: '#64748B', fontSize: '15px', lineHeight: '1.6' }}>
+                  Are you sure you want to delete <span style={{ color: '#EF4444', fontWeight: '800' }}>Grade {gradeToDelete.grade}-{gradeToDelete.grade_part}</span>?
+                </p>
+                <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '8px 12px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '10px', fontSize: '12px', color: '#B91C1C', fontWeight: '700' }}>
+                  <AlertTriangle size={14} /> This action cannot be undone.
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button 
+                  onClick={() => { setShowDeleteConfirm(false); setGradeToDelete(null); }}
+                  disabled={isDeleting}
+                  className="cancel-btn-delete"
+                  style={{ 
+                    flex: 1, padding: '14px', background: '#F8FAFC', color: '#64748B', 
+                    border: '1px solid #E2E8F0', borderRadius: '16px', fontWeight: '750', 
+                    fontSize: '15px', cursor: isDeleting ? 'not-allowed' : 'pointer', transition: 'all 0.2s' 
+                  }}
+                >
+                  Keep It
+                </button>
+                <button 
+                  onClick={confirmDeleteGrade}
+                  disabled={isDeleting}
+                  className="confirm-btn-delete"
+                  style={{ 
+                    flex: 1, padding: '14px', background: '#EF4444', color: 'white', 
+                    border: 'none', borderRadius: '16px', fontWeight: '750', 
+                    fontSize: '15px', cursor: isDeleting ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                  }}
+                >
+                  {isDeleting ? <Loader2 className="animate-spin" size={20} /> : 'Yes, Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
