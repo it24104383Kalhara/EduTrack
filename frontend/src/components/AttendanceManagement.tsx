@@ -326,41 +326,41 @@ const AttendanceManagement: React.FC = () => {
             <style>
               @page { margin: 0.5in; size: A4; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
               * { box-sizing: border-box; }
-              body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 28px; background: #F8F7FF; color: #1e1b4b; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .header { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; border-radius: 20px; padding: 28px 32px; margin-bottom: 28px; display: flex; align-items: center; justify-content: space-between; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-              .header-left { display: flex; align-items: center; gap: 16px; }
-              .header-logo { width: 56px; height: 56px; background: rgba(255,255,255,0.18) !important; border-radius: 14px; display: flex; align-items: center; justify-content: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .header h1 { color: white !important; font-size: 26px; margin: 0 0 4px; font-weight: 800; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .header-sub { color: rgba(255,255,255,0.8) !important; font-size: 14px; margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 16px; background: #F8F7FF; color: #1e1b4b; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; border-radius: 10px; padding: 12px 18px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .header-left { display: flex; align-items: center; gap: 10px; }
+              .header-logo { width: 36px; height: 36px; background: rgba(255,255,255,0.18) !important; border-radius: 8px; display: flex; align-items: center; justify-content: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header h1 { color: white !important; font-size: 18px; margin: 0 0 2px; font-weight: 800; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-sub { color: rgba(255,255,255,0.8) !important; font-size: 10px; margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               .header-right { text-align: right; }
-              .header-chip { background: rgba(255,255,255,0.18) !important; color: white !important; border-radius: 10px; padding: 6px 14px; font-size: 13px; font-weight: 700; margin-bottom: 6px; display: inline-block; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .header-date { color: rgba(255,255,255,0.7) !important; font-size: 12px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
-              .stat-card { padding: 16px; border-radius: 14px; text-align: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-              .stat-card.present { background: #D1FAE5 !important; border: 2px solid #6EE7B7; }
-              .stat-card.absent { background: #FEE2E2 !important; border: 2px solid #FCA5A5; }
-              .stat-card.late { background: #FEF3C7 !important; border: 2px solid #FCD34D; }
-              .stat-card.not-marked { background: #F1F5F9 !important; border: 2px solid #CBD5E1; }
-              .stat-number { font-size: 32px; font-weight: 900; margin-bottom: 4px; }
+              .header-chip { background: rgba(255,255,255,0.18) !important; color: white !important; border-radius: 6px; padding: 3px 8px; font-size: 10px; font-weight: 700; margin-bottom: 2px; display: inline-block; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-date { color: rgba(255,255,255,0.7) !important; font-size: 9px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 12px; }
+              .stat-card { padding: 4px 6px; border-radius: 6px; text-align: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .stat-card.present { background: #D1FAE5 !important; border: 1px solid #6EE7B7; }
+              .stat-card.absent { background: #FEE2E2 !important; border: 1px solid #FCA5A5; }
+              .stat-card.late { background: #FEF3C7 !important; border: 1px solid #FCD34D; }
+              .stat-card.not-marked { background: #F1F5F9 !important; border: 1px solid #CBD5E1; }
+              .stat-number { font-size: 16px; font-weight: 900; margin-bottom: 0; }
               .stat-card.present .stat-number { color: #059669 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               .stat-card.absent .stat-number { color: #DC2626 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               .stat-card.late .stat-number { color: #D97706 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               .stat-card.not-marked .stat-number { color: #475569 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .stat-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #475569 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .section-label { font-size: 13px; font-weight: 800; color: #633194 !important; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; padding-left: 4px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              table { width: 100%; border-collapse: collapse; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 12px rgba(99,49,148,0.08); background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              th { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; color: white !important; padding: 14px 12px; text-align: left; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-              td { padding: 13px 12px; font-size: 13px; border-bottom: 1px solid #EDE9FE; vertical-align: middle; color: #1E293B !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .stat-label { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #475569 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .section-label { font-size: 11px; font-weight: 800; color: #633194 !important; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; padding-left: 4px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              table { width: 100%; border-collapse: collapse; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 10px rgba(99,49,148,0.06); background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              th { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; color: white !important; padding: 10px 8px; text-align: left; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              td { padding: 9px 8px; font-size: 11px; border-bottom: 1px solid #EDE9FE; vertical-align: middle; color: #1E293B !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               tr:nth-child(even) td { background: #FAFAFA !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               .student-id { font-weight: 700; color: #633194 !important; text-align: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               .student-name { font-weight: 700; color: #1e1b4b !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .student-overall { font-size: 10px; color: #64748B !important; margin-top: 2px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .badge { font-weight: 800; border-radius: 7px; padding: 5px 12px; display: inline-block; font-size: 11px; text-align: center; text-transform: uppercase; letter-spacing: 0.04em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .student-overall { font-size: 9px; color: #64748B !important; margin-top: 1px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .badge { font-weight: 800; border-radius: 6px; padding: 3px 10px; display: inline-block; font-size: 9px; text-align: center; text-transform: uppercase; letter-spacing: 0.04em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
               .present { background: #D1FAE5 !important; color: #065F46 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               .absent { background: #FEE2E2 !important; color: #991B1B !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               .late { background: #FEF3C7 !important; color: #92400E !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               .not-marked { background: #F1F5F9 !important; color: #475569 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .footer { margin-top: 32px; text-align: center; border-top: 1px solid #EDE9FE; padding-top: 16px; font-size: 11px; color: #94A3B8 !important; -webkit-print-color-adjust: exact !important; print-color-assist: exact !important; }
+              .footer { margin-top: 24px; text-align: center; border-top: 1px solid #EDE9FE; padding-top: 12px; font-size: 10px; color: #94A3B8 !important; -webkit-print-color-adjust: exact !important; print-color-assist: exact !important; }
               .footer strong { color: #633194 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             </style>
           </head>
@@ -533,34 +533,34 @@ const AttendanceManagement: React.FC = () => {
             <style>
               @page { margin: 0.5in; size: A4; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
               * { box-sizing: border-box; }
-              body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 28px; background: #F8F7FF; color: #1e1b4b; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .header { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; border-radius: 20px; padding: 24px 32px; margin-bottom: 28px; display: flex; align-items: center; justify-content: space-between; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-              .header-left { display: flex; align-items: center; gap: 16px; }
-              .header-logo { width: 52px; height: 52px; background: rgba(255,255,255,0.18) !important; border-radius: 14px; display: flex; align-items: center; justify-content: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .header h1 { color: white !important; font-size: 24px; margin: 0 0 4px; font-weight: 800; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .header-sub { color: rgba(255,255,255,0.8) !important; font-size: 13px; margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 16px; background: #F8F7FF; color: #1e1b4b; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; border-radius: 10px; padding: 12px 20px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .header-left { display: flex; align-items: center; gap: 10px; }
+              .header-logo { width: 36px; height: 36px; background: rgba(255,255,255,0.18) !important; border-radius: 8px; display: flex; align-items: center; justify-content: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header h1 { color: white !important; font-size: 18px; margin: 0 0 2px; font-weight: 800; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-sub { color: rgba(255,255,255,0.8) !important; font-size: 10px; margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               .header-right { text-align: right; }
-              .header-chip { background: rgba(255,255,255,0.18) !important; color: white !important; border-radius: 10px; padding: 5px 12px; font-size: 13px; font-weight: 700; display: inline-block; margin-bottom: 4px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .header-meta { color: rgba(255,255,255,0.7) !important; font-size: 11px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .section-label { font-size: 13px; font-weight: 800; color: #633194 !important; text-transform: uppercase; letter-spacing: 0.06em; margin: 24px 0 10px; padding-left: 4px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .date-section { margin-bottom: 28px; page-break-inside: avoid; }
-              .date-header { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%) !important; color: white !important; padding: 10px 16px; border-radius: 10px; margin-bottom: 12px; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-              .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 14px; }
-              .stat-card { padding: 12px; border-radius: 12px; text-align: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-              .stat-card.present { background: #D1FAE5 !important; border: 2px solid #6EE7B7; color: #065F46 !important; }
-              .stat-card.absent { background: #FEE2E2 !important; border: 2px solid #FCA5A5; color: #991B1B !important; }
-              .stat-card.late { background: #FEF3C7 !important; border: 2px solid #FCD34D; color: #92400E !important; }
-              .stat-card.not-marked { background: #F1F5F9 !important; border: 2px solid #CBD5E1; color: #475569 !important; }
-              table { width: 100%; border-collapse: collapse; overflow: hidden; background: white; margin-bottom: 8px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              th { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; color: white !important; padding: 11px 10px; text-align: left; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-              td { padding: 10px; font-size: 12px; border-bottom: 1px solid #EDE9FE; vertical-align: middle; color: #1E293B !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-chip { background: rgba(255,255,255,0.18) !important; color: white !important; border-radius: 6px; padding: 3px 8px; font-size: 10px; font-weight: 700; display: inline-block; margin-bottom: 3px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-meta { color: rgba(255,255,255,0.7) !important; font-size: 9px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .section-label { font-size: 10px; font-weight: 800; color: #633194 !important; text-transform: uppercase; letter-spacing: 0.06em; margin: 12px 0 6px; padding-left: 4px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .date-section { margin-bottom: 16px; page-break-inside: avoid; }
+              .date-header { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%) !important; color: white !important; padding: 6px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 5px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 6px; }
+              .stat-card { padding: 4px 6px; border-radius: 6px; text-align: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .stat-card.present { background: #D1FAE5 !important; border: 1px solid #6EE7B7; color: #065F46 !important; }
+              .stat-card.absent { background: #FEE2E2 !important; border: 1px solid #FCA5A5; color: #991B1B !important; }
+              .stat-card.late { background: #FEF3C7 !important; border: 1px solid #FCD34D; color: #92400E !important; }
+              .stat-card.not-marked { background: #F1F5F9 !important; border: 1px solid #CBD5E1; color: #475569 !important; }
+              table { width: 100%; border-collapse: collapse; overflow: hidden; background: white; margin-bottom: 6px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              th { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; color: white !important; padding: 9px 8px; text-align: left; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              td { padding: 8px; font-size: 11px; border-bottom: 1px solid #EDE9FE; vertical-align: middle; color: #1E293B !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               tr:nth-child(even) td { background: #FAFAFA !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .badge { font-weight: 800; border-radius: 6px; padding: 3px 10px; display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .badge { font-weight: 800; border-radius: 5px; padding: 2px 8px; display: inline-block; font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
               .present { background: #D1FAE5 !important; color: #065F46 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               .absent { background: #FEE2E2 !important; color: #991B1B !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               .late { background: #FEF3C7 !important; color: #92400E !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               .not-marked { background: #F1F5F9 !important; color: #475569 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .footer { margin-top: 32px; text-align: center; border-top: 1px solid #EDE9FE; padding-top: 16px; font-size: 11px; color: #94A3B8 !important; }
+              .footer { margin-top: 24px; text-align: center; border-top: 1px solid #EDE9FE; padding-top: 12px; font-size: 10px; color: #94A3B8 !important; }
               .footer strong { color: #633194 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             </style>
           </head>
@@ -666,10 +666,10 @@ const AttendanceManagement: React.FC = () => {
                 ${date}
               </div>
               <div class="stats-row">
-                <div class="stat-card present"><div style="font-size:18px; font-weight:900;">${presentCount}</div><div style="font-size:10px; font-weight:800; text-transform:uppercase;">Present</div></div>
-                <div class="stat-card absent"><div style="font-size:18px; font-weight:900;">${absentCount}</div><div style="font-size:10px; font-weight:800; text-transform:uppercase;">Absent</div></div>
-                <div class="stat-card late"><div style="font-size:18px; font-weight:900;">${lateCount}</div><div style="font-size:10px; font-weight:800; text-transform:uppercase;">Late</div></div>
-                <div class="stat-card not-marked"><div style="font-size:18px; font-weight:900;">${notMarkedCount}</div><div style="font-size:10px; font-weight:800; text-transform:uppercase;">Not Marked</div></div>
+                <div class="stat-card present"><div style="font-size:15px; font-weight:900;">${presentCount}</div><div style="font-size:8px; font-weight:800; text-transform:uppercase;">Present</div></div>
+                <div class="stat-card absent"><div style="font-size:15px; font-weight:900;">${absentCount}</div><div style="font-size:8px; font-weight:800; text-transform:uppercase;">Absent</div></div>
+                <div class="stat-card late"><div style="font-size:15px; font-weight:900;">${lateCount}</div><div style="font-size:8px; font-weight:800; text-transform:uppercase;">Late</div></div>
+                <div class="stat-card not-marked"><div style="font-size:15px; font-weight:900;">${notMarkedCount}</div><div style="font-size:8px; font-weight:800; text-transform:uppercase;">Not Marked</div></div>
               </div>
               <table><thead><tr>
                 <th style="width:8%; text-align:center;">#</th>
@@ -765,20 +765,20 @@ const AttendanceManagement: React.FC = () => {
             <style>
               @page { margin: 0.5in; size: A4; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
               * { box-sizing: border-box; }
-              body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 28px; background: #F8F7FF; color: #1e1b4b; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .header { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; border-radius: 20px; padding: 24px 32px; margin-bottom: 28px; display: flex; align-items: center; justify-content: space-between; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-              .header-left { display: flex; align-items: center; gap: 16px; }
-              .header-logo { width: 52px; height: 52px; background: rgba(255,255,255,0.18) !important; border-radius: 14px; display: flex; align-items: center; justify-content: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .header h1 { color: white !important; font-size: 24px; margin: 0 0 4px; font-weight: 800; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .header-sub { color: rgba(255,255,255,0.8) !important; font-size: 13px; margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background: #F8F7FF; color: #1e1b4b; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; border-radius: 12px; padding: 16px 24px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              .header-left { display: flex; align-items: center; gap: 12px; }
+              .header-logo { width: 44px; height: 44px; background: rgba(255,255,255,0.18) !important; border-radius: 10px; display: flex; align-items: center; justify-content: center; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header h1 { color: white !important; font-size: 20px; margin: 0 0 2px; font-weight: 800; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-sub { color: rgba(255,255,255,0.8) !important; font-size: 11px; margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               .header-right { text-align: right; }
-              .header-chip { background: rgba(255,255,255,0.18) !important; color: white !important; border-radius: 10px; padding: 5px 12px; font-size: 13px; font-weight: 700; display: inline-block; margin-bottom: 4px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .header-meta { color: rgba(255,255,255,0.7) !important; font-size: 11px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-chip { background: rgba(255,255,255,0.18) !important; color: white !important; border-radius: 8px; padding: 4px 10px; font-size: 11px; font-weight: 700; display: inline-block; margin-bottom: 4px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              .header-meta { color: rgba(255,255,255,0.7) !important; font-size: 10px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               table { width: 100%; border-collapse: collapse; background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              th { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; color: white !important; padding: 11px 10px; text-align: left; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-              td { padding: 10px; font-size: 12px; border-bottom: 1px solid #EDE9FE; vertical-align: middle; color: #1E293B !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              th { background: linear-gradient(135deg, #633194 0%, #4B2380 100%) !important; color: white !important; padding: 9px 8px; text-align: left; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+              td { padding: 9px; font-size: 11px; border-bottom: 1px solid #EDE9FE; vertical-align: middle; color: #1E293B !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               tr:nth-child(even) td { background: #FAFAFA !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              .footer { margin-top: 32px; text-align: center; border-top: 1px solid #EDE9FE; padding-top: 16px; font-size: 11px; color: #94A3B8 !important; }
+              .footer { margin-top: 24px; text-align: center; border-top: 1px solid #EDE9FE; padding-top: 12px; font-size: 10px; color: #94A3B8 !important; }
               .footer strong { color: #633194 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             </style>
           </head>
