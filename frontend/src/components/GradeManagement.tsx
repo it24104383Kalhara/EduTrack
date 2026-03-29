@@ -39,7 +39,41 @@ const GradeManagement: React.FC = () => {
   const [searchStudent, setSearchStudent] = useState('');
   const [selectedSourceGrade, setSelectedSourceGrade] = useState<number | null>(null);
   const [transferHistory, setTransferHistory] = useState<Record<number, number>>({});
+  const [filterByAge, setFilterByAge] = useState(true);
   
+  // Age Calculation Helper
+  const calculateRecommendedGrade = (dob: string) => {
+    if (!dob) return null;
+    const date = new Date(dob);
+    if (isNaN(date.getTime())) return null;
+    
+    const year = date.getFullYear();
+    const month = date.getMonth(); // 0-indexed (Jan is 0)
+    
+    // User logic (Fixed mapping):
+    // Grade 6: Feb 2015 to Jan 2016
+    // Grade 7: Feb 2014 to Jan 2015
+    // Grade 13: Feb 2008 to Jan 2009
+    // Formula: (2021 - BirthYear) + (Month == Jan ? 1 : 0)? 
+    // Wait, Feb 2015 -> 2021-2015 = 6. Jan 2016 -> 2021-(2016-1) = 6. Correct.
+    const cohortYear = month === 0 ? year - 1 : year;
+    const finalGrade = 2021 - cohortYear;
+    
+    return finalGrade;
+  };
+
+  const calculateAge = (dob: string) => {
+    if (!dob) return 0;
+    const birthDate = new Date(dob);
+    if (isNaN(birthDate.getTime())) return 0;
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
+  };
   // Subject Selection State
   const [availableSubjects, setAvailableSubjects] = useState<Subject[]>([]);
 
@@ -412,6 +446,62 @@ const GradeManagement: React.FC = () => {
                 />
               </div>
 
+              {/* Age Filter Toggle */}
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                background: '#FFFFFF', 
+                padding: '16px 24px', 
+                borderRadius: '16px', 
+                marginBottom: '24px',
+                border: '1.5px solid #F3E8FF',
+                boxShadow: '0 4px 6px -1px rgba(99, 49, 148, 0.05)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ 
+                    width: '36px', 
+                    height: '36px', 
+                    background: filterByAge ? '#F3E8FF' : '#F1F5F9', 
+                    borderRadius: '10px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    color: filterByAge ? '#633194' : '#64748B',
+                    transition: 'all 0.2s'
+                  }}>
+                    <Activity size={20} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '700', color: '#1E1B4B', fontSize: '14px' }}>Smart Age Filter</div>
+                    <div style={{ fontSize: '12px', color: '#64748B' }}>Only show students compatible with Grade {grades.find(g => g.id === selectedGrade)?.grade}</div>
+                  </div>
+                </div>
+                <div 
+                  onClick={() => setFilterByAge(!filterByAge)}
+                  style={{ 
+                    width: '50px', 
+                    height: '26px', 
+                    background: filterByAge ? '#633194' : '#CBD5E1', 
+                    borderRadius: '20px', 
+                    padding: '3px', 
+                    cursor: 'pointer',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    position: 'relative'
+                  }}
+                >
+                  <div style={{ 
+                    width: '20px', 
+                    height: '20px', 
+                    background: '#FFFFFF', 
+                    borderRadius: '50%',
+                    transform: filterByAge ? 'translateX(24px)' : 'translateX(0)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                  }} />
+                </div>
+              </div>
+
               {/* Tab Navigation */}
               <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid #E5E7EB', paddingBottom: '4px' }}>
                 {[
@@ -476,25 +566,86 @@ const GradeManagement: React.FC = () => {
                       })()}
                     </div>
                   )}
-
-                  {/* TAB: Available Students */}
+                                {/* TAB: Available Students */}
                   {activeTab === 'available' && (
                     <div style={{ animation: 'slideIn 0.2s ease-out' }}>
                       {(() => {
-                        const available = students.filter(s => !grades.some(g => g.students?.some(ps => ps.id === s.id)) && `${s.first_name} ${s.last_name}`.toLowerCase().includes(searchStudent.toLowerCase()));
-                        if (available.length === 0) return <div style={{ textAlign: 'center', padding: '40px', color: '#64748B' }}>All students are already assigned.</div>;
+                        const targetGradeNum = grades.find(g => g.id === selectedGrade)?.grade || 0;
+                        const available = students.filter(s => {
+                          const isNotAssigned = !grades.some(g => g.students?.some(ps => ps.id === s.id));
+                          const matchesSearch = `${s.first_name} ${s.last_name}`.toLowerCase().includes(searchStudent.toLowerCase());
+                          
+                          if (filterByAge) {
+                            const recommendedGrade = calculateRecommendedGrade(s.date_of_birth);
+                            return isNotAssigned && matchesSearch && recommendedGrade === targetGradeNum;
+                          }
+                          
+                          return isNotAssigned && matchesSearch;
+                        });
+
+                        if (available.length === 0) return (
+                          <div style={{ textAlign: 'center', padding: '60px 40px', background: 'white', borderRadius: '24px', border: '1px dashed #E2E8F0' }}>
+                            <div style={{ width: '64px', height: '64px', background: '#F8F7FF', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#633194' }}>
+                              <Users size={32} />
+                            </div>
+                            <div style={{ fontSize: '18px', fontWeight: '700', color: '#1E1B4B' }}>{filterByAge ? `No Age-Compatible Students Found` : `No Students Found`}</div>
+                            <p style={{ color: '#64748B', maxWidth: '300px', margin: '8px auto 0', fontSize: '14px' }}>
+                              {filterByAge 
+                                ? `We couldn't find any unassigned students whose age matches Grade ${targetGradeNum} requirements.` 
+                                : `All students are already assigned or no matches found for your search.`}
+                            </p>
+                            {filterByAge && (
+                              <button 
+                                onClick={() => setFilterByAge(false)}
+                                style={{ marginTop: '20px', padding: '10px 20px', background: '#F3E8FF', color: '#633194', border: 'none', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
+                              >
+                                Toggle Off Age Filter
+                              </button>
+                            )}
+                          </div>
+                        );
                         return (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {available.map(s => (
-                              <div key={s.id} className="student-card-assign" style={{ background: '#FFFFFF', border: '1px solid #F3F4F6', borderRadius: '16px', padding: '14px 20px', display: 'flex', alignItems: 'center', gap: '18px' }}>
-                                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#F4F0FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#633194', fontWeight: '800' }}>{s.first_name.charAt(0)}</div>
-                                <div style={{ flex: 1 }}>
-                                  <div style={{ fontWeight: 700 }}>{s.first_name} {s.last_name}</div>
-                                  <div style={{ fontSize: '12px', color: '#64748B' }}>ID: {s.id}</div>
+                            {available.map(s => {
+                              const age = calculateAge(s.date_of_birth);
+                              const recGrade = calculateRecommendedGrade(s.date_of_birth);
+                              const isJan = new Date(s.date_of_birth).getMonth() === 0;
+
+                              return (
+                                <div key={s.id} className="student-card-assign" style={{ background: '#FFFFFF', border: '1px solid #F3F4F6', borderRadius: '16px', padding: '14px 20px', display: 'flex', alignItems: 'center', gap: '18px' }}>
+                                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#F4F0FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#633194', fontWeight: '800' }}>{s.first_name.charAt(0)}</div>
+                                  <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                      <div style={{ fontWeight: 700 }}>{s.first_name} {s.last_name}</div>
+                                      <div style={{ 
+                                        fontSize: '11px', 
+                                        fontWeight: '800', 
+                                        color: '#633194', 
+                                        background: '#F3E8FF', 
+                                        padding: '2px 8px', 
+                                        borderRadius: '6px' 
+                                      }}>
+                                        Age {age}
+                                      </div>
+                                      {isJan && (
+                                        <div style={{ 
+                                          fontSize: '11px', 
+                                          fontWeight: '800', 
+                                          color: '#059669', 
+                                          background: '#D1FAE5', 
+                                          padding: '2px 8px', 
+                                          borderRadius: '6px' 
+                                        }}>
+                                          Jan Bonus
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#64748B' }}>ID: {s.id} • DOB: {s.date_of_birth} • Recommended: Grade {recGrade}</div>
+                                  </div>
+                                  <button onClick={() => handleAssignStudent(s.id, selectedGrade!)} style={{ padding: '8px 16px', background: '#F4F0FF', color: '#633194', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>Assign</button>
                                 </div>
-                                <button onClick={() => handleAssignStudent(s.id, selectedGrade!)} style={{ padding: '8px 16px', background: '#F4F0FF', color: '#633194', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>Assign</button>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         );
                       })()}
