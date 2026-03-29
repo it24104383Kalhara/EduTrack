@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { studentApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -86,6 +86,14 @@ const StudentRegistrationForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step1Error, setStep1Error] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   // Parse 'YYYY-MM-DD' or 'YYYY.MM.DD' in local time to avoid UTC off-by-one bug
   const parseLocalDate = (dateStr: string) => {
@@ -126,19 +134,13 @@ const StudentRegistrationForm: React.FC = () => {
 
     // Final validation check for phone number - must be exactly 10 digits
     if (!/^\d{10}$/.test(formData.parent_phone)) {
-      setRegistration({
-        success: false,
-        message: 'Parent phone number must be exactly 10 digits.'
-      });
+      setNotification({ message: 'Parent phone number must be exactly 10 digits.', type: 'error' });
       return;
     }
 
     // Email validation
     if (formData.parent_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.parent_email)) {
-      setRegistration({
-        success: false,
-        message: 'Please enter a valid email address (e.g., parent@example.com).'
-      });
+      setNotification({ message: 'Please enter a valid email address (e.g., parent@example.com).', type: 'error' });
       return;
     }
 
@@ -363,6 +365,71 @@ const StudentRegistrationForm: React.FC = () => {
           }
         }
       `}</style>
+      {/* Custom Notification Toast */}
+      {notification && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          zIndex: 10000,
+          animation: 'slideInRight 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55)',
+          maxWidth: '400px'
+        }}>
+          <div style={{
+            background: notification.type === 'error' 
+              ? 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)' 
+              : 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
+            border: `1px solid ${notification.type === 'error' ? '#FECACA' : '#A7F3D0'}`,
+            borderRadius: '16px',
+            padding: '16px 20px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '12px',
+              background: notification.type === 'error' ? '#EF4444' : '#10B981',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '1.2rem',
+              boxShadow: `0 4px 12px ${notification.type === 'error' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`
+            }}>
+              {notification.type === 'error' ? '⚠️' : '✅'}
+            </div>
+            <div>
+              <div style={{ color: notification.type === 'error' ? '#991B1B' : '#065F46', fontWeight: '800', fontSize: '14px', marginBottom: '2px' }}>
+                {notification.type === 'error' ? 'Validation Error' : 'Error'}
+              </div>
+              <div style={{ color: notification.type === 'error' ? '#B91C1C' : '#059669', fontSize: '13px', fontWeight: '500' }}>
+                {notification.message}
+              </div>
+            </div>
+            <button 
+              onClick={() => setNotification(null)}
+              style={{
+                marginLeft: 'auto',
+                background: 'none',
+                border: 'none',
+                color: notification.type === 'error' ? '#B91C1C' : '#059669',
+                cursor: 'pointer',
+                fontSize: '1.2rem',
+                opacity: 0.5,
+                transition: 'opacity 0.2s'
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.opacity = '1')}
+              onMouseOut={(e) => (e.currentTarget.style.opacity = '0.5')}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       <h1 className="form-title" style={{
         textAlign: 'center',
         margin: '0 0 20px 0',

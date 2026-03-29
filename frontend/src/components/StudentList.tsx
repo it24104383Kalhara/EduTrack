@@ -189,6 +189,14 @@ const StudentList: React.FC<StudentListProps> = () => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [deletingStudentId, setDeletingStudentId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   useEffect(() => {
     fetchStudents();
@@ -243,6 +251,19 @@ const StudentList: React.FC<StudentListProps> = () => {
   };
 
   const handleUpdateStudent = async (updatedStudent: Student) => {
+    // NEW: Validation before update
+    if (!/^\d{10}$/.test(updatedStudent.parent_phone)) {
+      setNotification({ message: 'Parent phone number must be exactly 10 digits.', type: 'error' });
+      return;
+    }
+
+    if (updatedStudent.parent_email && 
+        String(updatedStudent.parent_email).trim() !== '' && 
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(updatedStudent.parent_email).trim())) {
+      setNotification({ message: 'Please enter a valid email address.', type: 'error' });
+      return;
+    }
+
     try {
       console.log('Updating student:', updatedStudent);
       console.log('Original date_of_birth:', updatedStudent.date_of_birth);
@@ -308,13 +329,13 @@ const StudentList: React.FC<StudentListProps> = () => {
       setEditingStudent(updatedStudentData);
 
       // Show success message
-      alert('Student updated successfully in database!');
+      setNotification({ message: 'Student information updated successfully!', type: 'success' });
 
     } catch (error: any) {
       console.error('Error updating student:', error);
 
       // Show specific error message
-      alert('Failed to update student in database: ' + error.message);
+      setNotification({ message: 'Failed to update student: ' + error.message, type: 'error' });
 
       // Keep the current student data in the list
       setStudents(prevStudents =>
@@ -338,7 +359,7 @@ const StudentList: React.FC<StudentListProps> = () => {
         })
         .catch(error => {
           console.error('Error deleting student:', error);
-          alert('Failed to delete student. Please try again.');
+          setNotification({ message: 'Failed to delete student. Please try again.', type: 'error' });
         });
 
       setShowDeleteModal(false);
@@ -2106,7 +2127,70 @@ const StudentList: React.FC<StudentListProps> = () => {
         )}
       </div>
 
-      {/* Edit Modal */}
+      {/* Custom Notification Toast */}
+      {notification && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          zIndex: 10000,
+          animation: 'slideInRight 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55)',
+          maxWidth: '400px'
+        }}>
+          <div style={{
+            background: notification.type === 'error' 
+              ? 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)' 
+              : 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
+            border: `1px solid ${notification.type === 'error' ? '#FECACA' : '#A7F3D0'}`,
+            borderRadius: '16px',
+            padding: '16px 20px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '12px',
+              background: notification.type === 'error' ? '#EF4444' : '#10B981',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '1.2rem',
+              boxShadow: `0 4px 12px ${notification.type === 'error' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`
+            }}>
+              {notification.type === 'error' ? '⚠️' : '✅'}
+            </div>
+            <div>
+              <div style={{ color: notification.type === 'error' ? '#991B1B' : '#065F46', fontWeight: '800', fontSize: '14px', marginBottom: '2px' }}>
+                {notification.type === 'error' ? 'Validation Error' : 'Success'}
+              </div>
+              <div style={{ color: notification.type === 'error' ? '#B91C1C' : '#059669', fontSize: '13px', fontWeight: '500' }}>
+                {notification.message}
+              </div>
+            </div>
+            <button 
+              onClick={() => setNotification(null)}
+              style={{
+                marginLeft: 'auto',
+                background: 'none',
+                border: 'none',
+                color: notification.type === 'error' ? '#B91C1C' : '#059669',
+                cursor: 'pointer',
+                fontSize: '1.2rem',
+                opacity: 0.5,
+                transition: 'opacity 0.2s'
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.opacity = '1')}
+              onMouseOut={(e) => (e.currentTarget.style.opacity = '0.5')}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
       {showEditModal && editingStudent && (
         <div style={{
           position: 'fixed',
@@ -2501,7 +2585,11 @@ const StudentList: React.FC<StudentListProps> = () => {
                     <input
                       type="text"
                       value={editingStudent.parent_phone}
-                      onChange={(e) => setEditingStudent({ ...editingStudent, parent_phone: e.target.value })}
+                      onChange={(e) => {
+                        const onlyNums = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                        setEditingStudent({ ...editingStudent, parent_phone: onlyNums });
+                      }}
+                      placeholder="e.g. 0771234567"
                       style={{
                         width: '100%',
                         padding: '10px',
@@ -2794,6 +2882,16 @@ const StudentList: React.FC<StudentListProps> = () => {
           to {
             opacity: 1;
             transform: translateY(0);
+          }
+        }
+        @keyframes slideInRight {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
           }
         }
       `}</style>
