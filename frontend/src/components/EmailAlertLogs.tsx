@@ -44,24 +44,35 @@ const EmailAlertLogs: React.FC = () => {
         student_name: search
       };
 
-      console.log('Fetching email logs via emailAlertsApi...', params);
-      const data = await emailAlertsApi.getLogs(params);
-      console.log('Email logs received:', data);
+      console.log('Fetching email logs and statistics...', params);
+      
+      // Fetch both logs and statistics in parallel for a true refresh
+      const [logsData, statsData] = await Promise.all([
+        emailAlertsApi.getLogs(params),
+        emailAlertsApi.getStatistics()
+      ]);
 
-      if (data) {
-        setLogs(data.logs);
-        setCurrentPage(data.pagination.current_page);
-        setTotalPages(data.pagination.total_pages);
-        setTotal(data.pagination.total);
-        if (data.statistics) {
-          setStatistics(data.statistics);
+      if (logsData) {
+        setLogs(logsData.logs);
+        setCurrentPage(logsData.pagination.current_page);
+        setTotalPages(logsData.pagination.total_pages);
+        setTotal(logsData.pagination.total);
+        
+        if (statsData) {
+           // Mapping statistics from backend response structure
+           setStatistics({
+             total_sent: statsData.summary?.total_sent || 0,
+             total_failed: statsData.summary?.total_failed || 0,
+             success_rate: statsData.summary?.success_rate || 0,
+             total_students: statsData.summary?.total_students || 0
+           });
         }
       } else {
         setError('Failed to fetch email logs');
       }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch email logs');
-      console.error('Error fetching email logs:', err);
+      console.error('Error fetching email data:', err);
     } finally {
       setLoading(false);
     }
@@ -204,11 +215,12 @@ const EmailAlertLogs: React.FC = () => {
                 Download PDF
               </button>
               <button
-                onClick={() => fetchLogs(currentPage, statusFilter, searchTerm)}
+                onClick={() => fetchLogs(1, statusFilter, searchTerm)}
                 className="flex items-center px-4 py-2 text-sm bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg shadow hover:shadow-md transform hover:scale-105 transition-all duration-200 font-semibold"
+                disabled={loading}
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
+                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                {loading ? 'Refreshing...' : 'Refresh'}
               </button>
             </div>
           </div>
@@ -254,51 +266,51 @@ const EmailAlertLogs: React.FC = () => {
 
         {/* Statistics Cards */}
         {statistics && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl shadow-md p-2.5 text-white transform hover:scale-105 transition-all duration-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-100 font-medium">Total Sent</p>
-                  <p className="text-3xl font-bold mt-1">{statistics.total_sent || 0}</p>
+                  <p className="text-purple-100 text-[9px] font-bold uppercase tracking-widest opacity-80">Total Sent</p>
+                  <p className="text-lg font-black leading-tight mt-0.5">{statistics.total_sent || 0}</p>
                 </div>
-                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
-                  <Mail className="w-8 h-8 text-white" />
+                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <Mail className="w-4 h-4 text-white" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-200">
+            <div className="bg-gradient-to-br from-red-500 to-pink-600 rounded-xl shadow-md p-2.5 text-white transform hover:scale-105 transition-all duration-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-red-100 font-medium">Failed</p>
-                  <p className="text-3xl font-bold mt-1">{statistics.total_failed || 0}</p>
+                  <p className="text-red-100 text-[9px] font-bold uppercase tracking-widest opacity-80">Failed</p>
+                  <p className="text-lg font-black leading-tight mt-0.5">{statistics.total_failed || 0}</p>
                 </div>
-                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
-                  <AlertTriangle className="w-8 h-8 text-white" />
+                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <AlertTriangle className="w-4 h-4 text-white" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-200">
+            <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl shadow-md p-2.5 text-white transform hover:scale-105 transition-all duration-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-violet-100 font-medium">Success Rate</p>
-                  <p className="text-3xl font-bold mt-1">{statistics.success_rate || 0}%</p>
+                  <p className="text-violet-100 text-[9px] font-bold uppercase tracking-widest opacity-80">Success Rate</p>
+                  <p className="text-lg font-black leading-tight mt-0.5">{statistics.success_rate || 0}%</p>
                 </div>
-                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
-                  <TrendingUp className="w-8 h-8 text-white" />
+                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <TrendingUp className="w-4 h-4 text-white" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-200">
+            <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl shadow-md p-2.5 text-white transform hover:scale-105 transition-all duration-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-100 font-medium">Students</p>
-                  <p className="text-3xl font-bold mt-1">{statistics.total_students || 0}</p>
+                  <p className="text-purple-100 text-[9px] font-bold uppercase tracking-widest opacity-80">Students</p>
+                  <p className="text-lg font-black leading-tight mt-0.5">{statistics.total_students || 0}</p>
                 </div>
-                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
-                  <Users className="w-8 h-8 text-white" />
+                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <Users className="w-4 h-4 text-white" />
                 </div>
               </div>
             </div>
@@ -309,10 +321,10 @@ const EmailAlertLogs: React.FC = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-2xl shadow-xl p-6">
+          <div className="bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl shadow-md p-2 px-4 mb-4">
             <div className="flex items-center">
-              <AlertCircle className="w-6 h-6 mr-3" />
-              <span className="font-semibold">{error}</span>
+              <AlertCircle className="w-4 h-4 mr-2" />
+              <span className="text-xs font-bold">{error}</span>
             </div>
           </div>
         )}
@@ -450,9 +462,10 @@ const EmailAlertLogs: React.FC = () => {
               <button
                 onClick={clearFilters}
                 className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 font-bold"
+                disabled={loading}
               >
-                <RefreshCw className="w-5 h-5 mr-2" />
-                Clear Filters
+                <RefreshCw className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                {loading ? 'Clearing...' : 'Clear Filters'}
               </button>
             )}
           </div>

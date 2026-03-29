@@ -192,25 +192,25 @@ const StudentResults: React.FC = () => {
                   ) : (
                     <div>
                       {/* Summary Cards */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                        <div style={{ background: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', textAlign: 'center', border: '1px solid #E5E7EB' }}>
-                          <div style={{ fontSize: '12px', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Rank</div>
-                          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#633194' }}>{selectedStudentResult.rank}</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px', marginBottom: '20px' }}>
+                        <div style={{ background: 'white', padding: '10px 14px', borderRadius: '10px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', textAlign: 'center', border: '1px solid #E5E7EB' }}>
+                          <div style={{ fontSize: '10px', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px', fontWeight: 700 }}>Rank</div>
+                          <div style={{ fontSize: '18px', fontWeight: '900', color: '#633194' }}>{selectedStudentResult.rank}</div>
                         </div>
 
-                        <div style={{ background: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', textAlign: 'center', border: '1px solid #E5E7EB' }}>
-                          <div style={{ fontSize: '12px', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Total Marks</div>
-                          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10B981' }}>{selectedStudentResult.result.total_marks_obtained}</div>
+                        <div style={{ background: 'white', padding: '10px 14px', borderRadius: '10px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', textAlign: 'center', border: '1px solid #E5E7EB' }}>
+                          <div style={{ fontSize: '10px', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px', fontWeight: 700 }}>Total Marks</div>
+                          <div style={{ fontSize: '18px', fontWeight: '900', color: '#10B981' }}>{selectedStudentResult.result.total_marks_obtained}</div>
                         </div>
 
-                        <div style={{ background: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', textAlign: 'center', border: '1px solid #E5E7EB' }}>
-                          <div style={{ fontSize: '12px', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Percentage</div>
-                          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3B82F6' }}>{selectedStudentResult.result.overall_percentage.toFixed(1)}%</div>
+                        <div style={{ background: 'white', padding: '10px 14px', borderRadius: '10px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', textAlign: 'center', border: '1px solid #E5E7EB' }}>
+                          <div style={{ fontSize: '10px', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px', fontWeight: 700 }}>Percentage</div>
+                          <div style={{ fontSize: '18px', fontWeight: '900', color: '#3B82F6' }}>{selectedStudentResult.result.overall_percentage.toFixed(1)}%</div>
                         </div>
 
-                        <div style={{ background: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', textAlign: 'center', border: '1px solid #E5E7EB' }}>
-                          <div style={{ fontSize: '12px', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Class Average</div>
-                          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#F59E0B' }}>{selectedStudentResult.class_average.toFixed(1)}%</div>
+                        <div style={{ background: 'white', padding: '10px 14px', borderRadius: '10px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', textAlign: 'center', border: '1px solid #E5E7EB' }}>
+                          <div style={{ fontSize: '10px', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px', fontWeight: 700 }}>Class Average</div>
+                          <div style={{ fontSize: '18px', fontWeight: '900', color: '#F59E0B' }}>{selectedStudentResult.class_average.toFixed(1)}%</div>
                         </div>
                       </div>
 

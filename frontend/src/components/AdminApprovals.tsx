@@ -204,16 +204,16 @@ const AdminApprovals: React.FC = () => {
               style={{
                 background: '#FFFFFF', borderRadius: '18px',
                 boxShadow: '0 2px 12px rgba(99,49,148,0.06)', border: '1px solid #EDE9FE',
-                padding: '22px 28px', display: 'flex', alignItems: 'center', gap: '20px',
+                padding: '12px 18px', display: 'flex', alignItems: 'center', gap: '16px',
                 animationDelay: `${idx * 0.06}s`
               }}
             >
               {/* Avatar */}
               <div style={{
-                width: '52px', height: '52px', minWidth: '52px', borderRadius: '14px',
+                width: '40px', height: '40px', minWidth: '40px', borderRadius: '12px',
                 background: 'linear-gradient(135deg,#633194,#4B2380)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#FFFFFF', fontWeight: 800, fontSize: '20px',
+                color: '#FFFFFF', fontWeight: 800, fontSize: '18px',
                 boxShadow: '0 4px 12px rgba(99,49,148,0.3)'
               }}>
                 {u.username.charAt(0).toUpperCase()}

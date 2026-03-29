@@ -145,7 +145,7 @@ const TeacherManagement: React.FC = () => {
         .teacher-card {
           background: #FFFFFF;
           border-radius: 16px;
-          padding: 24px;
+          padding: 16px;
           box-shadow: 0 4px 12px rgba(99, 49, 148, 0.04);
           border: 1px solid #F3F4F6;
           transition: transform 0.2s, box-shadow 0.2s;
@@ -199,10 +199,10 @@ const TeacherManagement: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                   <div style={{
-                    width: '48px', height: '48px', borderRadius: '12px',
+                    width: '36px', height: '36px', borderRadius: '10px',
                     background: '#F4F0FF', color: '#633194',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontWeight: 800, fontSize: '18px', border: '1px solid #DDD6FE'
+                    fontWeight: 800, fontSize: '15px', border: '1px solid #DDD6FE'
                   }}>
                     {(teacher.first_name?.[0] || teacher.username[0]).toUpperCase()}
                   </div>
@@ -214,18 +214,18 @@ const TeacherManagement: React.FC = () => {
                           value={editFormData.first_name || ''} 
                           onChange={e => setEditFormData({...editFormData, first_name: e.target.value})}
                           placeholder="First Name"
-                          style={{ width: '120px' }}
+                          style={{ flex: 1, minWidth: '100px' }}
                         />
                         <input 
                           className="input-field" 
                           value={editFormData.last_name || ''} 
                           onChange={e => setEditFormData({...editFormData, last_name: e.target.value})}
                           placeholder="Last Name"
-                          style={{ width: '120px' }}
+                          style={{ flex: 1, minWidth: '100px' }}
                         />
                       </div>
                     ) : (
-                      <h3 style={{ margin: 0, fontSize: '18px', color: '#1F2937', fontWeight: 700 }}>
+                      <h3 style={{ margin: 0, fontSize: '15px', color: '#1F2937', fontWeight: 700 }}>
                         {teacher.first_name || teacher.last_name 
                           ? `${teacher.first_name || ''} ${teacher.last_name || ''}`.trim() 
                           : teacher.username}
@@ -245,24 +245,7 @@ const TeacherManagement: React.FC = () => {
                   </div>
                 </div>
                 
-                {isEditing ? (
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button 
-                      onClick={() => handleSaveEdit(teacher.id)}
-                      disabled={savingId === teacher.id}
-                      style={{ background: '#10B981', color: '#FFF', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600 }}
-                    >
-                      {savingId === teacher.id ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save
-                    </button>
-                    <button 
-                      onClick={handleCancelEdit}
-                      disabled={savingId === teacher.id}
-                      style={{ background: '#F3F4F6', color: '#4B5563', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
+                {isEditing ? null : (
                   <button 
                     onClick={() => handleEditClick(teacher)}
                     style={{ background: '#F4F0FF', color: '#633194', border: '1px solid #DDD6FE', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s' }}
@@ -356,6 +339,29 @@ const TeacherManagement: React.FC = () => {
                   )}
                 </div>
               </div>
+
+              {isEditing && (
+                <div style={{ display: 'flex', gap: '12px', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #E5E7EB', justifyContent: 'flex-end' }}>
+                  <button 
+                    onClick={handleCancelEdit}
+                    disabled={savingId === teacher.id}
+                    style={{ background: '#F3F4F6', color: '#4B5563', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, transition: 'background 0.2s' }}
+                    onMouseOver={e => e.currentTarget.style.background = '#E5E7EB'}
+                    onMouseOut={e => e.currentTarget.style.background = '#F3F4F6'}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={() => handleSaveEdit(teacher.id)}
+                    disabled={savingId === teacher.id}
+                    style={{ background: '#10B981', color: '#FFF', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, boxShadow: '0 4px 10px rgba(16, 185, 129, 0.2)', transition: 'background 0.2s' }}
+                    onMouseOver={e => e.currentTarget.style.background = '#059669'}
+                    onMouseOut={e => e.currentTarget.style.background = '#10B981'}
+                  >
+                    {savingId === teacher.id ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save Changes
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
+import { useAuth } from '../context/AuthContext';
 import {
   Search,
   GraduationCap,
@@ -56,6 +57,18 @@ const GradeManagement: React.FC = () => {
     setValidationError(msg);
     setTimeout(() => setValidationError(null), 5000);
   };
+
+  const { user } = useAuth();
+
+  if (user?.role !== 'admin') {
+    return (
+      <div style={{ padding: '48px 24px', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '12px', padding: '24px', textAlign: 'center', color: '#B91C1C' }}>
+          Restricted Access. Admins only.
+        </div>
+      </div>
+    );
+  }
 
   const fetchGrades = async () => {
     try {
@@ -215,7 +228,7 @@ const GradeManagement: React.FC = () => {
     
     // Validation: Bucket Rule
     if (isAdding && selectedEnrollmentSubject?.category && bucketEnrollments[studentId]) {
-      showValidationError(`Already enrolled in "${bucketEnrollments[studentId]}" for "${selectedEnrollmentSubject.category}" bucket.`);
+      showValidationError(`Student is already enrolled in "${bucketEnrollments[studentId]}" for the "${selectedEnrollmentSubject.category}" bucket. One student can only select one subject per bucket.`);
       return;
     }
 
@@ -831,18 +844,18 @@ const GradeManagement: React.FC = () => {
                     }}>
                       <div style={{ 
                         background: '#FEF2F2', 
-                        border: '1.5px solid #FCA5A5', 
-                        padding: '12px 20px', 
-                        borderRadius: '14px', 
+                        border: '1px solid #FCA5A5', 
+                        padding: '8px 14px', 
+                        borderRadius: '10px', 
                         display: 'flex', 
                         alignItems: 'center', 
-                        gap: '12px',
-                        boxShadow: '0 10px 25px -5px rgba(220, 38, 38, 0.1)'
+                        gap: '10px',
+                        boxShadow: '0 4px 12px rgba(220, 38, 38, 0.08)'
                       }}>
-                        <div style={{ background: '#DC2626', color: 'white', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <AlertTriangle size={14} />
+                        <div style={{ background: '#DC2626', color: 'white', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <AlertTriangle size={10} />
                         </div>
-                        <div style={{ flex: 1, fontSize: '13px', fontWeight: '700', color: '#991B1B' }}>
+                        <div style={{ flex: 1, fontSize: '11px', fontWeight: '700', color: '#991B1B' }}>
                           {validationError}
                         </div>
                         <button 
@@ -872,16 +885,21 @@ const GradeManagement: React.FC = () => {
                         <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#1E293B', margin: 0 }}>Enroll Students for {selectedEnrollmentSubject.name}</h3>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                           <button 
-                            onClick={() => setBulkEnrolledStudentIds(gradeStudentsForBulk.map(s => s.id))}
+                            onClick={() => {
+                              const validIds = gradeStudentsForBulk
+                                .filter(s => !selectedEnrollmentSubject?.category || !bucketEnrollments[s.id])
+                                .map(s => s.id);
+                              setBulkEnrolledStudentIds(validIds);
+                            }}
                             style={{ fontSize: '12px', fontWeight: '700', color: '#633194', background: '#F5F3FF', border: '1px solid #DDD6FE', padding: '8px 16px', borderRadius: '10px', cursor: 'pointer' }}
                           >
-                            Select All
+                            Select All Available
                           </button>
                           <button 
                             onClick={() => setBulkEnrolledStudentIds([])}
                             style={{ fontSize: '12px', fontWeight: '700', color: '#64748B', background: '#F3F4F6', border: '1px solid #E2E8F0', padding: '8px 16px', borderRadius: '10px', cursor: 'pointer' }}
                           >
-                            Clear
+                            Clear All
                           </button>
                           <div style={{ fontSize: '15px', color: '#633194', fontWeight: '700', marginLeft: '8px' }}>
                             {bulkEnrolledStudentIds.length} Selected
@@ -926,8 +944,14 @@ const GradeManagement: React.FC = () => {
                               {bulkEnrolledStudentIds.includes(s.id) ? <Check size={16} /> : s.first_name.charAt(0)}
                             </div>
                             <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: '13px', fontWeight: '700', color: '#1E293B' }}>{s.first_name} {s.last_name}</div>
-                              <div style={{ fontSize: '11px', color: '#64748B' }}>ID: {s.id}</div>
+                              <div style={{ fontSize: '13px', fontWeight: '700', color: bucketEnrollments[s.id] ? '#94A3B8' : '#1E293B' }}>{s.first_name} {s.last_name}</div>
+                              {bucketEnrollments[s.id] ? (
+                                <div style={{ fontSize: '10px', color: '#DC2626', fontWeight: '800', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <AlertTriangle size={10} /> Enrolled: {bucketEnrollments[s.id]}
+                                </div>
+                              ) : (
+                                <div style={{ fontSize: '11px', color: '#64748B' }}>ID: {s.id}</div>
+                              )}
                             </div>
                           </div>
                         ))}
