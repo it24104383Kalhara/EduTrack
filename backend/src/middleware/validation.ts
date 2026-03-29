@@ -118,11 +118,31 @@ export const validateStudentRegistration = (req: Request, res: Response, next: N
   }
   */
 
-  if (!student.first_name || student.first_name.trim() === '') {
-     errors.push({ field: 'first_name', message: 'First name is required' });
+  // Required fields check
+  const requiredFields = ['first_name', 'last_name', 'date_of_birth', 'gender', 'religion', 'ethnicity', 'address', 'nationality', 'parent_type', 'parent_name', 'parent_phone', 'parent_address', 'parent_gender'];
+  
+  for (const field of requiredFields) {
+    if (!student[field as keyof Student] || (typeof student[field as keyof Student] === 'string' && String(student[field as keyof Student]).trim() === '')) {
+      errors.push({
+        field,
+        message: `${field.replace(/_/g, ' ')} is required`
+      });
+    }
   }
-  if (!student.last_name || student.last_name.trim() === '') {
-     errors.push({ field: 'last_name', message: 'Last name is required' });
+
+  // Validate phone number (only digits, exactly 10 chars)
+  if (student.parent_phone && !/^\d{10}$/.test(String(student.parent_phone).trim())) {
+    errors.push({
+      field: 'parent_phone',
+      message: 'Parent phone number must be exactly 10 digits'
+    });
+  }
+
+  if (student.first_name && student.first_name.trim().length < 2) {
+    errors.push({
+      field: 'first_name',
+      message: 'First name must be at least 2 characters long'
+    });
   }
 
   // If there are validation errors, return them

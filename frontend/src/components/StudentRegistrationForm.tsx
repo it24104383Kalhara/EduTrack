@@ -103,15 +103,35 @@ const StudentRegistrationForm: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // Special handling for phone number - only allow exactly 10 digits
+    if (name === 'parent_phone') {
+      const onlyNums = value.replace(/[^0-9]/g, '').slice(0, 10);
+      setFormData(prev => ({
+        ...prev,
+        [name]: onlyNums
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+    
     if (step1Error) setStep1Error(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Final validation check for phone number - must be exactly 10 digits
+    if (!/^\d{10}$/.test(formData.parent_phone)) {
+      setRegistration({
+        success: false,
+        message: 'Parent phone number must be exactly 10 digits.'
+      });
+      return;
+    }
 
     try {
       const newStudent = {
