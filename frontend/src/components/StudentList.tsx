@@ -412,7 +412,7 @@ const StudentList: React.FC<StudentListProps> = () => {
             overflow: hidden;
         }
         .header {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            background: linear-gradient(135deg, #633194 0%, #4B2380 100%);
             color: white;
             padding: 25px;
             border-radius: 16px 16px 0 0;
@@ -423,7 +423,6 @@ const StudentList: React.FC<StudentListProps> = () => {
             margin: 0 0 5px 0;
             font-size: 1.8rem;
             font-weight: 700;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
         .header p {
             margin: 0 0 10px 0;
@@ -631,13 +630,13 @@ const StudentList: React.FC<StudentListProps> = () => {
                 color-adjust: exact !important;
             }
             .section h3 {
-                color: #6366f1 !important;
+                color: #633194 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
             }
             .section.parent h3 {
-                color: #22c55e !important;
+                color: #8B5CF6 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
@@ -670,8 +669,8 @@ const StudentList: React.FC<StudentListProps> = () => {
     <div class="container">
         <div class="details-card">
             <div class="header">
-                <h1>Student Details</h1>
-                <p>Complete Student Information</p>
+                <h1>Student Profile</h1>
+                <p>EduTrack Academic Record</p>
                 <div class="registration-date">
                     📅 Registered: ${student.created_at ? new Date(student.created_at).toLocaleString('en-US', {
       year: 'numeric',
@@ -1118,630 +1117,211 @@ const StudentList: React.FC<StudentListProps> = () => {
             {/* Inline Student Details View */}
             {showInlineDetails && selectedStudent && (
               <div style={{
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)',
-                backdropFilter: 'blur(20px)',
+                background: '#FFFFFF',
                 borderRadius: '24px',
                 padding: '0',
-                border: '1px solid rgba(148, 163, 184, 0.2)',
-                boxShadow: '0 25px 50px rgba(0, 0, 0, 0.1)',
+                border: '1px solid #E5E7EB',
+                boxShadow: '0 25px 50px -12px rgba(99, 49, 148, 0.15)',
                 overflow: 'hidden',
-                animation: 'fadeInUp 0.5s ease-out'
+                animation: 'fadeInUp 0.5s ease-out',
+                marginBottom: '32px'
               }}>
-                {/* Header */}
+                {/* Premium Header */}
                 <div style={{
-                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
                   color: 'white',
-                  padding: '30px',
-                  borderRadius: '24px 24px 0 0',
+                  padding: '40px 30px',
                   textAlign: 'center',
                   position: 'relative'
                 }}>
                   <div style={{
                     position: 'absolute',
-                    top: '15px',
-                    left: '15px',
+                    top: '20px',
+                    left: '20px',
                     display: 'flex',
-                    gap: '10px'
+                    gap: '12px'
                   }}>
                     <button
                       onClick={() => setShowInlineDetails(false)}
                       style={{
-                        background: 'rgba(255, 255, 255, 0.2)',
+                        background: 'rgba(255, 255, 255, 0.15)',
                         color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        padding: '10px 20px',
-                        fontSize: '0.9rem',
-                        fontWeight: '600',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '12px',
+                        padding: '8px 18px',
+                        fontSize: '14px',
+                        fontWeight: '700',
                         cursor: 'pointer',
-                        transition: 'all 0.3s ease',
+                        transition: 'all 0.2s',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px'
+                        gap: '6px'
                       }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                        e.currentTarget.style.transform = 'translateX(-2px)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                        e.currentTarget.style.transform = 'translateX(0)';
-                      }}
+                      onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)')}
+                      onMouseOut={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)')}
                     >
-                      ← Back
+                      ← BACK
                     </button>
                     <button
                       onClick={() => handleDownloadPDF(selectedStudent!)}
                       style={{
-                        background: 'rgba(255, 255, 255, 0.2)',
+                        background: 'rgba(255, 255, 255, 0.15)',
                         color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        padding: '10px 20px',
-                        fontSize: '0.9rem',
-                        fontWeight: '600',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '12px',
+                        padding: '8px 18px',
+                        fontSize: '14px',
+                        fontWeight: '700',
                         cursor: 'pointer',
-                        transition: 'all 0.3s ease',
+                        transition: 'all 0.2s',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px'
+                        gap: '6px'
                       }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                      }}
+                      onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)')}
+                      onMouseOut={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)')}
                     >
-                      📄 Download PDF
+                      📄 PDF REPORT
                     </button>
                   </div>
-                  <button
-                    onClick={() => setShowInlineDetails(false)}
-                    style={{
-                      position: 'absolute',
-                      top: '15px',
-                      right: '15px',
-                      background: 'rgba(255, 255, 255, 0.2)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '50%',
-                      width: '40px',
-                      height: '40px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      fontSize: '24px',
-                      transition: 'all 0.3s ease'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                      e.currentTarget.style.transform = 'scale(1.1)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                      e.currentTarget.style.transform = 'scale(1)';
-                    }}
-                  >
-                    ×
-                  </button>
+                  
                   <h2 style={{
                     margin: '0 0 10px 0',
-                    fontSize: '2rem',
-                    fontWeight: '700',
-                    textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                    fontSize: '32px',
+                    fontWeight: '900',
+                    letterSpacing: '-1px'
                   }}>
-                    Student Details
+                    Student Profile
                   </h2>
-                  <p style={{
-                    margin: '0 0 15px 0',
-                    fontSize: '1.1rem',
-                    opacity: '0.9'
-                  }}>
-                    Complete Student Information
-                  </p>
                   <div style={{
-                    background: 'rgba(255, 255, 255, 0.15)',
-                    padding: '8px 20px',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    padding: '8px 24px',
                     borderRadius: '20px',
-                    fontSize: '1rem',
+                    fontSize: '14px',
                     fontWeight: '600',
                     display: 'inline-block',
-                    backdropFilter: 'blur(10px)'
+                    border: '1px solid rgba(255, 255, 255, 0.2)'
                   }}>
-                    📅 Registered: {selectedStudent.created_at ? new Date(selectedStudent.created_at).toLocaleString('en-US', {
+                    Registered: {selectedStudent.created_at ? new Date(selectedStudent.created_at).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) : 'Not available'}
+                      day: 'numeric'
+                    }) : 'N/A'}
                   </div>
                 </div>
 
-                {/* Student ID Badge */}
-                <div style={{
-                  textAlign: 'center',
-                  margin: '-20px 0 20px 0',
-                  position: 'relative',
-                  zIndex: '10'
-                }}>
+                {/* ID Badge Overlay */}
+                <div style={{ textAlign: 'center', marginTop: '-22px', position: 'relative', zIndex: 10 }}>
                   <div style={{
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
                     color: 'white',
-                    padding: '10px 25px',
-                    borderRadius: '20px',
-                    fontSize: '1rem',
-                    fontWeight: '600',
+                    padding: '10px 32px',
+                    borderRadius: '24px',
+                    fontSize: '16px',
+                    fontWeight: '800',
                     display: 'inline-block',
-                    boxShadow: '0 8px 25px rgba(245, 158, 11, 0.3)',
-                    border: '3px solid white'
+                    boxShadow: '0 10px 25px rgba(217, 119, 6, 0.3)',
+                    border: '4px solid white',
+                    textTransform: 'uppercase'
                   }}>
-                    🎓 Student ID: #{selectedStudent.id}
+                    🎓 REG NO: #{selectedStudent.id}
                   </div>
                 </div>
 
-                {/* Content */}
-                <div style={{ padding: '0 30px 30px 30px' }}>
-                  {/* Student Information Section */}
+                {/* Profile Grid */}
+                <div style={{ padding: '30px 40px 40px', display: 'grid', gap: '32px' }}>
+                  
+                  {/* General Info */}
                   <div style={{
-                    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)',
-                    padding: '25px',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(99, 102, 241, 0.1)',
-                    marginBottom: '25px'
+                    background: '#F9FAFB',
+                    padding: '30px',
+                    borderRadius: '20px',
+                    border: '1px solid #F3F4F6'
                   }}>
                     <h3 style={{
-                      color: '#6366f1',
-                      fontSize: '1.3rem',
-                      fontWeight: '700',
-                      margin: '0 0 20px 0',
+                      color: '#633194',
+                      fontSize: '18px',
+                      fontWeight: '800',
+                      margin: '0 0 24px 0',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '10px'
+                      gap: '12px'
                     }}>
-                      <span style={{ fontSize: '1.5rem' }}>👤</span>
-                      Student Information
+                      <span style={{ fontSize: '24px' }}>👤</span>
+                      Personal Information
                     </h3>
 
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                      gap: '20px'
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                      gap: '24px'
                     }}>
-                      <div style={{
-                        background: 'white',
-                        padding: '15px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(99, 102, 241, 0.1)'
-                      }}>
-                        <div style={{
-                          color: '#64748b',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          marginBottom: '5px',
-                          textTransform: 'uppercase'
+                      {[
+                        { label: 'Full Name', value: `${selectedStudent.first_name} ${selectedStudent.last_name}` },
+                        { label: 'Date of Birth', value: calculateAge(selectedStudent.date_of_birth) ? `${selectedStudent.date_of_birth} (${calculateAge(selectedStudent.date_of_birth)})` : selectedStudent.date_of_birth },
+                        { label: 'Gender', value: selectedStudent.gender },
+                        { label: 'Religion', value: selectedStudent.religion },
+                        { label: 'Ethnicity', value: selectedStudent.ethnicity || 'Not specified' },
+                        { label: 'Nationality', value: selectedStudent.nationality },
+                        { label: 'Home Address', value: selectedStudent.address, full: true }
+                      ].map((info, i) => (
+                        <div key={i} style={{ 
+                          background: 'white', 
+                          padding: '16px', 
+                          borderRadius: '16px', 
+                          border: '1px solid #F3F4F6',
+                          gridColumn: info.full ? '1 / -1' : 'auto'
                         }}>
-                          Full Name
+                          <div style={{ color: '#6B7280', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '6px' }}>{info.label}</div>
+                          <div style={{ color: '#1E1B4B', fontSize: '15px', fontWeight: '700' }}>{info.value}</div>
                         </div>
-                        <div style={{
-                          color: '#1e293b',
-                          fontSize: '1.1rem',
-                          fontWeight: '600'
-                        }}>
-                          {selectedStudent.first_name} {selectedStudent.last_name}
-                        </div>
-                      </div>
-
-                      <div style={{
-                        background: 'white',
-                        padding: '15px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(99, 102, 241, 0.1)'
-                      }}>
-                        <div style={{
-                          color: '#64748b',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          marginBottom: '5px',
-                          textTransform: 'uppercase'
-                        }}>
-                          Date of Birth
-                        </div>
-                        <div style={{
-                          color: '#1e293b',
-                          fontSize: '1.1rem',
-                          fontWeight: '600'
-                        }}>
-                          {(() => {
-                            // Handle timezone issue for selected student details
-                            let dateInput: any = selectedStudent.date_of_birth;
-                            let dateStr: string;
-
-                            // If it's a Date object (with timezone), convert to local date string
-                            if (dateInput instanceof Date) {
-                              const pad = (n: number) => String(n).padStart(2, '0');
-                              const year = dateInput.getFullYear();
-                              const month = dateInput.getMonth() + 1;
-                              const day = dateInput.getDate();
-                              dateStr = `${year}-${pad(month)}-${pad(day)}`;
-                            }
-                            // If it's an ISO string with timezone, extract local date
-                            else if (typeof dateInput === 'string' && dateInput.includes('T')) {
-                              const localDate = new Date(dateInput);
-                              const pad = (n: number) => String(n).padStart(2, '0');
-                              const year = localDate.getFullYear();
-                              const month = localDate.getMonth() + 1;
-                              const day = localDate.getDate();
-                              dateStr = `${year}-${pad(month)}-${pad(day)}`;
-                            }
-                            else {
-                              dateStr = String(dateInput);
-                            }
-
-                            if (!dateStr || dateStr === 'Invalid Date') return 'Not specified';
-
-                            // If it's already a string in YYYY-MM-DD format, format it nicely
-                            if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                              const [year, month, day] = dateStr.split('-');
-                              const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                              const formattedDate = `${monthNames[parseInt(month) - 1]} ${parseInt(day)}, ${year}`;
-                              const ageStr = calculateAge(dateStr);
-                              return ageStr ? `${formattedDate} (${ageStr})` : formattedDate;
-                            }
-
-                            // Fallback for any other format
-                            return dateStr;
-                          })()}
-                        </div>
-                      </div>
-
-                      <div style={{
-                        background: 'white',
-                        padding: '15px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(99, 102, 241, 0.1)'
-                      }}>
-                        <div style={{
-                          color: '#64748b',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          marginBottom: '5px',
-                          textTransform: 'uppercase'
-                        }}>
-                          Gender
-                        </div>
-                        <div style={{
-                          color: '#1e293b',
-                          fontSize: '1.1rem',
-                          fontWeight: '600'
-                        }}>
-                          {selectedStudent.gender.charAt(0).toUpperCase() + selectedStudent.gender.slice(1)}
-                        </div>
-                      </div>
-
-                      <div style={{
-                        background: 'white',
-                        padding: '15px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(99, 102, 241, 0.1)'
-                      }}>
-                        <div style={{
-                          color: '#64748b',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          marginBottom: '5px',
-                          textTransform: 'uppercase'
-                        }}>
-                          Religion
-                        </div>
-                        <div style={{
-                          color: '#1e293b',
-                          fontSize: '1.1rem',
-                          fontWeight: '600'
-                        }}>
-                          {selectedStudent.religion}
-                        </div>
-                      </div>
-
-                      <div style={{
-                        background: 'white',
-                        padding: '15px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(99, 102, 241, 0.1)'
-                      }}>
-                        <div style={{
-                          color: '#64748b',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          marginBottom: '5px',
-                          textTransform: 'uppercase'
-                        }}>
-                          Ethnicity
-                        </div>
-                        <div style={{
-                          color: '#1e293b',
-                          fontSize: '1.1rem',
-                          fontWeight: '600'
-                        }}>
-                          {selectedStudent.ethnicity || 'Not specified'}
-                        </div>
-                      </div>
-
-                      <div style={{
-                        background: 'white',
-                        padding: '15px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(99, 102, 241, 0.1)'
-                      }}>
-                        <div style={{
-                          color: '#64748b',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          marginBottom: '5px',
-                          textTransform: 'uppercase'
-                        }}>
-                          Nationality
-                        </div>
-                        <div style={{
-                          color: '#1e293b',
-                          fontSize: '1.1rem',
-                          fontWeight: '600'
-                        }}>
-                          {selectedStudent.nationality}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{
-                      background: 'white',
-                      padding: '15px',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(99, 102, 241, 0.1)',
-                      marginTop: '20px'
-                    }}>
-                      <div style={{
-                        color: '#64748b',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        marginBottom: '5px',
-                        textTransform: 'uppercase'
-                      }}>
-                        Address
-                      </div>
-                      <div style={{
-                        color: '#1e293b',
-                        fontSize: '1.1rem',
-                        fontWeight: '600',
-                        lineHeight: '1.5'
-                      }}>
-                        {selectedStudent.address}
-                      </div>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Parent Information Section */}
+                  {/* Parent Info */}
                   <div style={{
-                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%)',
-                    padding: '25px',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(34, 197, 94, 0.1)'
+                    background: '#F5F3FF',
+                    padding: '30px',
+                    borderRadius: '20px',
+                    border: '1px solid #EDE9FE'
                   }}>
                     <h3 style={{
-                      color: '#22c55e',
-                      fontSize: '1.3rem',
-                      fontWeight: '700',
-                      margin: '0 0 20px 0',
+                      color: '#8B5CF6',
+                      fontSize: '18px',
+                      fontWeight: '800',
+                      margin: '0 0 24px 0',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '10px'
+                      gap: '12px'
                     }}>
-                      <span style={{ fontSize: '1.5rem' }}>👨‍👩‍👧‍👦</span>
-                      Parent/Guardian Information
+                      <span style={{ fontSize: '24px' }}>👨‍👩‍👧‍👦</span>
+                      Guardian Information
                     </h3>
 
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                      gap: '20px'
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                      gap: '24px'
                     }}>
-                      <div style={{
-                        background: 'white',
-                        padding: '15px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(34, 197, 94, 0.1)'
-                      }}>
-                        <div style={{
-                          color: '#64748b',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          marginBottom: '5px',
-                          textTransform: 'uppercase'
+                      {[
+                        { label: 'Relation', value: selectedStudent.parent_type },
+                        { label: 'Guardian Name', value: selectedStudent.parent_name },
+                        { label: 'Contact Phone', value: selectedStudent.parent_phone },
+                        { label: 'Email Address', value: selectedStudent.parent_email || 'Not provided' },
+                        { label: 'Residential Address', value: selectedStudent.parent_address, full: true }
+                      ].map((info, i) => (
+                        <div key={i} style={{ 
+                          background: 'white', 
+                          padding: '16px', 
+                          borderRadius: '16px', 
+                          border: '1px solid #EDE9FE',
+                          gridColumn: info.full ? '1 / -1' : 'auto'
                         }}>
-                          Parent Type
+                          <div style={{ color: '#7C3AED', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '6px', opacity: 0.7 }}>{info.label}</div>
+                          <div style={{ color: '#1E1B4B', fontSize: '15px', fontWeight: '700' }}>{info.value}</div>
                         </div>
-                        <div style={{
-                          color: '#1e293b',
-                          fontSize: '1.1rem',
-                          fontWeight: '600'
-                        }}>
-                          {selectedStudent.parent_type.charAt(0).toUpperCase() + selectedStudent.parent_type.slice(1)}
-                        </div>
-                      </div>
-
-                      <div style={{
-                        background: 'white',
-                        padding: '15px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(34, 197, 94, 0.1)'
-                      }}>
-                        <div style={{
-                          color: '#64748b',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          marginBottom: '5px',
-                          textTransform: 'uppercase'
-                        }}>
-                          Parent Name
-                        </div>
-                        <div style={{
-                          color: '#1e293b',
-                          fontSize: '1.1rem',
-                          fontWeight: '600'
-                        }}>
-                          {selectedStudent.parent_name}
-                        </div>
-                      </div>
-
-                      <div style={{
-                        background: 'white',
-                        padding: '15px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(34, 197, 94, 0.1)'
-                      }}>
-                        <div style={{
-                          color: '#64748b',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          marginBottom: '5px',
-                          textTransform: 'uppercase'
-                        }}>
-                          Parent Phone
-                        </div>
-                        <div style={{
-                          color: '#1e293b',
-                          fontSize: '1.1rem',
-                          fontWeight: '600'
-                        }}>
-                          {selectedStudent.parent_phone}
-                        </div>
-                      </div>
-
-
-                      <div style={{
-                        background: 'white',
-                        padding: '15px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(34, 197, 94, 0.1)'
-                      }}>
-                        <div style={{
-                          color: '#64748b',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          marginBottom: '5px',
-                          textTransform: 'uppercase'
-                        }}>
-                          Parent Email
-                        </div>
-                        <div style={{
-                          color: '#1e293b',
-                          fontSize: '1.1rem',
-                          fontWeight: '600'
-                        }}>
-                          {selectedStudent.parent_email || 'Not provided'}
-                        </div>
-                      </div>
-
-                      <div style={{
-                        background: 'white',
-                        padding: '15px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(34, 197, 94, 0.1)'
-                      }}>
-                        <div style={{
-                          color: '#64748b',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          marginBottom: '5px',
-                          textTransform: 'uppercase'
-                        }}>
-                          Parent Religion
-                        </div>
-                        <div style={{
-                          color: '#1e293b',
-                          fontSize: '1.1rem',
-                          fontWeight: '600'
-                        }}>
-                          {selectedStudent.parent_religion}
-                        </div>
-                      </div>
-
-                      <div style={{
-                        background: 'white',
-                        padding: '15px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(34, 197, 94, 0.1)'
-                      }}>
-                        <div style={{
-                          color: '#64748b',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          marginBottom: '5px',
-                          textTransform: 'uppercase'
-                        }}>
-                          Parent Ethnicity
-                        </div>
-                        <div style={{
-                          color: '#1e293b',
-                          fontSize: '1.1rem',
-                          fontWeight: '600'
-                        }}>
-                          {selectedStudent.parent_ethnicity || 'Not specified'}
-                        </div>
-                      </div>
-
-                      <div style={{
-                        background: 'white',
-                        padding: '15px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(34, 197, 94, 0.1)'
-                      }}>
-                        <div style={{
-                          color: '#64748b',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          marginBottom: '5px',
-                          textTransform: 'uppercase'
-                        }}>
-                          Parent Nationality
-                        </div>
-                        <div style={{
-                          color: '#1e293b',
-                          fontSize: '1.1rem',
-                          fontWeight: '600'
-                        }}>
-                          {selectedStudent.parent_nationality}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{
-                      background: 'white',
-                      padding: '15px',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(34, 197, 94, 0.1)',
-                      marginTop: '20px'
-                    }}>
-                      <div style={{
-                        color: '#64748b',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        marginBottom: '5px',
-                        textTransform: 'uppercase'
-                      }}>
-                        Parent Address
-                      </div>
-                      <div style={{
-                        color: '#1e293b',
-                        fontSize: '1.1rem',
-                        fontWeight: '600',
-                        lineHeight: '1.5'
-                      }}>
-                        {selectedStudent.parent_address}
-                      </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -2191,561 +1771,473 @@ const StudentList: React.FC<StudentListProps> = () => {
           </div>
         </div>
       )}
+
+      {/* Redesigned Edit Student Modal - Project Sync */}
       {showEditModal && editingStudent && (
         <div style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.7)',
+          inset: 0,
+          backgroundColor: 'rgba(30, 27, 75, 0.4)',
+          backdropFilter: 'blur(10px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: '2000'
+          zIndex: 2500,
+          padding: '24px',
+          animation: 'fadeIn 0.3s ease-out'
         }}>
           <div style={{
-            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
-            backdropFilter: 'blur(20px)',
+            background: '#FFFFFF',
             borderRadius: '24px',
-            padding: '40px',
-            maxWidth: '600px',
-            width: '90%',
-            maxHeight: '80vh',
-            overflowY: 'auto',
-            border: '1px solid rgba(148, 163, 184, 0.2)',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)'
+            width: '100%',
+            maxWidth: '1000px',
+            maxHeight: '94vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            boxShadow: '0 25px 50px -12px rgba(99, 49, 148, 0.25)',
+            border: '1px solid #E5E7EB',
+            position: 'relative'
           }}>
-            <h2 style={{
-              color: '#f1f5f9',
-              fontSize: '1.8rem',
-              fontWeight: '700',
-              margin: '0 0 30px 0',
-              textAlign: 'center'
+            {/* Professional Header */}
+            <div style={{
+              padding: '24px 40px',
+              background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
+              color: 'white',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              boxShadow: '0 4px 12px rgba(99, 49, 148, 0.15)'
             }}>
-              Edit Student Information
-            </h2>
+              <div>
+                <h2 style={{
+                  fontSize: '24px',
+                  fontWeight: 800,
+                  margin: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}>
+                  <span style={{ fontSize: '28px' }}>👤</span>
+                  Edit Student Profile
+                </h2>
+                <p style={{ color: 'rgba(255, 255, 255, 0.7)', margin: '4px 0 0', fontSize: '13px', fontWeight: 500 }}>
+                  ID: #{editingStudent.id} • Registered Student Record
+                </p>
+              </div>
+              <button 
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingStudent(null);
+                }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: 'none',
+                  color: 'white',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)')}
+                onMouseOut={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)')}
+              >
+                ×
+              </button>
+            </div>
 
-            <div style={{ display: 'grid', gap: '20px', maxHeight: '60vh', overflowY: 'auto', paddingRight: '10px' }}>
-              {/* Student Details Section */}
-              <div style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-                <h3 style={{ color: '#6366f1', fontSize: '1.1rem', fontWeight: '700', margin: '0 0 15px 0' }}>Student Details</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.first_name}
-                      onChange={(e) => setEditingStudent({ ...editingStudent, first_name: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
+            {/* Form Content - High Density Scrollable */}
+            <div style={{
+              padding: '32px 40px',
+              overflowY: 'auto',
+              flex: 1,
+              background: '#F9FAFB'
+            }}>
+              {/* Information Cards */}
+              <div style={{ display: 'grid', gap: '32px' }}>
+                
+                {/* SECTION 1: STUDENT INFORMATION */}
+                <div style={{
+                  background: 'white',
+                  borderRadius: '20px',
+                  padding: '24px',
+                  border: '1px solid #F3F4F6',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
+                    <div style={{ width: '4px', height: '20px', background: '#633194', borderRadius: '4px' }}></div>
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1E1B4B', margin: 0 }}>Student Information</h3>
                   </div>
 
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.last_name}
-                      onChange={(e) => setEditingStudent({ ...editingStudent, last_name: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>First Name</label>
+                      <input
+                        type="text"
+                        value={editingStudent.first_name}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, first_name: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '12px',
+                          border: '1px solid #E5E7EB',
+                          background: '#FFFFFF',
+                          color: '#1E1B4B',
+                          fontSize: '14px',
+                          outline: 'none',
+                          transition: 'border-color 0.2s'
+                        }}
+                        onFocus={(e) => (e.target.style.borderColor = '#633194')}
+                        onBlur={(e) => (e.target.style.borderColor = '#E5E7EB')}
+                      />
+                    </div>
 
-                  <div>
-                    <label style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', fontSize: '14px', color: '#94a3b8', fontWeight: '600', gap: '8px' }}>
-                      Date of Birth
-                      {editingStudent.date_of_birth && !isNaN(parseLocalDateSafe(editingStudent.date_of_birth).getTime()) && (() => {
-                        const dob = parseLocalDateSafe(editingStudent.date_of_birth);
-                        const diffMs = Date.now() - dob.getTime();
-                        const age = diffMs >= 0 ? Math.abs(new Date(diffMs).getUTCFullYear() - 1970) : 0;
-                        return (
-                          <span style={{ 
-                            fontSize: '11px', 
-                            background: 'rgba(99, 102, 241, 0.2)', 
-                            color: '#818cf8', 
-                            padding: '2px 8px', 
-                            borderRadius: '10px', 
-                            fontWeight: '700' 
-                          }}>
-                            {age} yrs
-                          </span>
-                        );
-                      })()}
-                    </label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <select
-                        value={(() => {
-                          if (!editingStudent.date_of_birth) return '';
-                          const date = parseLocalDateSafe(editingStudent.date_of_birth);
-                          return isNaN(date.getTime()) ? '' : date.getDate();
-                        })()}
-                        onChange={(e) => {
-                          const day = parseInt(e.target.value);
-                          const currentDate = editingStudent.date_of_birth ? parseLocalDateSafe(editingStudent.date_of_birth) : new Date();
-                          const month = currentDate.getMonth();
-                          const year = currentDate.getFullYear();
-                          const newDate = new Date(year, month, day);
-                          setEditingStudent({ ...editingStudent, date_of_birth: toLocalDateString(newDate) });
-                        }}
-                        required
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Last Name</label>
+                      <input
+                        type="text"
+                        value={editingStudent.last_name}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, last_name: e.target.value })}
                         style={{
-                          flex: '1',
-                          padding: '10px 8px',
-                          border: '2px solid #d1d5db',
-                          borderRadius: '6px',
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '12px',
+                          border: '1px solid #E5E7EB',
+                          background: '#FFFFFF',
+                          color: '#1E1B4B',
                           fontSize: '14px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          backgroundColor: '#ffffff'
+                          outline: 'none',
+                          transition: 'border-color 0.2s'
                         }}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = '#633194';
-                          e.target.style.boxShadow = '0 0 0 3px rgba(99, 49, 148, 0.1)';
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = '#d1d5db';
-                          e.target.style.boxShadow = 'none';
-                        }}
-                      >
-                        <option value="">Day</option>
-                        {Array.from({ length: 31 }, (_, i) => (
-                          <option key={i + 1} value={i + 1}>{i + 1}</option>
-                        ))}
-                      </select>
-                      <select
-                        value={(() => {
-                          if (!editingStudent.date_of_birth) return '';
-                          const date = parseLocalDateSafe(editingStudent.date_of_birth);
-                          return isNaN(date.getTime()) ? '' : date.getMonth() + 1;
-                        })()}
-                        onChange={(e) => {
-                          const month = parseInt(e.target.value) - 1;
-                          const currentDate = editingStudent.date_of_birth ? parseLocalDateSafe(editingStudent.date_of_birth) : new Date();
-                          const day = currentDate.getDate();
-                          const year = currentDate.getFullYear();
-                          const newDate = new Date(year, month, day);
-                          setEditingStudent({ ...editingStudent, date_of_birth: toLocalDateString(newDate) });
-                        }}
-                        required
-                        style={{
-                          flex: '1.5',
-                          padding: '10px 8px',
-                          border: '2px solid #d1d5db',
-                          borderRadius: '6px',
-                          fontSize: '14px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          backgroundColor: '#ffffff'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = '#633194';
-                          e.target.style.boxShadow = '0 0 0 3px rgba(99, 49, 148, 0.1)';
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = '#d1d5db';
-                          e.target.style.boxShadow = 'none';
-                        }}
-                      >
-                        <option value="">Month</option>
-                        <option value="1">January</option>
-                        <option value="2">February</option>
-                        <option value="3">March</option>
-                        <option value="4">April</option>
-                        <option value="5">May</option>
-                        <option value="6">June</option>
-                        <option value="7">July</option>
-                        <option value="8">August</option>
-                        <option value="9">September</option>
-                        <option value="10">October</option>
-                        <option value="11">November</option>
-                        <option value="12">December</option>
-                      </select>
-                      <select
-                        value={(() => {
-                          if (!editingStudent.date_of_birth) return '';
-                          const date = parseLocalDateSafe(editingStudent.date_of_birth);
-                          return isNaN(date.getTime()) ? '' : date.getFullYear();
-                        })()}
-                        onChange={(e) => {
-                          const year = parseInt(e.target.value);
-                          const currentDate = editingStudent.date_of_birth ? parseLocalDateSafe(editingStudent.date_of_birth) : new Date();
-                          const day = currentDate.getDate();
-                          const month = currentDate.getMonth();
-                          const newDate = new Date(year, month, day);
-                          setEditingStudent({ ...editingStudent, date_of_birth: toLocalDateString(newDate) });
-                        }}
-                        required
-                        style={{
-                          flex: '1.2',
-                          padding: '10px 8px',
-                          border: '2px solid #d1d5db',
-                          borderRadius: '6px',
-                          fontSize: '14px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          backgroundColor: '#ffffff'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = '#633194';
-                          e.target.style.boxShadow = '0 0 0 3px rgba(99, 49, 148, 0.1)';
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = '#d1d5db';
-                          e.target.style.boxShadow = 'none';
-                        }}
-                      >
-                        <option value="">Year</option>
-                        {Array.from({ length: 100 }, (_, i) => {
-                          const year = new Date().getFullYear() - i;
+                        onFocus={(e) => (e.target.style.borderColor = '#633194')}
+                        onBlur={(e) => (e.target.style.borderColor = '#E5E7EB')}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>
+                        Date of Birth
+                        {editingStudent.date_of_birth && !isNaN(parseLocalDateSafe(editingStudent.date_of_birth).getTime()) && (() => {
+                          const age = calculateAge(editingStudent.date_of_birth);
                           return (
-                            <option key={year} value={year}>{year}</option>
+                            <span style={{ 
+                              fontSize: '10px', 
+                              background: '#F3F4F6', 
+                              color: '#633194', 
+                              padding: '2px 8px', 
+                              borderRadius: '8px', 
+                              fontWeight: 800,
+                              marginLeft: '8px'
+                            }}>
+                              {age} YEARS OLD
+                            </span>
                           );
-                        })}
+                        })()}
+                      </label>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <select
+                          value={(() => {
+                            if (!editingStudent.date_of_birth) return '';
+                            const date = parseLocalDateSafe(editingStudent.date_of_birth);
+                            return isNaN(date.getTime()) ? '' : date.getDate();
+                          })()}
+                          onChange={(e) => {
+                            const day = parseInt(e.target.value);
+                            const currentDate = editingStudent.date_of_birth ? parseLocalDateSafe(editingStudent.date_of_birth) : new Date();
+                            const month = currentDate.getMonth();
+                            const year = currentDate.getFullYear();
+                            const newDate = new Date(year, month, day);
+                            setEditingStudent({ ...editingStudent, date_of_birth: toLocalDateString(newDate) });
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '12px',
+                            borderRadius: '12px',
+                            border: '1px solid #E5E7EB',
+                            background: '#FFFFFF',
+                            fontSize: '14px'
+                          }}
+                        >
+                          <option value="">Day</option>
+                          {Array.from({ length: 31 }, (_, i) => (
+                            <option key={i + 1} value={i + 1}>{i + 1}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={(() => {
+                            if (!editingStudent.date_of_birth) return '';
+                            const date = parseLocalDateSafe(editingStudent.date_of_birth);
+                            return isNaN(date.getTime()) ? '' : date.getMonth() + 1;
+                          })()}
+                          onChange={(e) => {
+                            const month = parseInt(e.target.value) - 1;
+                            const currentDate = editingStudent.date_of_birth ? parseLocalDateSafe(editingStudent.date_of_birth) : new Date();
+                            const day = currentDate.getDate();
+                            const year = currentDate.getFullYear();
+                            const newDate = new Date(year, month, day);
+                            setEditingStudent({ ...editingStudent, date_of_birth: toLocalDateString(newDate) });
+                          }}
+                          style={{
+                            flex: 1.5,
+                            padding: '12px',
+                            borderRadius: '12px',
+                            border: '1px solid #E5E7EB',
+                            background: '#FFFFFF',
+                            fontSize: '14px'
+                          }}
+                        >
+                          <option value="">Month</option>
+                          {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m, idx) => (
+                            <option key={m} value={idx + 1}>{m}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={(() => {
+                            if (!editingStudent.date_of_birth) return '';
+                            const date = parseLocalDateSafe(editingStudent.date_of_birth);
+                            return isNaN(date.getTime()) ? '' : date.getFullYear();
+                          })()}
+                          onChange={(e) => {
+                            const year = parseInt(e.target.value);
+                            const currentDate = editingStudent.date_of_birth ? parseLocalDateSafe(editingStudent.date_of_birth) : new Date();
+                            const day = currentDate.getDate();
+                            const month = currentDate.getMonth();
+                            const newDate = new Date(year, month, day);
+                            setEditingStudent({ ...editingStudent, date_of_birth: toLocalDateString(newDate) });
+                          }}
+                          style={{
+                            flex: 1.2,
+                            padding: '12px',
+                            borderRadius: '12px',
+                            border: '1px solid #E5E7EB',
+                            background: '#FFFFFF',
+                            fontSize: '14px'
+                          }}
+                        >
+                          <option value="">Year</option>
+                          {Array.from({ length: 100 }, (_, i) => {
+                            const year = new Date().getFullYear() - i;
+                            return <option key={year} value={year}>{year}</option>;
+                          })}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Gender</label>
+                      <select
+                        value={editingStudent.gender}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, gender: e.target.value as 'male' | 'female' | 'other' })}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '12px',
+                          border: '1px solid #E5E7EB',
+                          background: '#FFFFFF',
+                          fontSize: '14px'
+                        }}
+                      >
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
                       </select>
                     </div>
-                  </div>
 
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Gender
-                    </label>
-                    <select
-                      value={editingStudent.gender}
-                      onChange={(e) => setEditingStudent({ ...editingStudent, gender: e.target.value as 'male' | 'female' | 'other' })}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    >
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                    </select>
-                  </div>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Religion</label>
+                      <input
+                        type="text"
+                        value={editingStudent.religion}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, religion: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '12px',
+                          border: '1px solid #E5E7EB',
+                          fontSize: '14px'
+                        }}
+                      />
+                    </div>
 
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Religion
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.religion}
-                      onChange={(e) => setEditingStudent({ ...editingStudent, religion: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Ethnicity</label>
+                      <input
+                        type="text"
+                        value={editingStudent.ethnicity || ''}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, ethnicity: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '12px',
+                          border: '1px solid #E5E7EB',
+                          fontSize: '14px'
+                        }}
+                      />
+                    </div>
 
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Ethnicity
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent?.ethnicity || ''}
-                      onChange={(e) => setEditingStudent({ ...editingStudent, ethnicity: e.target.value })}
-                      placeholder="Enter ethnicity"
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Nationality
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.nationality}
-                      onChange={(e) => setEditingStudent({ ...editingStudent, nationality: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Home Address</label>
+                      <textarea
+                        value={editingStudent.address}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, address: e.target.value })}
+                        rows={2}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '12px',
+                          border: '1px solid #E5E7EB',
+                          fontSize: '14px',
+                          resize: 'none'
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div style={{ marginTop: '15px' }}>
-                  <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                    Address
-                  </label>
-                  <textarea
-                    value={editingStudent.address}
-                    onChange={(e) => setEditingStudent({ ...editingStudent, address: e.target.value })}
-                    rows={2}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      background: 'rgba(15, 23, 42, 0.6)',
-                      border: '1px solid rgba(148, 163, 184, 0.2)',
-                      borderRadius: '6px',
-                      color: '#e2e8f0',
-                      fontSize: '0.9rem',
-                      resize: 'vertical'
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Parent/Guardian Details Section */}
-              <div style={{ background: 'rgba(139, 92, 246, 0.1)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
-                <h3 style={{ color: '#8b5cf6', fontSize: '1.1rem', fontWeight: '700', margin: '0 0 15px 0' }}>Parent/Guardian Details</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Parent Type
-                    </label>
-                    <select
-                      value={editingStudent.parent_type}
-                      onChange={(e) => setEditingStudent({ ...editingStudent, parent_type: e.target.value as 'father' | 'mother' | 'guardian' })}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    >
-                      <option value="father">Father</option>
-                      <option value="mother">Mother</option>
-                      <option value="guardian">Guardian</option>
-                    </select>
+                {/* SECTION 2: PARENT DETAILS */}
+                <div style={{
+                  background: 'white',
+                  borderRadius: '20px',
+                  padding: '24px',
+                  border: '1px solid #F3F4F6',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
+                    <div style={{ width: '4px', height: '20px', background: '#8B5CF6', borderRadius: '4px' }}></div>
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1E1B4B', margin: 0 }}>Parent / Guardian Details</h3>
                   </div>
 
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Parent Name
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.parent_name}
-                      onChange={(e) => setEditingStudent({ ...editingStudent, parent_name: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Parent Type</label>
+                      <select
+                        value={editingStudent.parent_type}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, parent_type: e.target.value as 'father' | 'mother' | 'guardian' })}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '12px',
+                          border: '1px solid #E5E7EB',
+                          fontSize: '14px'
+                        }}
+                      >
+                        <option value="father">Father</option>
+                        <option value="mother">Mother</option>
+                        <option value="guardian">Guardian</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Parent Name</label>
+                      <input
+                        type="text"
+                        value={editingStudent.parent_name}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, parent_name: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '12px',
+                          border: '1px solid #E5E7EB',
+                          fontSize: '14px'
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Contact Phone</label>
+                      <input
+                        type="text"
+                        value={editingStudent.parent_phone}
+                        onChange={(e) => {
+                          const onlyNums = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                          setEditingStudent({ ...editingStudent, parent_phone: onlyNums });
+                        }}
+                        placeholder="10 Digits"
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '12px',
+                          border: '1px solid #E5E7EB',
+                          fontSize: '14px'
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Email Address</label>
+                      <input
+                        type="email"
+                        value={editingStudent.parent_email || ''}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, parent_email: e.target.value })}
+                        placeholder="parent@example.com"
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '12px',
+                          border: '1px solid #E5E7EB',
+                          fontSize: '14px'
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: '#6B7280', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>Parent Address</label>
+                      <textarea
+                        value={editingStudent.parent_address}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, parent_address: e.target.value })}
+                        rows={2}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: '12px',
+                          border: '1px solid #E5E7EB',
+                          fontSize: '14px',
+                          resize: 'none'
+                        }}
+                      />
+                    </div>
                   </div>
-
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Parent Phone
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.parent_phone}
-                      onChange={(e) => {
-                        const onlyNums = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
-                        setEditingStudent({ ...editingStudent, parent_phone: onlyNums });
-                      }}
-                      placeholder="e.g. 0771234567"
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-
-
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Parent Gender
-                    </label>
-                    <select
-                      value={editingStudent.parent_gender}
-                      onChange={(e) => setEditingStudent({ ...editingStudent, parent_gender: e.target.value as 'male' | 'female' | 'other' })}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    >
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Parent Email
-                    </label>
-                    <input
-                      type="email"
-                      value={editingStudent.parent_email || ''}
-                      onChange={(e) => setEditingStudent({ ...editingStudent, parent_email: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Parent Religion
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.parent_religion}
-                      onChange={(e) => setEditingStudent({ ...editingStudent, parent_religion: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Parent Ethnicity
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent?.parent_ethnicity || ''}
-                      onChange={(e) => setEditingStudent({ ...editingStudent, parent_ethnicity: e.target.value })}
-                      placeholder="Enter parent ethnicity"
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                      Parent Nationality
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStudent.parent_nationality}
-                      onChange={(e) => setEditingStudent({ ...editingStudent, parent_nationality: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: '1px solid rgba(148, 163, 184, 0.2)',
-                        borderRadius: '6px',
-                        color: '#e2e8f0',
-                        fontSize: '0.9rem'
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ marginTop: '15px' }}>
-                  <label style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
-                    Parent Address
-                  </label>
-                  <textarea
-                    value={editingStudent.parent_address}
-                    onChange={(e) => setEditingStudent({ ...editingStudent, parent_address: e.target.value })}
-                    rows={2}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      background: 'rgba(15, 23, 42, 0.6)',
-                      border: '1px solid rgba(148, 163, 184, 0.2)',
-                      borderRadius: '6px',
-                      color: '#e2e8f0',
-                      fontSize: '0.9rem',
-                      resize: 'vertical'
-                    }}
-                  />
                 </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '15px', marginTop: '30px', justifyContent: 'flex-end' }}>
+            {/* Redesigned Actions Bar */}
+            <div style={{
+              padding: '24px 40px',
+              borderTop: '1px solid #E5E7EB',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '16px',
+              background: '#FFFFFF'
+            }}>
               <button
                 onClick={() => {
                   setShowEditModal(false);
                   setEditingStudent(null);
                 }}
                 style={{
-                  padding: '12px 25px',
-                  background: 'rgba(148, 163, 184, 0.2)',
-                  color: '#94a3b8',
-                  border: '1px solid rgba(148, 163, 184, 0.3)',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  fontWeight: '600',
+                  padding: '12px 28px',
+                  background: 'transparent',
+                  color: '#6B7280',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: 600,
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = '#F9FAFB';
+                  e.currentTarget.style.color = '#111827';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = '#6B7280';
                 }}
               >
                 Cancel
@@ -2753,120 +2245,145 @@ const StudentList: React.FC<StudentListProps> = () => {
               <button
                 onClick={() => handleUpdateStudent(editingStudent)}
                 style={{
-                  padding: '12px 25px',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  padding: '12px 32px',
+                  background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  fontWeight: '600',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: 700,
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
+                  transition: 'all 0.2s',
+                  boxShadow: '0 4px 12px rgba(99, 49, 148, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(99, 49, 148, 0.3)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 49, 148, 0.2)';
                 }}
               >
-                Save Changes
+                <span>Update Changes</span>
+                <span style={{ fontSize: '16px' }}>✔️</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Redesigned Delete Modal - Project Sync */}
       {showDeleteModal && (
         <div style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.7)',
+          inset: 0,
+          background: 'rgba(30, 27, 75, 0.6)',
+          backdropFilter: 'blur(8px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: '2000'
+          zIndex: 3000,
+          padding: '20px',
+          animation: 'fadeIn 0.2s ease-out'
         }}>
           <div style={{
-            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
-            backdropFilter: 'blur(20px)',
+            background: '#FFFFFF',
             borderRadius: '24px',
             padding: '40px',
-            maxWidth: '400px',
-            width: '90%',
-            border: '1px solid rgba(148, 163, 184, 0.2)',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)',
-            textAlign: 'center'
+            maxWidth: '450px',
+            width: '100%',
+            border: '1px solid #FEE2E2',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            textAlign: 'center',
+            position: 'relative',
+            overflow: 'hidden'
           }}>
+            {/* Danger Indicator Bar */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '6px',
+              background: 'linear-gradient(90deg, #EF4444 0%, #DC2626 100%)'
+            }} />
+
             <div style={{
               width: '80px',
               height: '80px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+              borderRadius: '24px',
+              background: '#FEF2F2',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 25px',
-              fontSize: '2rem',
-              color: 'white',
-              boxShadow: '0 10px 30px rgba(239, 68, 68, 0.3)'
+              margin: '0 auto 24px',
+              fontSize: '32px',
+              color: '#EF4444',
+              transform: 'rotate(10deg)',
+              boxShadow: '0 8px 16px rgba(239, 68, 68, 0.1)'
             }}>
               ⚠️
             </div>
-
-            <h2 style={{
-              color: '#f1f5f9',
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              margin: '0 0 15px 0'
-            }}>
-              Delete Student
+            
+            <h2 style={{ color: '#1E1B4B', fontSize: '24px', fontWeight: '800', margin: '0 0 12px 0' }}>
+              Confirm Deletion
             </h2>
-
-            <p style={{
-              color: '#94a3b8',
-              fontSize: '1rem',
-              margin: '0 0 30px 0',
-              lineHeight: '1.5'
-            }}>
-              Are you sure you want to delete this student? This action cannot be undone.
+            <p style={{ color: '#6B7280', fontSize: '15px', margin: '0 0 32px 0', lineHeight: '1.6' }}>
+              Are you sure you want to remove this student record? This action is <strong style={{ color: '#EF4444' }}>permanent</strong> and cannot be restored.
             </p>
-
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+            
+            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
               <button
                 onClick={() => {
                   setShowDeleteModal(false);
                   setDeletingStudentId(null);
                 }}
                 style={{
-                  padding: '12px 25px',
-                  background: 'rgba(148, 163, 184, 0.2)',
-                  color: '#94a3b8',
-                  border: '1px solid rgba(148, 163, 184, 0.3)',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
+                  flex: 1,
+                  padding: '14px 24px',
+                  background: '#F9FAFB',
+                  color: '#6B7280',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '12px',
+                  fontSize: '15px',
                   fontWeight: '600',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.2s'
                 }}
+                onMouseOver={(e) => (e.currentTarget.style.background = '#F3F4F6')}
+                onMouseOut={(e) => (e.currentTarget.style.background = '#F9FAFB')}
               >
-                Cancel
+                Go Back
               </button>
               <button
                 onClick={handleConfirmDelete}
                 style={{
-                  padding: '12px 25px',
-                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  flex: 1,
+                  padding: '14px 24px',
+                  background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  fontWeight: '600',
+                  borderRadius: '12px',
+                  fontSize: '15px',
+                  fontWeight: '700',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'
+                  transition: 'all 0.2s',
+                  boxShadow: '0 8px 16px rgba(239, 68, 68, 0.2)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 12px 20px rgba(239, 68, 68, 0.3)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(239, 68, 68, 0.2)';
                 }}
               >
-                Delete
+                Delete Now
               </button>
             </div>
           </div>
@@ -2874,6 +2391,10 @@ const StudentList: React.FC<StudentListProps> = () => {
       )}
 
       <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
         @keyframes fadeInUp {
           from {
             opacity: 0;
