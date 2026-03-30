@@ -1004,8 +1004,15 @@ export const resultsApi = {
 export const reportCardApi = {
   // Download report card PDF
   async downloadReportCard(studentId: number, gradeId: number, term: string): Promise<Blob> {
-    const BASE_URL = 'http://localhost:5000/api';
-    const response = await fetch(`${BASE_URL}/report-cards/student/${studentId}/grade/${gradeId}/term/${term}`);
+    const token = localStorage.getItem('edutrack_token');
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${token}`
+    };
+    
+    const response = await fetch(`${API_BASE_URL}/report-cards/student/${studentId}/grade/${gradeId}/term/${term}`, {
+      headers
+    });
+    
     if (!response.ok) {
       throw new Error('Failed to download report card');
     }
