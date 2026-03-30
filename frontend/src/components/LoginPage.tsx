@@ -71,9 +71,16 @@ const LoginPage: React.FC = () => {
         }
 
         // Email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (email && !emailRegex.test(email)) {
           setError('Please enter a valid email address.');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Prevent common typos for known domains
+        if (email && email.toLowerCase().endsWith('@gmail.co')) {
+          setError('Invalid email format. Did you mean @gmail.com?');
           setIsLoading(false);
           return;
         }
