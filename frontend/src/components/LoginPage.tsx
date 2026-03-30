@@ -411,7 +411,7 @@ const LoginPage: React.FC = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
+                    placeholder="teacher@gmail.com"
                     style={{
                       width: '100%',
                       padding: '12px 16px',
