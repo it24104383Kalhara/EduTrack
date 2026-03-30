@@ -71,6 +71,10 @@ const AdminApprovals: React.FC = () => {
       const data = await response.json();
       if (response.ok && data.success) {
         setUsers(prev => prev.filter(u => u.id !== id));
+        // Refetch grades to ensure assigned classes don't show up for other pending users
+        if (action === 'approve' && grade_id) {
+          fetchGrades();
+        }
       } else {
         alert(data.message || `Failed to ${action} user`);
       }
