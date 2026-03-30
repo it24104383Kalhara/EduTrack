@@ -370,7 +370,7 @@ const LoginPage: React.FC = () => {
                   <div style={{ flex: 1 }}>
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#4B5563', marginBottom: '8px' }}>Phone Number</label>
                     <input
-                      type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="+1-234-567-8900" required
+                      type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="0701963183" required
                       style={{ width: '100%', padding: '12px 16px', background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '12px', color: '#1F2937', fontSize: '14px', outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box', boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)' }}
                       onFocus={e => { e.currentTarget.style.borderColor = '#7A43B6'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(122, 67, 182, 0.1)'; }}
                       onBlur={e => { e.currentTarget.style.borderColor = '#E5E7EB'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'; }}
