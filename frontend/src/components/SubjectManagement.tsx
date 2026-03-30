@@ -12,8 +12,10 @@ import {
 import { subjectApi } from '../services/api';
 import type { Subject } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const SubjectManagement: React.FC = () => {
+  const { showToast } = useToast();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFormTab, setActiveFormTab] = useState<'6-11' | '12-13'>('6-11');
@@ -67,7 +69,7 @@ const SubjectManagement: React.FC = () => {
       setSubjects(subjectsData);
     } catch (error) {
       console.error('Failed to fetch subjects:', error);
-      alert('Failed to load subjects. Please try again.');
+      showToast('Failed to load subjects. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -93,7 +95,7 @@ const SubjectManagement: React.FC = () => {
 
   const handleAddSubject = async () => {
     if (!formData.name || !formData.code || formData.grades.length === 0) {
-      alert('Please fill in Name, Code and select at least one Grade.');
+      showToast('Please fill in Name, Code and select at least one Grade.', 'warning');
       return;
     }
     try {
@@ -105,8 +107,9 @@ const SubjectManagement: React.FC = () => {
       });
       setSubjects(prev => [...prev, newSub]);
       setFormData({ name: '', code: '', grades: [], streams: [], category: '', is_optional: false });
+      showToast('Subject created successfully!', 'success');
     } catch (error: any) {
-      alert(error.message || 'Failed to add subject.');
+      showToast(error.message || 'Failed to add subject.', 'error');
     } finally {
       setLoading(false);
     }
@@ -118,9 +121,10 @@ const SubjectManagement: React.FC = () => {
       try {
         await subjectApi.delete(id);
         setSubjects(prev => prev.filter(s => s.id !== id));
+        showToast('Subject deleted successfully!', 'success');
       } catch (error) {
         console.error('Failed to delete subject:', error);
-        alert('Failed to delete subject. Please try again.');
+        showToast('Failed to delete subject. Please try again.', 'error');
       }
     }
   };
@@ -167,8 +171,9 @@ const SubjectManagement: React.FC = () => {
       });
       setSubjects(prev => prev.map(s => s.id === editingId ? updatedSubject : s));
       setEditingId(null);
+      showToast('Subject updated successfully!', 'success');
     } catch (error: any) {
-      alert(error.message || 'Failed to update subject.');
+      showToast(error.message || 'Failed to update subject.', 'error');
     }
   };
 
