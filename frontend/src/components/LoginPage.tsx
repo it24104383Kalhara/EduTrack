@@ -54,10 +54,18 @@ const LoginPage: React.FC = () => {
           setError(data.message || 'Password reset failed.');
         }
       } else if (isRegister) {
-        // Phone number validation: Allow digits, +, -, and spaces
+        // Phone number validation: Allow digits, +, -, and spaces, but must be exactly 10 digits
         const phoneRegex = /^[0-9+\-\s]+$/;
+        const digitCount = (phoneNumber.match(/\d/g) || []).length;
+
         if (phoneNumber && !phoneRegex.test(phoneNumber)) {
           setError('Please enter a valid phone number (numeric characters only).');
+          setIsLoading(false);
+          return;
+        }
+
+        if (phoneNumber && digitCount !== 10) {
+          setError('Phone number must be exactly 10 digits.');
           setIsLoading(false);
           return;
         }
