@@ -54,6 +54,14 @@ const LoginPage: React.FC = () => {
           setError(data.message || 'Password reset failed.');
         }
       } else if (isRegister) {
+        // Phone number validation: Allow digits, +, -, and spaces
+        const phoneRegex = /^[0-9+\-\s]+$/;
+        if (phoneNumber && !phoneRegex.test(phoneNumber)) {
+          setError('Please enter a valid phone number (numeric characters only).');
+          setIsLoading(false);
+          return;
+        }
+
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
           method: 'POST',
           headers: {
