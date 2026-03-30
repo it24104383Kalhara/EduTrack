@@ -7,7 +7,8 @@ import {
   X,
   Loader2,
   Library,
-  CheckCircle
+  CheckCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { subjectApi } from '../services/api';
 import type { Subject } from '../services/api';
@@ -29,6 +30,12 @@ const SubjectManagement: React.FC = () => {
   });
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  
+  // Custom Confirmation Modal State
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [editForm, setEditForm] = useState({
     name: '',
     code: '',
@@ -117,16 +124,33 @@ const SubjectManagement: React.FC = () => {
 
   const deleteSubject = async (id: string) => {
     const subject = subjects.find(s => s.id === id);
-    if (subject && confirm(`Are you sure you want to delete "${subject.name}"?`)) {
-      try {
-        await subjectApi.delete(id);
-        setSubjects(prev => prev.filter(s => s.id !== id));
-        showToast('Subject deleted successfully!', 'success');
-      } catch (error) {
-        console.error('Failed to delete subject:', error);
-        showToast('Failed to delete subject. Please try again.', 'error');
-      }
+    if (subject) {
+      setSubjectToDelete(subject);
+      setShowDeleteConfirm(true);
     }
+  };
+
+  const confirmDeleteSubject = async () => {
+    if (!subjectToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      await subjectApi.delete(subjectToDelete.id);
+      setSubjects(prev => prev.filter(s => s.id !== subjectToDelete.id));
+      showToast('Subject deleted successfully!', 'success');
+      setShowDeleteConfirm(false);
+      setSubjectToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete subject:', error);
+      showToast('Failed to delete subject. Please try again.', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const cancelDeleteSubject = () => {
+    setShowDeleteConfirm(false);
+    setSubjectToDelete(null);
   };
 
   const editSubject = (id: string) => {
@@ -654,6 +678,106 @@ const SubjectManagement: React.FC = () => {
               <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
                 <button onClick={cancelEdit} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1.5px solid #D1D5DB', background: 'white', cursor: 'pointer', fontWeight: '700', fontSize: '13px' }}>Cancel</button>
                 <button onClick={saveEdit} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#633194', color: 'white', cursor: 'pointer', fontWeight: '700', fontSize: '13px', boxShadow: '0 8px 16px rgba(99, 49, 148, 0.2)' }}>Save Changes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Beautiful Custom Deletion Confirmation Modal */}
+      {showDeleteConfirm && subjectToDelete && (
+        <div style={{ 
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+          background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(12px)', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', 
+          zIndex: 3000, padding: '20px',
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <style>{`
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes popIn { 
+              from { opacity: 0; transform: scale(0.9) translateY(10px); } 
+              to { opacity: 1; transform: scale(1) translateY(0); } 
+            }
+          `}</style>
+          <div style={{ 
+            background: '#FFFFFF', 
+            width: '100%', 
+            maxWidth: '440px', 
+            borderRadius: '24px', 
+            padding: '36px',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)',
+            border: '1px solid #F1F5F9',
+            position: 'relative',
+            overflow: 'hidden',
+            animation: 'popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}>
+            {/* Warning Circle Glow */}
+            <div style={{ 
+              position: 'absolute', top: '-60px', right: '-60px', 
+              width: '180px', height: '180px', borderRadius: '50%', 
+              background: 'radial-gradient(circle, rgba(239, 68, 68, 0.08) 0%, transparent 70%)',
+              zIndex: 0 
+            }} />
+            
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{ 
+                width: '64px', height: '64px', background: '#FEF2F2', 
+                borderRadius: '20px', display: 'flex', alignItems: 'center', 
+                justifyContent: 'center', marginBottom: '24px',
+                border: '1px solid #FEE2E2'
+              }}>
+                <AlertTriangle size={32} color="#EF4444" />
+              </div>
+              
+              <h3 style={{ 
+                fontSize: '24px', fontWeight: '900', color: '#1E1B4B', 
+                margin: '0 0 12px 0', letterSpacing: '-0.02em' 
+              }}>
+                Delete Subject?
+              </h3>
+              
+              <p style={{ 
+                fontSize: '15px', color: '#64748B', lineHeight: '1.6', 
+                margin: '0 0 32px 0', fontWeight: '500' 
+              }}>
+                Are you sure you want to permanently delete <strong style={{ color: '#1E1B4B', fontWeight: '800' }}>"{subjectToDelete.name}"</strong>? This action will remove the subject from all assigned grades and cannot be undone.
+              </p>
+              
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button 
+                  onClick={cancelDeleteSubject}
+                  disabled={isDeleting}
+                  style={{ 
+                    flex: 1, padding: '14px', borderRadius: '14px', 
+                    border: '1.5px solid #E2E8F0', background: 'white', 
+                    color: '#64748B', fontWeight: '700', fontSize: '15px',
+                    cursor: isDeleting ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={e => !isDeleting && (e.currentTarget.style.background = '#F8FAFC')}
+                  onMouseLeave={e => !isDeleting && (e.currentTarget.style.background = 'white')}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmDeleteSubject}
+                  disabled={isDeleting}
+                  style={{ 
+                    flex: 1, padding: '14px', borderRadius: '14px', 
+                    border: 'none', background: '#EF4444', 
+                    color: 'white', fontWeight: '700', fontSize: '15px',
+                    cursor: isDeleting ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.2)',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={e => !isDeleting && (e.currentTarget.style.transform = 'translateY(-2px)')}
+                  onMouseLeave={e => !isDeleting && (e.currentTarget.style.transform = 'translateY(0)')}
+                >
+                  {isDeleting ? <Loader2 className="animate-spin" size={20} /> : <Trash2 size={18} />}
+                  {isDeleting ? 'Deleting...' : 'Confirm Delete'}
+                </button>
               </div>
             </div>
           </div>
