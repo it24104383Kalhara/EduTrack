@@ -70,6 +70,14 @@ const LoginPage: React.FC = () => {
           return;
         }
 
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (email && !emailRegex.test(email)) {
+          setError('Please enter a valid email address.');
+          setIsLoading(false);
+          return;
+        }
+
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
           method: 'POST',
           headers: {
