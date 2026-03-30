@@ -117,12 +117,7 @@ router.post('/login', async (req: Request, res: Response) => {
       message: 'Login successful',
       data: {
         token,
-        user: {
-          id: user.id,
-          username: user.username,
-          role: user.role,
-          status: user.status
-        }
+        user: user
       }
     });
 
@@ -181,12 +176,7 @@ router.get('/me', async (req: any, res: Response) => {
     res.json({
       success: true,
       data: {
-        user: {
-          id: user.id,
-          username: user.username,
-          role: user.role,
-          status: user.status
-        }
+        user: user
       }
     });
   } catch (error) {

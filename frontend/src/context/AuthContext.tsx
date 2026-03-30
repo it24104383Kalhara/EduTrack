@@ -5,6 +5,14 @@ interface User {
   id: number;
   username: string;
   role: string;
+  status?: string;
+  first_name?: string;
+  last_name?: string;
+  grade?: string;
+  gender?: string;
+  phone_number?: string;
+  birthday?: string;
+  address?: string;
 }
 
 interface AuthContextType {

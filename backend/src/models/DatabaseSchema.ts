@@ -12,6 +12,8 @@ export class DatabaseSchema {
       await pool.query(SCHEMA_QUERIES.USE_DB);
 
       // Create tables in dependency order
+      await pool.query(SCHEMA_QUERIES.TABLES.USERS);
+      await pool.query(SCHEMA_QUERIES.TABLES.TEACHERS);
       await pool.query(SCHEMA_QUERIES.TABLES.STUDENTS);
       await pool.query(SCHEMA_QUERIES.TABLES.GRADES);
       await pool.query(SCHEMA_QUERIES.TABLES.SUBJECTS);

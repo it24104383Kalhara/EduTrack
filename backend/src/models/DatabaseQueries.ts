@@ -10,6 +10,40 @@ export const SCHEMA_QUERIES = {
     USE_DB: 'USE edutrack',
 
     TABLES: {
+        USERS: `
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                email VARCHAR(100) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                role ENUM('admin', 'teacher') NOT NULL,
+                status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+                first_name VARCHAR(100),
+                last_name VARCHAR(100),
+                gender ENUM('male', 'female'),
+                grade VARCHAR(50),
+                phone_number VARCHAR(20),
+                birthday DATE,
+                address TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+        TEACHERS: `
+            CREATE TABLE IF NOT EXISTS teachers (
+                user_id INT PRIMARY KEY,
+                first_name VARCHAR(100),
+                last_name VARCHAR(100),
+                gender ENUM('male', 'female'),
+                grade VARCHAR(50),
+                phone_number VARCHAR(20),
+                birthday DATE,
+                address TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
         STUDENTS: `
             CREATE TABLE IF NOT EXISTS students (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -608,4 +642,55 @@ export const EMAIL_LOG_QUERIES = {
     `,
     DELETE: 'DELETE FROM email_logs WHERE id = ?',
     CLEANUP_OLD: 'DELETE FROM email_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY)'
+};
+
+export const USER_QUERIES = {
+    FIND_BY_USERNAME: 'SELECT * FROM users WHERE username = ?',
+    FIND_BY_ID: `
+      SELECT u.id, u.username, u.email, u.role, u.status, u.created_at, 
+             COALESCE(t.first_name, u.first_name) as first_name,
+             COALESCE(t.last_name, u.last_name) as last_name,
+             COALESCE(t.gender, u.gender) as gender,
+             u.grade as grade,
+             COALESCE(t.phone_number, u.phone_number) as phone_number,
+             COALESCE(t.birthday, u.birthday) as birthday,
+             COALESCE(t.address, u.address) as address
+      FROM users u
+      LEFT JOIN teachers t ON u.id = t.user_id
+      WHERE u.id = ?
+    `,
+    CREATE: `
+      INSERT INTO users (username, email, password_hash, role, status, 
+      first_name, last_name, gender, grade, phone_number, birthday, address) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    GET_PENDING: `
+      SELECT id, username, email, role, status, created_at,
+             first_name, last_name, gender, grade, phone_number, birthday, address
+      FROM users
+      WHERE status = 'pending' ORDER BY created_at DESC
+    `,
+    GET_ALL_TEACHERS: `
+      SELECT u.id, u.username, u.email, u.role, u.status, u.created_at, 
+             t.first_name, t.last_name, t.gender, u.grade, t.phone_number, t.birthday, t.address,
+             (SELECT id FROM grades WHERE teacher_id = u.id LIMIT 1) as grade_id
+      FROM users u
+      JOIN teachers t ON u.id = t.user_id
+      WHERE u.role = 'teacher' AND u.status = 'approved' ORDER BY u.created_at DESC
+    `,
+    UPDATE_STATUS: 'UPDATE users SET status = ? WHERE id = ?',
+    UPDATE_PASSWORD: 'UPDATE users SET password_hash = ? WHERE username = ?',
+    SYNC_USER_TO_TEACHER: `
+      INSERT INTO teachers (user_id, first_name, last_name, gender, grade, phone_number, birthday, address)
+      SELECT id, first_name, last_name, gender, grade, phone_number, birthday, address
+      FROM users WHERE id = ?
+      ON DUPLICATE KEY UPDATE
+        first_name = VALUES(first_name),
+        last_name = VALUES(last_name),
+        gender = VALUES(gender),
+        grade = VALUES(grade),
+        phone_number = VALUES(phone_number),
+        birthday = VALUES(birthday),
+        address = VALUES(address)
+    `
 };

@@ -214,7 +214,9 @@ const Dashboard: React.FC<DashboardProps> = ({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 900, color: '#1e1b4b', letterSpacing: '-0.3px' }}>
-            {user?.role === 'teacher' ? `Welcome, ${user.username}!` : 'System Dashboard'}
+            {user?.role === 'teacher' 
+              ? `Welcome, ${user.username}!${user.grade ? ` (${user.grade})` : ''}` 
+              : 'System Dashboard'}
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: '10px', color: '#94a3b8', fontWeight: 600, letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: '5px' }}>
             <Calendar size={11} />

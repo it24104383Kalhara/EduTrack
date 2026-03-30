@@ -312,6 +312,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
             <div style={{ fontSize: '12px', color: '#633194', fontWeight: 600, textTransform: 'capitalize', opacity: 0.8 }}>
               {user?.role || 'Staff'}
             </div>
+            {user?.role === 'teacher' && user.grade && (
+              <div style={{ fontSize: '10px', color: '#059669', fontWeight: 700, marginTop: '2px', background: '#ECFDF5', padding: '1px 6px', borderRadius: '4px', display: 'inline-block' }}>
+                {user.grade}
+              </div>
+            )}
           </div>
         </div>
 

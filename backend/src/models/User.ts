@@ -1,4 +1,5 @@
 import pool from '../config/database';
+import { USER_QUERIES } from './DatabaseQueries';
 
 export interface User {
   id: number;
@@ -20,35 +21,20 @@ export interface User {
 
 export class UserModel {
   static async findByUsername(username: string): Promise<User | null> {
-    const [rows] = await pool.execute('SELECT * FROM users WHERE username = ?', [username]);
+    const [rows] = await pool.execute(USER_QUERIES.FIND_BY_USERNAME, [username]);
     const users = rows as User[];
     return users.length > 0 ? users[0] : null;
   }
 
   static async findById(id: number): Promise<User | null> {
-    const [rows] = await pool.execute(`
-      SELECT u.id, u.username, u.email, u.role, u.status, u.created_at, 
-             COALESCE(t.first_name, u.first_name) as first_name,
-             COALESCE(t.last_name, u.last_name) as last_name,
-             COALESCE(t.gender, u.gender) as gender,
-             COALESCE(t.grade, u.grade) as grade,
-             COALESCE(t.phone_number, u.phone_number) as phone_number,
-             COALESCE(t.birthday, u.birthday) as birthday,
-             COALESCE(t.address, u.address) as address
-      FROM users u
-      LEFT JOIN teachers t ON u.id = t.user_id
-      WHERE u.id = ?`, [id]);
+    const [rows] = await pool.execute(USER_QUERIES.FIND_BY_ID, [id]);
     const users = rows as User[];
     return users.length > 0 ? users[0] : null;
   }
   
   static async create(user: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<number> {
-    // Store all profile data in users table only.
-    // Teacher details will be copied to teachers table ONLY when admin approves.
     const [result] = await pool.execute(
-      `INSERT INTO users (username, email, password_hash, role, status, 
-       first_name, last_name, gender, grade, phone_number, birthday, address) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      USER_QUERIES.CREATE,
       [
         user.username, user.email, user.password_hash, user.role, user.status || 'pending',
         user.first_name || null,
@@ -64,27 +50,12 @@ export class UserModel {
   }
 
   static async getPendingUsers(): Promise<User[]> {
-    // Read profile data directly from users table (no JOIN to teachers needed)
-    // Teachers table is only populated after admin approval
-    const [rows] = await pool.execute(`
-      SELECT id, username, email, role, status, created_at,
-             first_name, last_name, gender, grade, phone_number, birthday, address
-      FROM users
-      WHERE status = ? ORDER BY created_at DESC`,
-      ['pending']
-    );
+    const [rows] = await pool.execute(USER_QUERIES.GET_PENDING);
     return rows as User[];
   }
 
   static async getAllTeachers(): Promise<User[]> {
-    const [rows] = await pool.execute(`
-      SELECT u.id, u.username, u.email, u.role, u.status, u.created_at, 
-             t.first_name, t.last_name, t.gender, t.grade, t.phone_number, t.birthday, t.address
-      FROM users u
-      JOIN teachers t ON u.id = t.user_id
-      WHERE u.role = ? AND u.status = ? ORDER BY u.created_at DESC`,
-      ['teacher', 'approved']
-    );
+    const [rows] = await pool.execute(USER_QUERIES.GET_ALL_TEACHERS);
     return rows as User[];
   }
 
@@ -144,7 +115,7 @@ export class UserModel {
 
   static async updateStatus(id: number, status: 'approved' | 'rejected'): Promise<boolean> {
     const [result] = await pool.execute(
-      'UPDATE users SET status = ? WHERE id = ?',
+      USER_QUERIES.UPDATE_STATUS,
       [status, id]
     );
     return (result as any).affectedRows > 0;
@@ -152,7 +123,7 @@ export class UserModel {
 
   static async updatePassword(username: string, password_hash: string): Promise<boolean> {
     const [result] = await pool.execute(
-      'UPDATE users SET password_hash = ? WHERE username = ?',
+      USER_QUERIES.UPDATE_PASSWORD,
       [password_hash, username]
     );
     return (result as any).affectedRows > 0;
