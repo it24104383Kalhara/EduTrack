@@ -264,6 +264,21 @@ const StudentList: React.FC<StudentListProps> = () => {
       return;
     }
 
+    // Birthday validation (2006-12-31 to 2016-01-31)
+    if (updatedStudent.date_of_birth) {
+      const dob = new Date(updatedStudent.date_of_birth);
+      const minDob = new Date('2006-12-31');
+      const maxDob = new Date('2016-01-31');
+
+      if (dob < minDob || dob > maxDob) {
+        setNotification({ 
+          message: 'Update Denied: Student must be born between Dec 31, 2006 and Jan 31, 2016.', 
+          type: 'error' 
+        });
+        return;
+      }
+    }
+
     try {
       console.log('Updating student:', updatedStudent);
       console.log('Original date_of_birth:', updatedStudent.date_of_birth);
