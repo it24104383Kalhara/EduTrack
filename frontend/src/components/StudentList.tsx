@@ -565,12 +565,20 @@ const StudentList: React.FC<StudentListProps> = () => {
                         <div class="value">${student.parent_email || 'N/A'}</div>
                     </div>
                     <div class="info-card">
+                        <span class="label">Gender</span>
+                        <div class="value" style="text-transform: capitalize;">${student.parent_gender || 'N/A'}</div>
+                    </div>
+                    <div class="info-card">
                         <span class="label">Religion</span>
                         <div class="value">${student.parent_religion || 'N/A'}</div>
                     </div>
                     <div class="info-card">
                         <span class="label">Nationality</span>
                         <div class="value">${student.parent_nationality || 'N/A'}</div>
+                    </div>
+                    <div class="info-card">
+                        <span class="label">Ethnicity</span>
+                        <div class="value">${student.parent_ethnicity || 'N/A'}</div>
                     </div>
                     <div class="info-card address-card">
                         <span class="label">Guardian Address</span>
@@ -1060,12 +1068,16 @@ const StudentList: React.FC<StudentListProps> = () => {
                       gap: '16px'
                     }}>
                       {[
-                        { label: 'Parent Type', value: selectedStudent.parent_type },
+                        { label: 'Parent Type', value: selectedStudent.parent_type, capitalize: true },
                         { label: 'Parent Name', value: selectedStudent.parent_name },
+                        { label: 'Parent Gender', value: selectedStudent.parent_gender, capitalize: true },
                         { label: 'Contact Phone', value: selectedStudent.parent_phone },
                         { label: 'Email Address', value: selectedStudent.parent_email || 'Not provided' },
+                        { label: 'Nationality', value: selectedStudent.parent_nationality || 'Not specified' },
+                        { label: 'Religion', value: selectedStudent.parent_religion || 'Not specified' },
+                        { label: 'Ethnicity', value: selectedStudent.parent_ethnicity || 'Not specified' },
                         { label: 'Parent Address', value: selectedStudent.parent_address, full: true }
-                      ].map((info, i) => (
+                      ].map((info: any, i) => (
                         <div key={i} style={{ 
                           background: 'white', 
                           padding: '12px', 
@@ -1074,7 +1086,7 @@ const StudentList: React.FC<StudentListProps> = () => {
                           gridColumn: info.full ? '1 / -1' : 'auto'
                         }}>
                           <div style={{ color: '#8B5CF6', fontSize: '10px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '4px' }}>{info.label}</div>
-                          <div style={{ color: '#1E1B4B', fontSize: '13px', fontWeight: '700' }}>{info.value}</div>
+                          <div style={{ color: '#1E1B4B', fontSize: '13px', fontWeight: '700', textTransform: info.capitalize ? 'capitalize' : 'none' }}>{info.value}</div>
                         </div>
                       ))}
                     </div>
@@ -1930,6 +1942,73 @@ const StudentList: React.FC<StudentListProps> = () => {
                         value={editingStudent.parent_email || ''}
                         onChange={(e) => setEditingStudent({ ...editingStudent, parent_email: e.target.value })}
                         placeholder="parent@example.com"
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
+                          border: '1px solid #E5E7EB',
+                          fontSize: '13px'
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>Parent Gender</label>
+                      <select
+                        value={editingStudent.parent_gender}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, parent_gender: e.target.value as 'male' | 'female' | 'other' })}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
+                          border: '1px solid #E5E7EB',
+                          fontSize: '13px'
+                        }}
+                      >
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>Parent Nationality</label>
+                      <input
+                        type="text"
+                        value={editingStudent.parent_nationality || ''}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, parent_nationality: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
+                          border: '1px solid #E5E7EB',
+                          fontSize: '13px'
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>Parent Religion</label>
+                      <input
+                        type="text"
+                        value={editingStudent.parent_religion || ''}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, parent_religion: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
+                          border: '1px solid #E5E7EB',
+                          fontSize: '13px'
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280', marginBottom: '6px', display: 'block', textTransform: 'uppercase' }}>Parent Ethnicity</label>
+                      <input
+                        type="text"
+                        value={editingStudent.parent_ethnicity || ''}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, parent_ethnicity: e.target.value })}
                         style={{
                           width: '100%',
                           padding: '8px 12px',
