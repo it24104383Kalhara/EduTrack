@@ -537,7 +537,8 @@ const GradeManagement: React.FC = () => {
                       const fromSource = transferHistory[s.id] === selectedSourceGrade && grades.find(g => g.id === selectedGrade)?.students?.some(ps => ps.id === s.id);
                       return inSource || fromSource;
                     }
-                    return grades.find(g => g.id === selectedGrade)?.students?.some(ps => ps.id === s.id);
+                    const wasTransferredThisSession = transferHistory[s.id] && grades.find(g => g.id === selectedGrade)?.students?.some(ps => ps.id === s.id);
+                    return wasTransferredThisSession;
                   }).length }
                 ].map(tab => (
                   <button
@@ -705,14 +706,16 @@ const GradeManagement: React.FC = () => {
 
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
                         {(() => {
-                           const filtered = students.filter(s => {
+                          const filtered = students.filter(s => {
+                            // If a source grade is selected, show students IN that source OR students who just CAME from it
                             if (selectedSourceGrade) {
                               const inSource = grades.find(g => g.id === selectedSourceGrade)?.students?.some(ps => ps.id === s.id);
                               const fromSource = transferHistory[s.id] === selectedSourceGrade && grades.find(g => g.id === selectedGrade)?.students?.some(ps => ps.id === s.id);
                               return (inSource || fromSource) && `${s.first_name} ${s.last_name}`.toLowerCase().includes(searchStudent.toLowerCase());
                             }
-                            const isInThisGrade = grades.find(g => g.id === selectedGrade)?.students?.some(ps => ps.id === s.id);
-                            return isInThisGrade && `${s.first_name} ${s.last_name}`.toLowerCase().includes(searchStudent.toLowerCase());
+                            // If NO source is selected, only show students who were transferred in this session (any source)
+                            const wasTransferredThisSession = transferHistory[s.id] && grades.find(g => g.id === selectedGrade)?.students?.some(ps => ps.id === s.id);
+                            return wasTransferredThisSession && `${s.first_name} ${s.last_name}`.toLowerCase().includes(searchStudent.toLowerCase());
                           });
 
                           if (filtered.length === 0) return <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px', color: '#64748B' }}>
@@ -722,51 +725,55 @@ const GradeManagement: React.FC = () => {
                           return filtered.map(s => (
                                 <div key={s.id}>
                                   {(() => {
-                                    // 1. Identify which grade they are currently marked as IN in this component
-                                    const inThisGrade = grades.find(g => g.id === selectedGrade)?.students?.some(ps => ps.id === s.id);
+                                    // 1. Identify which grade they are currently marked as IN
+                                    const inCurrentGrade = grades.find(g => g.id === selectedGrade)?.students?.some(ps => ps.id === s.id);
                                     
-                                    // 2. Resolve WHICH grade they came from (Source)
-                                    // We use number casting (Number()) to ensure the comparison works regardless of API types
-                                    const sourceId = (transferHistory[s.id] || selectedSourceGrade);
+                                    // 2. Resolve WHAT grade they are coming from
+                                    const sourceId = transferHistory[s.id] || selectedSourceGrade;
                                     const sourceGradeObj = grades.find(g => Number(g.id) === Number(sourceId));
                                     
                                     // 3. Resolve TARGET grade (The one we are currently viewing)
                                     const targetGradeObj = grades.find(g => g.id === selectedGrade);
 
+                                    // Only show the transfer card if they are in source grade OR if they were just transferred
+                                    const isActualTransfer = transferHistory[s.id] && inCurrentGrade;
+
                                     return (
                                       <div key={s.id} className="student-card-assign" style={{ 
-                                        background: inThisGrade ? '#F0FDF4' : '#F9FAFB', 
-                                        border: inThisGrade ? '1px solid #BBF7D0' : '1px solid #E5E7EB', 
+                                        background: isActualTransfer ? '#F0FDF4' : '#F9FAFB', 
+                                        border: isActualTransfer ? '1px solid #BBF7D0' : '1px solid #E5E7EB', 
                                         borderRadius: '16px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' 
                                       }}>
                                         <div style={{ 
                                           width: '40px', height: '40px', borderRadius: '10px', 
-                                          background: inThisGrade ? '#BBF7D0' : '#E5E7EB', 
+                                          background: isActualTransfer ? '#BBF7D0' : '#E5E7EB', 
                                           display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                                          color: inThisGrade ? '#166534' : '#64748B', fontWeight: '800' 
+                                          color: isActualTransfer ? '#166534' : '#64748B', fontWeight: '800' 
                                         }}>{s.first_name.charAt(0)}</div>
                                         <div style={{ flex: 1 }}>
                                           <div style={{ fontWeight: 700, color: '#374151', fontSize: '15px' }}>{s.first_name} {s.last_name}</div>
                                           <div style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                                             {/* SOURCE GRADE BADGE */}
-                                            <span style={{ background: '#FEE2E2', color: '#B91C1C', padding: '4px 10px', borderRadius: '8px', fontWeight: 800, fontSize: '11px', border: '1px solid #FCA5A5' }}>
-                                              Grade {sourceGradeObj ? `${sourceGradeObj.grade}${sourceGradeObj.grade_part}` : '6B'}
-                                            </span>
+                                            {sourceGradeObj && (
+                                              <span style={{ background: '#FEE2E2', color: '#B91C1C', padding: '4px 10px', borderRadius: '8px', fontWeight: 800, fontSize: '11px', border: '1px solid #FCA5A5' }}>
+                                                Grade {sourceGradeObj.grade}{sourceGradeObj.grade_part}
+                                              </span>
+                                            )}
 
-                                            <ArrowRight size={14} style={{ color: '#94A3B8' }} />
+                                            {sourceGradeObj && <ArrowRight size={14} style={{ color: '#94A3B8' }} />}
 
                                             {/* TARGET GRADE BADGE */}
                                             <span style={{ 
-                                              background: inThisGrade ? '#DCFCE7' : '#DBEAFE', 
-                                              color: inThisGrade ? '#166534' : '#1E40AF', 
+                                              background: isActualTransfer ? '#DCFCE7' : '#DBEAFE', 
+                                              color: isActualTransfer ? '#166534' : '#1E40AF', 
                                               padding: '4px 10px', borderRadius: '8px', 
                                               fontWeight: 800, fontSize: '11px',
-                                              border: inThisGrade ? '1px solid #BBF7D0' : '1px solid #93C5FD'
+                                              border: isActualTransfer ? '1px solid #BBF7D0' : '1px solid #93C5FD'
                                             }}>
                                               Grade {targetGradeObj?.grade}{targetGradeObj?.grade_part}
                                             </span>
 
-                                            {inThisGrade && (
+                                            {isActualTransfer && (
                                               <div style={{ 
                                                 marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px',
                                                 color: '#059669', fontSize: '11px', fontWeight: 900,
@@ -778,7 +785,7 @@ const GradeManagement: React.FC = () => {
                                             )}
                                           </div>
                                         </div>
-                                        {!inThisGrade && (
+                                        {!inCurrentGrade && (
                                           <button onClick={() => handleAssignStudent(s.id, selectedGrade!)} style={{ padding: '10px 18px', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
                                             Transfer
                                           </button>
