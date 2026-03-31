@@ -40,6 +40,7 @@ const SubjectManagement: React.FC = () => {
     name: '',
     code: '',
     grades: [] as string[],
+    streams: [] as string[],
     type: '6-11' as '6-11' | '12-13',
     category: '',
     is_optional: false
@@ -170,10 +171,27 @@ const SubjectManagement: React.FC = () => {
         parsedGrades = [subject.grades as string];
       }
 
+      let parsedStreams: string[] = [];
+      if (subject.stream) {
+        if (Array.isArray(subject.stream)) {
+          parsedStreams = subject.stream.flatMap(s => {
+            if (typeof s === 'string' && s.startsWith('[')) {
+              try { return JSON.parse(s); } catch { return s; }
+            }
+            return s;
+          });
+        } else if (typeof subject.stream === 'string' && (subject.stream as string).startsWith('[')) {
+          try { parsedStreams = JSON.parse(subject.stream as string); } catch { parsedStreams = [subject.stream as string]; }
+        } else {
+          parsedStreams = [subject.stream as string];
+        }
+      }
+
       setEditForm({
         name: subject.name,
         code: subject.code,
         grades: parsedGrades,
+        streams: parsedStreams,
         type: subject.type,
         category: subject.category || '',
         is_optional: !!subject.is_optional
@@ -189,6 +207,7 @@ const SubjectManagement: React.FC = () => {
         name: editForm.name,
         code: editForm.code,
         grades: editForm.grades,
+        stream: editForm.type === '12-13' ? editForm.streams : undefined,
         type: editForm.type,
         category: editForm.category || undefined,
         is_optional: editForm.is_optional
@@ -211,6 +230,15 @@ const SubjectManagement: React.FC = () => {
       grades: prev.grades.includes(grade)
         ? prev.grades.filter(g => g !== grade)
         : [...prev.grades, grade]
+    }));
+  };
+
+  const handleEditStreamChange = (stream: string) => {
+    setEditForm(prev => ({
+      ...prev,
+      streams: prev.streams.includes(stream)
+        ? prev.streams.filter(s => s !== stream)
+        : [...prev.streams, stream]
     }));
   };
 
@@ -595,36 +623,36 @@ const SubjectManagement: React.FC = () => {
       {/* Edit Modal */}
       {editingId && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(17, 24, 39, 0.4)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div style={{ background: 'white', padding: '40px', borderRadius: '32px', width: '480px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid #E5E7EB', animation: 'modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-              <h3 style={{ fontSize: '26px', fontWeight: '800', color: '#111827', margin: 0, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Edit2 size={24} color="#633194" /> Edit Subject
+          <div style={{ background: 'white', padding: '24px', borderRadius: '24px', width: '400px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid #E5E7EB', animation: 'modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#111827', margin: 0, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Edit2 size={20} color="#633194" /> Edit Subject
               </h3>
               <button
                 onClick={cancelEdit}
-                style={{ background: '#F3F4F6', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ background: '#F3F4F6', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                <X size={20} color="#4B5563" />
+                <X size={18} color="#4B5563" />
               </button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label htmlFor="edit-name" style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#4B5563', marginBottom: '10px' }}>Subject Name</label>
+                <label htmlFor="edit-name" style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#4B5563', marginBottom: '8px' }}>Subject Name</label>
                 <input id="edit-name" name="name" type="text" className="edu-input" value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} style={inputStyle} />
               </div>
               <div>
-                <label htmlFor="edit-code" style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#4B5563', marginBottom: '10px' }}>Subject Code</label>
+                <label htmlFor="edit-code" style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#4B5563', marginBottom: '8px' }}>Subject Code</label>
                 <input id="edit-code" name="code" type="text" className="edu-input" value={editForm.code} onChange={e => setEditForm(p => ({ ...p, code: e.target.value }))} style={inputStyle} />
               </div>
               <div style={{ display: 'flex', gap: '16px' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#4B5563', marginBottom: '10px' }}>Category (Bucket)</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#4B5563', marginBottom: '8px' }}>Category (Bucket)</label>
                   {editForm.type === '6-11' ? (
                     <select
                       className="edu-input"
                       value={editForm.category}
                       onChange={e => setEditForm(p => ({ ...p, category: e.target.value }))}
-                      style={{ ...inputStyle, padding: '10px 12px' }}
+                      style={{ ...inputStyle, padding: '8px 12px' }}
                     >
                       <option value="">Select Category</option>
                       {commonCategories.map(c => <option key={c} value={c}>{c}</option>)}
@@ -634,23 +662,23 @@ const SubjectManagement: React.FC = () => {
                       className="edu-input"
                       value={editForm.category}
                       onChange={e => setEditForm(p => ({ ...p, category: e.target.value }))}
-                      style={{ ...inputStyle, padding: '10px 12px' }}
+                      style={{ ...inputStyle, padding: '8px 12px' }}
                     >
                       <option value="">Select Category</option>
                       {['Category 1', 'Category 2', 'Category 3'].map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', marginTop: '24px' }}>
-                  <label style={{ fontSize: '14px', fontWeight: '600', color: '#4B5563', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={editForm.is_optional} onChange={e => setEditForm(p => ({ ...p, is_optional: e.target.checked }))} style={{ accentColor: '#633194', width: '18px', height: '18px' }} />
+                <div style={{ display: 'flex', alignItems: 'center', marginTop: '20px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '600', color: '#4B5563', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={editForm.is_optional} onChange={e => setEditForm(p => ({ ...p, is_optional: e.target.checked }))} style={{ accentColor: '#633194', width: '16px', height: '16px' }} />
                     Optional
                   </label>
                 </div>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '700', color: '#4B5563', marginBottom: '16px' }}>Grades</label>
-                <div style={{ background: '#F9FAFB', padding: '16px', borderRadius: '12px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#4B5563', marginBottom: '8px' }}>Grades</label>
+                <div style={{ background: '#F9FAFB', padding: '12px', borderRadius: '12px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                   {(editForm.type === '6-11' ? ['6', '7', '8', '9', '10', '11'] : ['12', '13']).map(g => (
                     <label
                       key={g}
@@ -675,9 +703,38 @@ const SubjectManagement: React.FC = () => {
                   ))}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-                <button onClick={cancelEdit} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1.5px solid #D1D5DB', background: 'white', cursor: 'pointer', fontWeight: '700', fontSize: '13px' }}>Cancel</button>
-                <button onClick={saveEdit} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#633194', color: 'white', cursor: 'pointer', fontWeight: '700', fontSize: '13px', boxShadow: '0 8px 16px rgba(99, 49, 148, 0.2)' }}>Save Changes</button>
+              {editForm.type === '12-13' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#4B5563', marginBottom: '8px' }}>Streams</label>
+                  <div style={{ background: '#F9FAFB', padding: '12px', borderRadius: '12px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                    {['Science', 'Commerce', 'Arts', 'Technology'].map(s => (
+                      <label
+                        key={s}
+                        style={{
+                          fontSize: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          cursor: 'pointer',
+                          color: '#4B5563',
+                          fontWeight: '500'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={editForm.streams.includes(s)}
+                          onChange={() => handleEditStreamChange(s)}
+                          style={{ accentColor: '#633194', width: '14px', height: '14px', cursor: 'pointer' }}
+                        />
+                        {s}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <button onClick={cancelEdit} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1.5px solid #D1D5DB', background: 'white', cursor: 'pointer', fontWeight: '700', fontSize: '13px' }}>Cancel</button>
+                <button onClick={saveEdit} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', background: '#633194', color: 'white', cursor: 'pointer', fontWeight: '700', fontSize: '13px', boxShadow: '0 8px 16px rgba(99, 49, 148, 0.2)' }}>Save Changes</button>
               </div>
             </div>
           </div>

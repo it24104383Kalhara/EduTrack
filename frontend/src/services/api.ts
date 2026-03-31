@@ -303,7 +303,7 @@ async function apiRequest<T>(
   try {
     const url = `${API_BASE_URL}${endpoint}`;
     console.log('🔵 [API_REQUEST]:', { method: options.method || 'GET', url, endpoint });
-    
+
     // Debug: Log the exact body being sent
     if (options.body) {
       console.log('📤 [API_REQUEST_BODY]:', options.body);
@@ -313,7 +313,7 @@ async function apiRequest<T>(
         console.log('📤 [API_REQUEST_MARKS_OBTAINED]:', parsedBody.marks_obtained);
       }
     }
-    
+
     const token = localStorage.getItem('edutrack_token');
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -561,7 +561,7 @@ export const attendanceApi = {
     const params = new URLSearchParams();
     if (startDate) params.append('start_date', startDate);
     if (endDate) params.append('end_date', endDate);
-    
+
     const url = `/attendance/student/${studentId}/report${params.toString() ? `?${params.toString()}` : ''}`;
     const response = await apiRequest<StudentReportResponse>(url);
     return response.data;
@@ -587,7 +587,7 @@ export const attendanceApi = {
     const params = new URLSearchParams();
     if (startDate) params.append('start_date', startDate);
     if (endDate) params.append('end_date', endDate);
-    
+
     const url = `/attendance/grade/${gradeId}/report${params.toString() ? `?${params.toString()}` : ''}`;
     const response = await apiRequest<GradeReportResponse>(url);
     return response.data;
@@ -702,7 +702,7 @@ export const attendanceMarkApi = {
     const params = new URLSearchParams();
     if (startDate) params.append('start_date', startDate);
     if (endDate) params.append('end_date', endDate);
-    
+
     const url = `/attendance-mark/all${params.toString() ? `?${params.toString()}` : ''}`;
     const response = await apiRequest<AllAttendanceResponse>(url);
     return response.data;
@@ -1008,11 +1008,11 @@ export const reportCardApi = {
     const headers: Record<string, string> = {
       'Authorization': `Bearer ${token}`
     };
-    
+
     const response = await fetch(`${API_BASE_URL}/report-cards/student/${studentId}/grade/${gradeId}/term/${term}`, {
       headers
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to download report card');
     }
@@ -1047,7 +1047,7 @@ export const emailAlertsApi = {
     if (params.limit) queryParams.append('limit', params.limit.toString());
     if (params.status && params.status !== 'all') queryParams.append('status', params.status);
     if (params.student_name) queryParams.append('student_name', params.student_name);
-    
+
     const url = `/email-alerts/logs${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await apiRequest<EmailLogResponse['data']>(url);
     return response.data;
@@ -1092,14 +1092,14 @@ interface EmailLogResponse {
   };
 }
 
-export default { 
-  gradeApi, 
-  studentApi, 
-  subjectApi, 
-  attendanceApi, 
-  attendanceMarkApi, 
-  marksApi, 
-  resultsApi, 
+export default {
+  gradeApi,
+  studentApi,
+  subjectApi,
+  attendanceApi,
+  attendanceMarkApi,
+  marksApi,
+  resultsApi,
   reportCardApi,
   dashboardApi,
   emailAlertsApi

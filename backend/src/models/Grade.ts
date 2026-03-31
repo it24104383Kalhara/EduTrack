@@ -144,8 +144,8 @@ export class GradeModel {
   static async create(gradeData: Omit<Grade, 'id' | 'created_at' | 'updated_at'>): Promise<Grade> {
     try {
       const [result] = await pool.execute(GRADE_QUERIES.CREATE, [
-        gradeData.grade, 
-        gradeData.grade_part, 
+        gradeData.grade,
+        gradeData.grade_part,
         gradeData.teacher_id || null
       ]);
       const insertedId = (result as any).insertId;
