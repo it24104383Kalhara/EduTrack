@@ -147,6 +147,25 @@ export const validateStudentRegistration = (req: Request, res: Response, next: N
     });
   }
 
+  // Validate date of birth (2006-12-31 to 2016-01-31)
+  if (student.date_of_birth) {
+    const dob = new Date(student.date_of_birth);
+    const minDob = new Date('2006-12-31');
+    const maxDob = new Date('2016-01-31');
+
+    if (isNaN(dob.getTime())) {
+      errors.push({
+        field: 'date_of_birth',
+        message: 'Invalid date format'
+      });
+    } else if (dob < minDob || dob > maxDob) {
+      errors.push({
+        field: 'date_of_birth',
+        message: 'Student must be born between 31st Dec 2006 and 31st Jan 2016'
+      });
+    }
+  }
+
   // Basic name validation (letters allowed)
   if (student.first_name && student.first_name.trim().length < 2) {
     errors.push({

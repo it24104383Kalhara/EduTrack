@@ -144,6 +144,21 @@ const StudentRegistrationForm: React.FC = () => {
       return;
     }
 
+    // Birthday validation (2006-12-31 to 2016-01-31)
+    if (formData.date_of_birth) {
+      const dob = new Date(formData.date_of_birth);
+      const minDob = new Date('2006-12-31');
+      const maxDob = new Date('2016-01-31');
+
+      if (dob < minDob || dob > maxDob) {
+        setNotification({ 
+          message: 'Registration Denied: Student must be born between Dec 31, 2006 and Jan 31, 2016.', 
+          type: 'error' 
+        });
+        return;
+      }
+    }
+
     try {
       const newStudent = {
         first_name: formData.first_name,
