@@ -2,7 +2,7 @@ import pool from '../config/database';
 import { SUBJECT_QUERIES } from './DatabaseQueries';
 
 export interface Subject {
-  id: string;
+  id: number;
   name: string;
   code: string;
   grades: string | string[];
@@ -56,7 +56,7 @@ export class SubjectModel {
   }
 
   // Get subject by ID
-  static async findById(id: string): Promise<SubjectWithDetails | null> {
+  static async findById(id: number): Promise<SubjectWithDetails | null> {
     try {
       const [rows] = await pool.execute(SUBJECT_QUERIES.FIND_BY_ID, [id]);
       const subjects = rows as any[];
@@ -95,12 +95,10 @@ export class SubjectModel {
 
   // Create new subject
   static async create(subject: Omit<Subject, 'id' | 'created_at' | 'updated_at'>): Promise<Subject> {
-    const id = `SUBJ_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const gradesArray = Array.isArray(subject.grades) ? subject.grades : [subject.grades];
     
     try {
-      await pool.execute(SUBJECT_QUERIES.CREATE, [
-        id,
+      const [result] = await pool.execute(SUBJECT_QUERIES.CREATE, [
         subject.name,
         subject.code,
         JSON.stringify(gradesArray),
@@ -109,6 +107,8 @@ export class SubjectModel {
         subject.category || null,
         subject.is_optional ? 1 : 0
       ]);
+      
+      const id = (result as any).insertId;
       
       return {
         id,
@@ -128,7 +128,7 @@ export class SubjectModel {
   }
 
   // Update subject
-  static async update(id: string, updates: Partial<Omit<Subject, 'id' | 'created_at' | 'updated_at'>>): Promise<Subject | null> {
+  static async update(id: number, updates: Partial<Omit<Subject, 'id' | 'created_at' | 'updated_at'>>): Promise<Subject | null> {
     const fields = [];
     const values = [];
     
@@ -191,7 +191,7 @@ export class SubjectModel {
   }
 
   // Delete subject
-  static async delete(id: string): Promise<boolean> {
+  static async delete(id: number): Promise<boolean> {
     try {
       const [result] = await pool.execute(SUBJECT_QUERIES.DELETE, [id]);
       return (result as any).affectedRows > 0;
@@ -202,7 +202,7 @@ export class SubjectModel {
   }
 
   // Check if subject code exists
-  static async findByCode(code: string, excludeId?: string): Promise<Subject | null> {
+  static async findByCode(code: string, excludeId?: number): Promise<Subject | null> {
     try {
       const params = excludeId ? [code, excludeId] : [code];
       const [rows] = await pool.execute(SUBJECT_QUERIES.FIND_BY_CODE(!!excludeId), params);
@@ -219,7 +219,7 @@ export class SubjectModel {
     name: string, 
     grade: string, 
     stream?: string, 
-    excludeId?: string
+    excludeId?: number
   ): Promise<Subject | null> {
     try {
       let params: any[];
