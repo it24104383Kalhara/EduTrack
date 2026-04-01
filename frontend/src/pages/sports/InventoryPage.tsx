@@ -489,10 +489,10 @@ export default function InventoryPage() {
                                                 {log.status === 'Reserved' ? (
                                                     <button
                                                         onClick={() => openReturnModal(log)}
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white rounded-xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
-                                                        style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95 transition-all duration-200 border border-indigo-400/20"
+                                                        style={{ background: 'linear-gradient(135deg,#633194,#4f46e5)' }}
                                                     >
-                                                        <ArrowPathRoundedSquareIcon className="h-3.5 w-3.5" /> Return Item
+                                                        <ArrowPathRoundedSquareIcon className="h-3.5 w-3.5 drop-shadow-sm" /> Return Item
                                                     </button>
                                                 ) : (
                                                     <span className="text-xs text-gray-300 italic">Returned</span>
@@ -722,7 +722,7 @@ export default function InventoryPage() {
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-gray-100">
                         <div className="px-6 py-4 flex items-center justify-between"
-                             style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>
+                             style={{ background: 'linear-gradient(135deg,#633194,#4f46e5)' }}>
                             <div>
                                 <h3 className="text-base font-bold text-white flex items-center gap-2">
                                     <ArrowPathRoundedSquareIcon className="h-5 w-5" /> Return Equipment
@@ -774,8 +774,8 @@ export default function InventoryPage() {
                                 </button>
                                 <button type="submit"
                                     disabled={returnReservedMutation.isPending}
-                                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition-all disabled:opacity-50"
-                                    style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>
+                                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition-all active:scale-95 disabled:opacity-50"
+                                    style={{ background: 'linear-gradient(135deg,#633194,#4f46e5)' }}>
                                     {returnReservedMutation.isPending ? 'Processing…' : 'Confirm Return'}
                                 </button>
                             </div>
