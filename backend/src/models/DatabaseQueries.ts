@@ -82,7 +82,7 @@ export const SCHEMA_QUERIES = {
         `,
         SUBJECTS: `
             CREATE TABLE IF NOT EXISTS subjects (
-                id VARCHAR(50) PRIMARY KEY,
+                id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
                 code VARCHAR(50) NOT NULL UNIQUE,
                 grades JSON NOT NULL,
@@ -102,7 +102,7 @@ export const SCHEMA_QUERIES = {
             CREATE TABLE IF NOT EXISTS student_subjects (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 student_id INT NOT NULL,
-                subject_id VARCHAR(50) NOT NULL,
+                subject_id INT NOT NULL,
                 grade_id INT NOT NULL,
                 assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
@@ -153,7 +153,7 @@ export const SCHEMA_QUERIES = {
             CREATE TABLE IF NOT EXISTS marks (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 student_id INT NOT NULL,
-                subject_id VARCHAR(50) NOT NULL,
+                subject_id INT NOT NULL,
                 grade_id INT NOT NULL,
                 term VARCHAR(50) NOT NULL,
                 exam_type ENUM('mid_term', 'final_term', 'assignment', 'quiz', 'practical') NOT NULL,
