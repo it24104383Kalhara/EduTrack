@@ -381,8 +381,8 @@ export const SUBJECT_QUERIES = {
         FROM subjects WHERE id = ?
     `,
     CREATE: `
-        INSERT INTO subjects (id, name, code, grades, stream, type, category, is_optional) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO subjects (name, code, grades, stream, type, category, is_optional) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     `,
     UPDATE: (setClause: string) => `UPDATE subjects SET ${setClause} WHERE id = ?`,
     DELETE: 'DELETE FROM subjects WHERE id = ?',
