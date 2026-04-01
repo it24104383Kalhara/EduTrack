@@ -1,3 +1,4 @@
+// EduTrack Backend Server - Updated 2026-04-01
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
