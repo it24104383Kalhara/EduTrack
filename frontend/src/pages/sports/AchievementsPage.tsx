@@ -356,13 +356,15 @@ export default function AchievementsPage() {
 
             {/* Activity Selector */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Select Activity</label>
+                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Select Sport</label>
                 <div className="flex flex-wrap gap-2">
                     <button
                         onClick={() => setSelectedActivityId(null)}
                         className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${!selectedActivityId ? 'bg-[#633194] text-white border-[#633194] shadow-sm' : 'bg-white text-gray-500 border-gray-200 hover:border-[#633194]/40'}`}
                     >All Activities</button>
-                    {activities?.map(a => (
+                    {activities?.filter(a => a.type === 'Sport')
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map(a => (
                         <button key={a.id}
                             onClick={() => setSelectedActivityId(a.id!)}
                             className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${selectedActivityId === a.id ? 'bg-[#633194] text-white border-[#633194] shadow-sm' : 'bg-white text-gray-500 border-gray-200 hover:border-[#633194]/40'}`}
@@ -546,7 +548,9 @@ export default function AchievementsPage() {
                                         value={chartActivityId ?? ''}
                                         onChange={(v) => setChartActivityId(v ? parseInt(v as string) : null)}
                                         placeholder="All Activities"
-                                        options={(activities ?? []).map(a => ({ value: a.id!, label: a.name }))}
+                                        options={(activities ?? []).filter(a => a.type === 'Sport')
+                                            .sort((a, b) => a.name.localeCompare(b.name))
+                                            .map(a => ({ value: a.id!, label: a.name }))}
                                     />
                                 </div>
                                 {/* Period Selection for Graph */}
