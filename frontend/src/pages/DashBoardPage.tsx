@@ -56,7 +56,7 @@ function InventoryAnalytics() {
     const latestInv = getLatestDate();
 
     return (
-        <div className="bg-[#F8F9FB] rounded-[24px] border border-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center relative h-full overflow-visible z-[5]">
+        <div className="bg-white rounded-[24px] border border-gray-100 p-4 shadow-sm flex flex-col items-center relative h-full overflow-visible z-[5]">
             {/* Stable Legend Tooltips (High Stacking Layer) */}
             <div className="absolute top-0 inset-x-0 z-[130] pointer-events-none px-4 h-0 overflow-visible">
                 {/* Available Hover Popup (Right-Aligned & Safe) */}
@@ -281,7 +281,7 @@ export default function DashBoardPage() {
     const totalActivities = activityCounts.Sport + activityCounts.Club + activityCounts.Society;
 
     return (
-        <div className="space-y-4 max-h-screen overflow-hidden">
+        <div className="space-y-4 pb-10">
             <div className="flex justify-between items-end mb-2">
                 <div>
                     <h1 className="text-xl font-bold text-gray-800 tracking-tight">{user?.role} Portal</h1>
@@ -316,31 +316,33 @@ export default function DashBoardPage() {
                 <div className="lg:col-span-1 space-y-4">
                     <div className="bg-white rounded-[24px] border border-gray-100 p-5 hover:shadow-md transition-all">
                         <div className="flex items-center gap-2 mb-3">
-                            <div className="h-7 w-7 rounded-lg bg-[#FFF0E6] flex items-center justify-center text-orange-500">
-                                <BellAlertIcon className="h-4 w-4" />
+                            <div className="h-8 w-8 rounded-lg bg-[#FFF0E6] flex items-center justify-center text-orange-500">
+                                <BellAlertIcon className="h-5 w-5" />
                             </div>
-                            <h3 className="text-xs font-bold text-gray-800 uppercase">Alerts</h3>
+                            <h3 className="text-[14px] font-black text-gray-800 uppercase tracking-tight">Alerts</h3>
                         </div>
-                        <p className="text-[11px] text-gray-500">3 pending alerts requiring review.</p>
+                        <p className="text-[13px] font-medium text-gray-500 leading-relaxed px-1">
+                            3 pending alerts requiring review.
+                        </p>
                     </div>
 
                     <div className="bg-white rounded-[24px] border border-gray-100 p-5 overflow-hidden">
-                        <h3 className="text-xs font-bold text-gray-800 uppercase mb-3 px-1">Updates</h3>
-                        <div className="space-y-2">
+                        <h3 className="text-[14px] font-black text-gray-800 uppercase mb-4 px-1 tracking-tight">Updates</h3>
+                        <div className="space-y-1.5">
                             {[
                                 { label: 'Basketball', desc: 'New group added', time: 'Just now', color: 'bg-[#E1F5FE]', txt: 'text-blue-500', icon: TrophyIcon },
                                 { label: 'Swimming', desc: 'Sync complete', time: 'Today', color: 'bg-[#FFF0E6]', txt: 'text-orange-500', icon: DocumentTextIcon },
                                 { label: 'System', desc: 'Notification sent', time: 'Yesterday', color: 'bg-[#F4F0FF]', txt: 'text-[#633194]', icon: BellAlertIcon },
                             ].map((item, i) => (
-                                <div key={i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-                                    <div className={clsx("h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0", item.color)}>
+                                <div key={i} className="flex items-center gap-3.5 p-2.5 rounded-xl hover:bg-gray-50 transition-colors">
+                                    <div className={clsx("h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0", item.color)}>
                                         <item.icon className={clsx("h-4 w-4", item.txt)} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[11px] font-bold text-gray-800 truncate">{item.label}</p>
-                                        <p className="text-[10px] text-gray-500 truncate">{item.desc}</p>
+                                        <p className="text-[13px] font-bold text-gray-800 truncate leading-tight mb-0.5">{item.label}</p>
+                                        <p className="text-[11.5px] font-medium text-gray-500 truncate leading-tight">{item.desc}</p>
                                     </div>
-                                    <span className="text-[9px] text-gray-400">{item.time}</span>
+                                    <span className="text-[10.5px] font-bold text-gray-400 whitespace-nowrap">{item.time}</span>
                                 </div>
                             ))}
                         </div>
