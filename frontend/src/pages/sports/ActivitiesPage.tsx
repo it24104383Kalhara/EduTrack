@@ -11,6 +11,8 @@ import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
 import ArrowRightIcon from '@heroicons/react/24/outline/ArrowRightIcon';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
+import { motion, AnimatePresence } from 'framer-motion';
+import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 
 const TYPE_CONFIG: Record<string, { color: string; bg: string; border: string; badgeBg: string; badgeText: string; accent: string }> = {
     Sport: { color: 'text-orange-500', bg: 'bg-[#FFF0E6]', border: 'border-orange-100', badgeBg: 'bg-orange-50', badgeText: 'text-orange-700', accent: 'bg-orange-400' },
@@ -35,6 +37,7 @@ export default function ActivitiesPage() {
     const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null, name: string}>({ isOpen: false, id: null, name: '' });
     const [search, setSearch] = useState('');
     const [typeFilter, setTypeFilter] = useState<string>('All');
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         name: '',
         type: 'Sport',
@@ -49,10 +52,12 @@ export default function ActivitiesPage() {
 
     const createMutation = useMutation({
         mutationFn: activityService.create,
-        onSuccess: () => {
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['activities'] });
             setIsModalOpen(false);
+            setSuccessMessage((data as any).name);
             setFormData({ name: '', type: 'Sport', description: '', in_charge_staff_id: user?.id || 1 });
+            setTimeout(() => setSuccessMessage(null), 3000);
         },
     });
 
@@ -102,7 +107,35 @@ export default function ActivitiesPage() {
     );
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 relative">
+            <AnimatePresence>
+                {successMessage && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20, x: '-50%' }}
+                        animate={{ opacity: 1, y: 0, x: '-50%' }}
+                        exit={{ opacity: 0, y: -20, x: '-50%' }}
+                        className="fixed top-6 left-1/2 z-[100] flex items-center gap-3 px-6 py-3 bg-white/90 backdrop-blur-md rounded-2xl shadow-[0_20px_50px_rgba(99,49,148,0.15)] border border-purple-100 whitespace-nowrap"
+                    >
+                        <div className="h-8 w-8 rounded-full bg-[#F4F0FF] flex items-center justify-center text-[#633194]">
+                            <CheckCircleIcon className="h-5 w-5" />
+                        </div>
+                        <div className="flex flex-col pr-2">
+                            <span className="text-[13px] font-bold text-gray-800 tracking-tight">
+                                Success! Activity Created
+                            </span>
+                            <span className="text-[11px] font-semibold text-[#633194] opacity-80">
+                                "{successMessage}" is now live.
+                            </span>
+                        </div>
+                        <button 
+                            onClick={() => setSuccessMessage(null)} 
+                            className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 transition-all"
+                        >
+                            <XMarkIcon className="h-4 w-4" />
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
