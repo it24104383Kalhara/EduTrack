@@ -11,12 +11,23 @@ import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import CheckCircleIcon from '@heroicons/react/24/solid/CheckCircleIcon';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
+import ChevronUpIcon from '@heroicons/react/24/outline/ChevronUpIcon';
+import ChevronDownIcon from '@heroicons/react/24/outline/ChevronDownIcon';
+import { useMemo } from 'react';
+import clsx from 'clsx';
 
 const ROLE_CONFIG: Record<string, { bg: string; text: string; border: string }> = {
     Captain: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
     'Vice-Captain': { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
     Secretary: { bg: 'bg-[#F4F0FF]', text: 'text-[#633194]', border: 'border-purple-200' },
     Member: { bg: 'bg-gray-100', text: 'text-gray-600', border: 'border-gray-200' },
+};
+
+const ROLE_PRIORITY: Record<string, number> = {
+    'Captain': 1,
+    'Vice-Captain': 2,
+    'Secretary': 3,
+    'Member': 4
 };
 
 export default function ActivityMembersPage() {
@@ -31,6 +42,11 @@ export default function ActivityMembersPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedStudent, setSelectedStudent] = useState<{ id: number, name: string, grade: string, classTeacherName?: string } | null>(null);
     const [formData, setFormData] = useState({ student_id: '', role: 'Member' });
+    const [error, setError] = useState<string | null>(null);
+    const [sortConfig, setSortConfig] = useState<{ key: 'student' | 'role' | 'grade' | 'joined', direction: 'asc' | 'desc' }>({
+        key: 'role',
+        direction: 'asc'
+    });
 
     const { data: searchResults, isLoading: isSearchLoading } = useQuery({
         queryKey: ['studentsSearch', searchQuery],
@@ -53,6 +69,54 @@ export default function ActivityMembersPage() {
         enabled: !!activityId,
     });
 
+    const sortedMembers = useMemo(() => {
+        if (!members) return [];
+        const sorted = [...members];
+        sorted.sort((a: any, b: any) => {
+            let valA: any, valB: any;
+            
+            switch (sortConfig.key) {
+                case 'student':
+                    valA = a.student_name?.toLowerCase() || '';
+                    valB = b.student_name?.toLowerCase() || '';
+                    break;
+                case 'role':
+                    valA = ROLE_PRIORITY[a.role] || 99;
+                    valB = ROLE_PRIORITY[b.role] || 99;
+                    break;
+                case 'grade':
+                    valA = a.grade || '';
+                    valB = b.grade || '';
+                    // Natural sorting for grades (11 > 10)
+                    return sortConfig.direction === 'asc' 
+                        ? valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' })
+                        : valB.localeCompare(valA, undefined, { numeric: true, sensitivity: 'base' });
+                case 'joined':
+                    valA = new Date(a.joined_at).getTime();
+                    valB = new Date(b.joined_at).getTime();
+                    break;
+                default:
+                    return 0;
+            }
+
+            if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+            
+            // Secondary sort: Use student name if the primary values are the same
+            const nameA = a.student_name?.toLowerCase() || '';
+            const nameB = b.student_name?.toLowerCase() || '';
+            return nameA.localeCompare(nameB);
+        });
+        return sorted;
+    }, [members, sortConfig]);
+
+    const handleSort = (key: 'student' | 'role' | 'grade' | 'joined') => {
+        setSortConfig(prev => ({
+            key,
+            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
     const registerMutation = useMutation({
         mutationFn: membershipService.register,
         onSuccess: () => {
@@ -61,9 +125,10 @@ export default function ActivityMembersPage() {
             setFormData({ student_id: '', role: 'Member' });
             setSearchQuery('');
             setSelectedStudent(null);
+            setError(null);
         },
         onError: (error: any) => {
-            alert('Failed to register student: ' + (error.response?.data?.error || error.message));
+            setError(error.response?.data?.error || error.message);
         },
     });
 
@@ -79,8 +144,23 @@ export default function ActivityMembersPage() {
 
     const handleRegister = (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
         const studentIdToReg = selectedStudent ? selectedStudent.id : parseInt(formData.student_id);
-        if (!studentIdToReg) { alert('Please select or enter a student ID'); return; }
+        if (!studentIdToReg) { setError('Please select or enter a student ID'); return; }
+
+        // Prevent duplicate registration on frontend-side if members are loaded
+        if (members && members.some((m: any) => m.student_id === studentIdToReg)) {
+            setError(`Student is already registered in this activity.`);
+            return;
+        }
+
+        // Prevent duplicate singular roles (Captain, Vice-Captain, Secretary)
+        const singularRoles = ['Captain', 'Vice-Captain', 'Secretary'];
+        if (singularRoles.includes(formData.role) && members && members.some((m: any) => m.role === formData.role)) {
+            setError(`The ${formData.role} role is already assigned in this activity.`);
+            return;
+        }
+
         registerMutation.mutate({
             student_id: studentIdToReg,
             student_name: selectedStudent?.name,
@@ -165,18 +245,58 @@ export default function ActivityMembersPage() {
                     <table className="min-w-full">
                         <thead>
                             <tr className="border-b border-gray-100">
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Student</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Grade &amp; Teacher</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Joined</th>
+                                <th 
+                                    className="px-6 py-4 text-left text-[11px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:bg-gray-100/50 transition-colors group/h"
+                                    onClick={() => handleSort('student')}
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        Student
+                                        <div className={clsx("transition-all duration-300", sortConfig.key === 'student' ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1 group-hover/h:opacity-50")}>
+                                            {sortConfig.key === 'student' && sortConfig.direction === 'desc' ? <ChevronDownIcon className="h-3 w-3 text-[#633194]" /> : <ChevronUpIcon className="h-3 w-3 text-[#633194]" />}
+                                        </div>
+                                    </div>
+                                </th>
+                                <th 
+                                    className="px-6 py-4 text-left text-[11px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:bg-gray-100/50 transition-colors group/h"
+                                    onClick={() => handleSort('role')}
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        Role
+                                        <div className={clsx("transition-all duration-300", sortConfig.key === 'role' ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1 group-hover/h:opacity-50")}>
+                                            {sortConfig.key === 'role' && sortConfig.direction === 'desc' ? <ChevronDownIcon className="h-3 w-3 text-[#633194]" /> : <ChevronUpIcon className="h-3 w-3 text-[#633194]" />}
+                                        </div>
+                                    </div>
+                                </th>
+                                <th 
+                                    className="px-6 py-4 text-left text-[11px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:bg-gray-100/50 transition-colors group/h"
+                                    onClick={() => handleSort('grade')}
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        Grade &amp; Teacher
+                                        <div className={clsx("transition-all duration-300", sortConfig.key === 'grade' ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1 group-hover/h:opacity-50")}>
+                                            {sortConfig.key === 'grade' && sortConfig.direction === 'desc' ? <ChevronDownIcon className="h-3 w-3 text-[#633194]" /> : <ChevronUpIcon className="h-3 w-3 text-[#633194]" />}
+                                        </div>
+                                    </div>
+                                </th>
+                                <th 
+                                    className="px-6 py-4 text-left text-[11px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:bg-gray-100/50 transition-colors group/h"
+                                    onClick={() => handleSort('joined')}
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        Joined
+                                        <div className={clsx("transition-all duration-300", sortConfig.key === 'joined' ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1 group-hover/h:opacity-50")}>
+                                            {sortConfig.key === 'joined' && sortConfig.direction === 'desc' ? <ChevronDownIcon className="h-3 w-3 text-[#633194]" /> : <ChevronUpIcon className="h-3 w-3 text-[#633194]" />}
+                                        </div>
+                                    </div>
+                                </th>
                                 {(user?.role === 'Admin' || user?.role === 'Coach') && (
-                                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                                    <th className="px-6 py-4 text-right text-[11px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
                                 )}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {members && members.length > 0 ? (
-                                members.map((member: any, idx: number) => {
+                            {sortedMembers.length > 0 ? (
+                                sortedMembers.map((member: any, idx: number) => {
                                     const roleCfg = ROLE_CONFIG[member.role] ?? ROLE_CONFIG['Member'];
                                     const letter = member.student_name?.charAt(0) ?? String.fromCharCode(65 + (idx % 26));
                                     return (
@@ -301,6 +421,7 @@ export default function ActivityMembersPage() {
                                                             setSelectedStudent(student);
                                                             setFormData({ ...formData, student_id: student.id.toString() });
                                                             setSearchQuery('');
+                                                            setError(null);
                                                         }}
                                                         className="px-4 py-3 hover:bg-[#F4F0FF] cursor-pointer flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
                                                     >
@@ -332,7 +453,10 @@ export default function ActivityMembersPage() {
                                             type="number"
                                             className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all"
                                             value={formData.student_id}
-                                            onChange={e => setFormData({ ...formData, student_id: e.target.value })}
+                                            onChange={e => {
+                                                setFormData({ ...formData, student_id: e.target.value });
+                                                setError(null);
+                                            }}
                                             placeholder="e.g. 1042"
                                         />
                                     </div>
@@ -390,6 +514,16 @@ export default function ActivityMembersPage() {
                                     })}
                                 </div>
                             </div>
+
+                            {/* Error Alert Display */}
+                            {error && (
+                                <div className="p-3.5 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3">
+                                    <XMarkIcon className="h-4 w-4 text-red-500 mt-0.5" />
+                                    <p className="text-[12.5px] font-bold text-red-700 leading-tight">
+                                        {error}
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Action Buttons */}
                             <div className="flex gap-3 pt-2 border-t border-gray-100">

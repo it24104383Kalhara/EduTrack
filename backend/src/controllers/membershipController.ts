@@ -11,6 +11,23 @@ export const registerStudent = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'student_id and activity_id are required' });
         }
 
+        // Check for existing membership (Duplicate student)
+        const existing = await MembershipModel.checkExistingMembership(student_id, activity_id);
+        if (existing) {
+            return res.status(409).json({ error: 'Student is already registered in this activity.' });
+        }
+
+        // Check for unique roles (Captain, Vice-Captain, Secretary)
+        const singularRoles = ['Captain', 'Vice-Captain', 'Secretary'];
+        const targetRole = role || 'Member';
+        
+        if (singularRoles.includes(targetRole)) {
+            const existingRole = await MembershipModel.checkExistingRoleInActivity(activity_id, targetRole);
+            if (existingRole) {
+                return res.status(409).json({ error: `The ${targetRole} role is already assigned to a student in this activity.` });
+            }
+        }
+
         const membership = {
             student_id,
             student_name,

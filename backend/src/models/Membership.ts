@@ -44,3 +44,19 @@ export const removeStudentFromActivity = async (membershipId: number): Promise<v
         [membershipId]
     );
 };
+
+export const checkExistingMembership = async (studentId: number, activityId: number): Promise<Membership | null> => {
+    const [rows] = await pool.query<RowDataPacket[]>(
+        'SELECT * FROM sports_memberships WHERE student_id = ? AND activity_id = ? AND quit_at IS NULL',
+        [studentId, activityId]
+    );
+    return rows.length > 0 ? (rows[0] as Membership) : null;
+};
+
+export const checkExistingRoleInActivity = async (activityId: number, role: string): Promise<Membership | null> => {
+    const [rows] = await pool.query<RowDataPacket[]>(
+        'SELECT * FROM sports_memberships WHERE activity_id = ? AND role = ? AND quit_at IS NULL',
+        [activityId, role]
+    );
+    return rows.length > 0 ? (rows[0] as Membership) : null;
+};

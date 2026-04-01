@@ -60,7 +60,7 @@ const RestrictedPage = () => {
                         onClick={() => navigate('/dashboard')}
                         className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-white border border-gray-200 text-gray-700 font-bold text-sm shadow-sm hover:bg-gray-50 hover:border-gray-300 transition-all"
                     >
-                        Return Home
+                        Return Dashboard
                     </button>
                 </div>
 
