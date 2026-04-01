@@ -6,6 +6,8 @@
   position: relative;
   overflow: hidden;
   font-family: system-ui, -apple-system, sans-serif;
+  padding-top: 64px;
+  box-sizing: border-box;
 }
 
 /* Decorative blobs */

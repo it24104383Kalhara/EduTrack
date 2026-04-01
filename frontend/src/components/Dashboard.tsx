@@ -64,6 +64,7 @@ interface DashboardProps {
   onNavigateToViewStudents: () => void;
   onNavigateToResetPassword: () => void;
   onNavigateToHeartRateMonitor: () => void;
+  onNavigateToFindHospital: () => void;
 }
 
 function Dashboard({
@@ -72,12 +73,13 @@ function Dashboard({
   onNavigateToViewStudents,
   onNavigateToResetPassword,
   onNavigateToHeartRateMonitor,
+  onNavigateToFindHospital,
 }: DashboardProps) {
   const handlers: Record<string, () => void> = {
     "add-student": onNavigateToStudentForm,
     "view-students": onNavigateToViewStudents,
     "heart-rate": onNavigateToHeartRateMonitor,
-    "find-hospital": () => {},
+    "find-hospital": onNavigateToFindHospital,
   };
 
   return (

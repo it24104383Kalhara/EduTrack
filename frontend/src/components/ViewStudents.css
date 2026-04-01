@@ -231,3 +231,107 @@
   border-color: #ff4d6d;
   transform: scale(1.1);
 }
+
+/* ── Date Blocks ── */
+.date-blocks-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.date-block {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid #eff6ff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  overflow: hidden;
+  transition: box-shadow 0.25s, transform 0.2s;
+}
+
+.date-block:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+.date-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  cursor: pointer;
+  background: #ffffff;
+  transition: background 0.2s;
+  user-select: none;
+}
+
+.date-block-header:hover {
+  background: #f8fafc;
+}
+
+.date-block-header.expanded {
+  border-bottom: 1px solid #eef2ff;
+  background: #f8fafc;
+}
+
+.date-block-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #2563eb;
+}
+
+.date-block-info h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.date-block-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.student-count.badge {
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid #bfdbfe;
+}
+
+.chevron {
+  color: #9ca3af;
+  transition: transform 0.3s ease;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+  color: #2563eb;
+}
+
+.date-block-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease-in-out;
+  background-color: #f8fafc;
+}
+
+.date-block-content.open {
+  grid-template-rows: 1fr;
+}
+
+.date-block-inner {
+  overflow: hidden;
+}
+
+.date-specific-grid {
+  padding: 24px;
+  margin: 0;
+}

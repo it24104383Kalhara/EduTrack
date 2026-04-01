@@ -1,0 +1,507 @@
+/* ─── FindHospital — EduTrack Health Theme ─────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+* { box-sizing: border-box; }
+
+/* ─── Root ────────────────────────────────────────────────────────────────── */
+.fh-root {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #f0fdf4 0%, #dcfce7 40%, #e8f5fe 100%);
+  font-family: 'Inter', sans-serif;
+  color: #1f2937;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ─── Background blobs ────────────────────────────────────────────────────── */
+.fh-blob-1 {
+  position: fixed;
+  top: -120px; left: 15%;
+  width: 520px; height: 520px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #6ee7b7 0%, transparent 70%);
+  opacity: 0.25;
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+.fh-blob-2 {
+  position: fixed;
+  bottom: -80px; right: -60px;
+  width: 380px; height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #93c5fd 0%, transparent 70%);
+  opacity: 0.2;
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Header ──────────────────────────────────────────────────────────────── */
+.fh-header {
+  position: sticky;
+  top: 0; z-index: 50;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.80);
+  border-bottom: 1px solid rgba(5,150,105,0.12);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.fh-header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.fh-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+.fh-logo-icon {
+  width: 36px; height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #059669, #34d399);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px rgba(5,150,105,0.30);
+  flex-shrink: 0;
+}
+.fh-logo-icon svg { width: 18px; height: 18px; color: white; }
+.fh-logo-text { font-size: 16px; font-weight: 800; color: #059669; }
+
+.fh-title-group { display: flex; flex-direction: column; align-items: flex-start; }
+.fh-page-title  { font-size: 14px; font-weight: 700; color: #059669; line-height: 1; }
+.fh-page-sub    { font-size: 11px; color: #9ca3af; font-weight: 500; }
+
+.fh-header-actions { display: flex; align-items: center; gap: 8px; }
+
+.fh-btn-back {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 2px solid rgba(5,150,105,0.22);
+  background: transparent;
+  color: #059669;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+.fh-btn-back:hover {
+  background: #ecfdf5;
+  border-color: #059669;
+  transform: translateY(-1px);
+}
+.fh-btn-logout {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+  color: white;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(244,63,94,0.30);
+  font-family: 'Inter', sans-serif;
+}
+.fh-btn-logout:hover {
+  box-shadow: 0 6px 20px rgba(244,63,94,0.40);
+  transform: translateY(-1px);
+}
+
+/* ─── Main content ────────────────────────────────────────────────────────── */
+.fh-main {
+  position: relative; z-index: 1;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 36px 24px 60px;
+}
+
+/* ─── Hero search card ────────────────────────────────────────────────────── */
+.fh-hero-card {
+  background: linear-gradient(135deg, #059669 0%, #34d399 70%, #6ee7b7 100%);
+  border-radius: 28px;
+  padding: 40px 40px 36px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(5,150,105,0.30);
+}
+.fh-hero-card::before {
+  content: '';
+  position: absolute; top: -60px; right: -60px;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 70%);
+  pointer-events: none;
+}
+.fh-hero-card::after {
+  content: '';
+  position: absolute; bottom: -40px; left: -40px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.10), transparent 70%);
+  pointer-events: none;
+}
+
+.fh-hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.22);
+  border: 1px solid rgba(255,255,255,0.35);
+  color: white;
+  font-size: 11px; font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 99px;
+  margin-bottom: 18px;
+  backdrop-filter: blur(4px);
+  letter-spacing: 0.04em;
+}
+.fh-hero-title {
+  font-size: 28px; font-weight: 900;
+  color: white;
+  margin: 0 0 6px;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.12);
+}
+.fh-hero-sub {
+  font-size: 14px; color: rgba(255,255,255,0.80);
+  margin: 0 0 24px;
+  font-weight: 500;
+}
+
+/* ─── Search input ────────────────────────────────────────────────────────── */
+.fh-search-wrap {
+  position: relative;
+}
+.fh-search-icon {
+  position: absolute;
+  left: 16px; top: 50%;
+  transform: translateY(-50%);
+  width: 20px; height: 20px;
+  color: #059669;
+  pointer-events: none;
+}
+.fh-search-input {
+  width: 100%;
+  padding: 15px 20px 15px 46px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  background: white;
+  font-size: 15px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  color: #1f2937;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+}
+.fh-search-input::placeholder { color: #9ca3af; font-weight: 400; }
+.fh-search-input:focus {
+  border-color: #059669;
+  box-shadow: 0 0 0 4px rgba(5,150,105,0.18), 0 4px 20px rgba(0,0,0,0.10);
+}
+.fh-clear-btn {
+  position: absolute;
+  right: 14px; top: 50%;
+  transform: translateY(-50%);
+  background: #ecfdf5;
+  border: none; cursor: pointer;
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: #059669;
+  transition: background 0.2s;
+}
+.fh-clear-btn:hover { background: #d1fae5; }
+
+/* ─── Status / info strip ─────────────────────────────────────────────────── */
+.fh-status-strip {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 0 20px;
+  font-size: 13px; color: #6b7280;
+  font-weight: 500;
+  min-height: 32px;
+}
+.fh-spinner {
+  width: 18px; height: 18px;
+  border: 2.5px solid #a7f3d0;
+  border-top-color: #059669;
+  border-radius: 50%;
+  animation: fh-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes fh-spin { to { transform: rotate(360deg); } }
+
+.fh-count-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #059669;
+  font-size: 12px; font-weight: 700;
+  padding: 3px 10px; border-radius: 99px;
+}
+
+/* ─── Results list ────────────────────────────────────────────────────────── */
+.fh-results { display: flex; flex-direction: column; gap: 14px; }
+
+/* ─── Hospital card ───────────────────────────────────────────────────────── */
+.fh-card {
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid rgba(5,150,105,0.10);
+  box-shadow: 0 4px 24px rgba(5,150,105,0.07);
+  padding: 20px 22px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.fh-card:hover {
+  box-shadow: 0 10px 36px rgba(5,150,105,0.14);
+  transform: translateY(-3px);
+}
+
+.fh-card-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #059669, #34d399);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(5,150,105,0.25);
+}
+.fh-card-icon svg { width: 22px; height: 22px; color: white; }
+
+.fh-card-body { flex: 1; min-width: 0; }
+
+.fh-card-top {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 10px;
+  margin-bottom: 4px;
+}
+.fh-card-name {
+  font-size: 15px; font-weight: 800;
+  color: #111827;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fh-type-badge {
+  flex-shrink: 0;
+  font-size: 10px; font-weight: 700;
+  padding: 3px 9px; border-radius: 99px;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.fh-type-hospital  { background: #fee2e2; color: #dc2626; }
+.fh-type-clinic    { background: #ede9fe; color: #7c3aed; }
+.fh-type-pharmacy  { background: #fef3c7; color: #d97706; }
+.fh-type-default   { background: #dcfce7; color: #059669; }
+
+.fh-card-address {
+  font-size: 13px; color: #6b7280; margin-bottom: 10px;
+  line-height: 1.45;
+}
+
+.fh-card-footer {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+
+.fh-dist-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #ecfdf5; border: 1px solid #a7f3d0;
+  color: #059669;
+  font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 99px;
+}
+.fh-phone-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #f0f9ff; border: 1px solid #bae6fd;
+  color: #0369a1;
+  font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 99px;
+  text-decoration: none;
+}
+.fh-phone-pill:hover { background: #e0f2fe; }
+
+.fh-maps-btn {
+  margin-left: auto;
+  display: inline-flex; align-items: center; gap: 5px;
+  background: linear-gradient(135deg, #059669, #34d399);
+  color: white;
+  font-size: 11px; font-weight: 700;
+  padding: 5px 12px; border-radius: 10px;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(5,150,105,0.25);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.fh-maps-btn:hover {
+  box-shadow: 0 4px 16px rgba(5,150,105,0.35);
+  transform: translateY(-1px);
+}
+.fh-maps-btn svg { width: 11px; height: 11px; }
+
+/* ─── Empty / Error states ────────────────────────────────────────────────── */
+.fh-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+}
+.fh-empty-icon {
+  font-size: 52px; margin-bottom: 12px;
+}
+.fh-empty-title {
+  font-size: 16px; font-weight: 700; color: #6b7280; margin-bottom: 6px;
+}
+.fh-empty-sub { font-size: 13px; }
+
+.fh-error-box {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 16px;
+  padding: 18px 22px;
+  font-size: 13px; color: #e11d48;
+  font-weight: 600;
+  display: flex; align-items: center; gap: 10px;
+}
+
+/* ─── Prompt state (nothing typed yet) ───────────────────────────────────── */
+.fh-prompt {
+  text-align: center;
+  padding: 60px 20px;
+}
+.fh-prompt-icon { font-size: 56px; margin-bottom: 14px; }
+.fh-prompt-title {
+  font-size: 17px; font-weight: 800; color: #059669; margin-bottom: 8px;
+}
+.fh-prompt-sub { font-size: 13px; color: #9ca3af; }
+
+/* ─── Action buttons row ──────────────────────────────────────────────────── */
+.fh-action-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.fh-gps-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 22px;
+  border-radius: 14px;
+  border: 2px solid rgba(255,255,255,0.40);
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(8px);
+  color: white;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+}
+.fh-gps-btn:hover {
+  background: rgba(255,255,255,0.30);
+  border-color: rgba(255,255,255,0.60);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+.fh-gps-btn.active {
+  background: white;
+  color: #059669;
+  border-color: white;
+  box-shadow: 0 6px 24px rgba(255,255,255,0.30);
+}
+
+.fh-gps-pulse {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #059669;
+  animation: fh-gps-pulse-anim 1.5s ease-in-out infinite;
+  margin-left: 4px;
+}
+
+@keyframes fh-gps-pulse-anim {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.6); }
+}
+
+.fh-gps-error {
+  margin-top: 10px;
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.20);
+  border-radius: 12px;
+  font-size: 13px;
+  color: #fef3c7;
+  font-weight: 600;
+}
+
+/* ─── Map Section ─────────────────────────────────────────────────────────── */
+.fh-map-container {
+  margin-bottom: 24px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 12px 48px rgba(5,150,105,0.12);
+  border: 1px solid rgba(5,150,105,0.12);
+  background: white;
+  animation: fh-map-fade-in 0.5s ease;
+}
+
+@keyframes fh-map-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fh-map-iframe {
+  width: 100%;
+  height: 400px;
+  border: none;
+  display: block;
+}
+
+.fh-map-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(255,255,255,0.95);
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  border-top: 1px solid rgba(5,150,105,0.08);
+}
+
+.fh-map-pin {
+  font-size: 16px;
+}
+
+.fh-gps-live-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #059669;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 99px;
+  animation: fh-gps-pulse-anim 1.5s ease-in-out infinite;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .fh-hero-card { padding: 28px 22px 24px; }
+  .fh-hero-title { font-size: 22px; }
+  .fh-main { padding: 24px 14px 50px; }
+  .fh-card { flex-direction: column; }
+  .fh-card-icon { width: 40px; height: 40px; border-radius: 10px; }
+  .fh-maps-btn { margin-left: 0; }
+  .fh-map-iframe { height: 280px; }
+  .fh-action-row { flex-direction: column; }
+  .fh-gps-btn { width: 100%; justify-content: center; }
+}
