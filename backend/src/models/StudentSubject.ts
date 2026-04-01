@@ -4,7 +4,7 @@ import { STUDENT_SUBJECT_QUERIES } from './DatabaseQueries';
 export interface StudentSubject {
   id?: number;
   student_id: number;
-  subject_id: string;
+  subject_id: number;
   grade_id: number;
   assigned_at?: Date;
   subject_name?: string;
@@ -14,7 +14,7 @@ export interface StudentSubject {
 }
 
 export class StudentSubjectModel {
-  static async assignBulk(assignments: {student_id: number, subject_id: string, grade_id: number}[]): Promise<void> {
+  static async assignBulk(assignments: {student_id: number, subject_id: number, grade_id: number}[]): Promise<void> {
     if (assignments.length === 0) return;
     try {
       const values = assignments.map(a => [a.student_id, a.subject_id, a.grade_id]);
@@ -44,7 +44,7 @@ export class StudentSubjectModel {
     }
   }
 
-  static async getBySubjectGrade(subjectId: string, gradeId: number): Promise<any[]> {
+  static async getBySubjectGrade(subjectId: number, gradeId: number): Promise<any[]> {
     try {
       const [rows] = await pool.execute(STUDENT_SUBJECT_QUERIES.GET_BY_SUBJECT_GRADE, [subjectId, gradeId]);
       return rows as any[];
@@ -54,7 +54,7 @@ export class StudentSubjectModel {
     }
   }
 
-  static async syncStudentsForSubject(subjectId: string, gradeId: number, studentIds: number[]): Promise<void> {
+  static async syncStudentsForSubject(subjectId: number, gradeId: number, studentIds: number[]): Promise<void> {
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
