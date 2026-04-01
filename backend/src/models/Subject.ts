@@ -98,11 +98,15 @@ export class SubjectModel {
     const gradesArray = Array.isArray(subject.grades) ? subject.grades : [subject.grades];
     
     try {
+      const streamValue = subject.stream && Array.isArray(subject.stream) && subject.stream.length > 0 
+        ? JSON.stringify(subject.stream) 
+        : (subject.stream && !Array.isArray(subject.stream) ? JSON.stringify([subject.stream]) : null);
+
       const [result] = await pool.execute(SUBJECT_QUERIES.CREATE, [
         subject.name,
         subject.code,
         JSON.stringify(gradesArray),
-        subject.stream ? JSON.stringify(Array.isArray(subject.stream) ? subject.stream : [subject.stream]) : null,
+        streamValue,
         subject.type,
         subject.category || null,
         subject.is_optional ? 1 : 0
@@ -118,12 +122,12 @@ export class SubjectModel {
         created_at: new Date(),
         updated_at: new Date()
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('🔴 [SUBJECT_CREATE_ERROR]:', error);
-      if (error instanceof Error && error.message.includes('Duplicate entry')) {
+      if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
         throw new Error('Subject code already exists');
       }
-      throw new Error('Failed to create subject');
+      throw error;
     }
   }
 
