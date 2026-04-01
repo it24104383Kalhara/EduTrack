@@ -203,23 +203,23 @@ function PanelPortal({
 }: { triggerRect: DOMRect | null; children: React.ReactNode; width?: number }) {
     if (!triggerRect) return null;
 
-    const PANEL_HEIGHT_APPROX = 420;
+    const PANEL_HEIGHT_APPROX = 480;
     const GAP = 6;
     const spaceBelow = window.innerHeight - triggerRect.bottom;
     const openUpward = spaceBelow < PANEL_HEIGHT_APPROX && triggerRect.top > PANEL_HEIGHT_APPROX;
 
     const style: React.CSSProperties = {
-        position: 'fixed',
+        position: 'absolute',
         left: Math.min(triggerRect.left, window.innerWidth - width - 8),
         width,
         zIndex: 9999,
         ...(openUpward
-            ? { bottom: window.innerHeight - triggerRect.top + GAP }
-            : { top: triggerRect.bottom + GAP }),
+            ? { top: triggerRect.top + window.scrollY - GAP, transform: 'translateY(-100%)' }
+            : { top: triggerRect.bottom + window.scrollY + GAP }),
     };
 
     return createPortal(
-        <div style={style}>
+        <div style={style} className="scrollbar-hide">
             <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-5"
                  style={{ animation: 'dtpFadeIn .15s ease-out' }}>
                 <style>{`
@@ -264,13 +264,12 @@ export default function DateTimePicker({ value, onChange, mode = 'datetime', lab
         return () => document.removeEventListener('mousedown', handler);
     }, [open]);
 
-    // Close on scroll / resize so portal doesn't drift
+    // Close on resize so portal doesn't drift
     useEffect(() => {
         if (!open) return;
         const close = () => setOpen(false);
-        window.addEventListener('scroll', close, true);
         window.addEventListener('resize', close);
-        return () => { window.removeEventListener('scroll', close, true); window.removeEventListener('resize', close); };
+        return () => window.removeEventListener('resize', close);
     }, [open]);
 
     const openPicker = () => {
