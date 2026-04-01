@@ -89,7 +89,7 @@ const GradeManagement: React.FC = () => {
   const [gradeStudentsForBulk, setGradeStudentsForBulk] = useState<Student[]>([]);
   const [bulkEnrolledStudentIds, setBulkEnrolledStudentIds] = useState<number[]>([]);
   const [savingBulk, setSavingBulk] = useState(false);
-  const [hoveredSubjectId, setHoveredSubjectId] = useState<string | null>(null);
+  const [hoveredSubjectId, setHoveredSubjectId] = useState<number | null>(null);
   const [bucketEnrollments, setBucketEnrollments] = useState<Record<number, string>>({});
   const [validationError, setValidationError] = useState<string | null>(null);
   const { showToast } = useToast();
