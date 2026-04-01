@@ -117,18 +117,6 @@ function LineChart({ data, period }: { data: TimeSeriesPoint[]; period: string }
                     <g key={`dot-${i}`} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)} style={{ cursor: 'pointer' }}>
                         <circle cx={p.x} cy={p.y} r={hover === i ? 6 : 4} fill={hover === i ? '#633194' : '#9b59b6'} stroke="white" strokeWidth="2"
                             style={{ transition: 'r 0.15s ease' }} />
-                        {hover === i && (
-                            <g>
-                                <rect x={p.x - 48} y={p.y - 46} width="96" height="38" rx="6" fill="white"
-                                    filter="drop-shadow(0 2px 8px rgba(0,0,0,0.12))" />
-                                <text x={p.x} y={p.y - 28} textAnchor="middle" fontSize="13" fontWeight="700" fill="#633194">
-                                    {Number(p.d.total_points).toFixed(1)} pts
-                                </text>
-                                <text x={p.x} y={p.y - 14} textAnchor="middle" fontSize="10" fill="#6b7280">
-                                    {p.d.student_count} students
-                                </text>
-                            </g>
-                        )}
                     </g>
                 ))}
             </svg>
