@@ -337,7 +337,7 @@ router.get('/student/:studentId/grade/:gradeId/term/:term', async (req, res) => 
 router.get('/grade/:gradeId/subject/:subjectId/term/:term', async (req: AuthRequest, res) => {
   try {
     const gradeId = parseInt(String(req.params.gradeId));
-    const subjectId = String(req.params.subjectId);
+    const subjectId = parseInt(String(req.params.subjectId));
     const term = String(req.params.term);
     
     if (isNaN(gradeId)) {
@@ -372,7 +372,7 @@ router.get('/grade/:gradeId/subject/:subjectId/term/:term', async (req: AuthRequ
       data: marks,
       count: marks.length,
       timestamp: new Date().toISOString(),
-      endpoint: `/api/marks/grade/${gradeId}/subject/${subjectId}/term/${term}`
+      endpoint: `/api/marks/grade/${gradeId}/subject/${req.params.subjectId}/term/${term}`
     });
   } catch (error) {
     console.error('Error retrieving marks:', error);
