@@ -5,7 +5,7 @@ import { MARKS_QUERIES } from './DatabaseQueries';
 export interface Mark {
   id?: number;
   student_id: number;
-  subject_id: string;
+  subject_id: number;
   grade_id: number;
   term: string;
   exam_type: 'mid_term' | 'final_term' | 'assignment' | 'quiz' | 'practical';
@@ -110,9 +110,9 @@ export class MarksModel {
     }
   }
 
-  static async findByUniqueKey(studentId: number, subjectId: string, gradeId: number, term: string, examType: string): Promise<Mark | null> {
+  static async findByUniqueKey(studentId: number, subjectId: number, gradeId: number, term: string, examType: string): Promise<Mark | null> {
     try {
-      const [rows] = await pool.execute(MARKS_QUERIES.FIND_BY_UNIQUE_KEY, [studentId, subjectId.trim(), gradeId, term.trim(), examType.trim()]) as [Mark[], any];
+      const [rows] = await pool.execute(MARKS_QUERIES.FIND_BY_UNIQUE_KEY, [studentId, subjectId, gradeId, term.trim(), examType.trim()]) as [Mark[], any];
       return rows.length > 0 ? rows[0] : null;
     } catch (error) {
       console.error('❌ Error finding mark by unique key:', error);
@@ -140,7 +140,7 @@ export class MarksModel {
     }
   }
 
-  static async findByGradeSubjectTerm(gradeId: number, subjectId: string, term: string): Promise<MarkWithDetails[]> {
+  static async findByGradeSubjectTerm(gradeId: number, subjectId: number, term: string): Promise<MarkWithDetails[]> {
     try {
       const [rows] = await pool.execute(MARKS_QUERIES.FIND_DETAILS_BY_GRADE_SUBJECT_TERM, [gradeId, subjectId, term]) as [MarkWithDetails[], any];
       return rows;
