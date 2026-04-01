@@ -205,7 +205,7 @@ export interface AttendanceMark {
 }
 
 export interface Subject {
-  id: string;
+  id: number;
   name: string;
   code: string;
   grades: string | string[];
@@ -220,7 +220,7 @@ export interface Subject {
 export interface StudentSubject {
   id?: number;
   student_id: number;
-  subject_id: string;
+  subject_id: number;
   grade_id: number;
   assigned_at?: string;
   subject_name?: string;
@@ -232,7 +232,7 @@ export interface StudentSubject {
 export interface Mark {
   id?: number;
   student_id: number;
-  subject_id: string;
+  subject_id: number;
   grade_id: number;
   term: string;
   exam_type: 'mid_term' | 'final_term' | 'assignment' | 'quiz' | 'practical';
@@ -758,7 +758,7 @@ export const subjectApi = {
   },
 
   // Get subject by ID
-  async getById(id: string): Promise<Subject | null> {
+  async getById(id: number): Promise<Subject | null> {
     try {
       const response = await apiRequest<Subject>(`/subjects/${id}`);
       return response.data;
@@ -780,7 +780,7 @@ export const subjectApi = {
   },
 
   // Update subject
-  async update(id: string, subjectData: Partial<Subject>): Promise<Subject> {
+  async update(id: number, subjectData: Partial<Subject>): Promise<Subject> {
     const response = await apiRequest<Subject>(`/subjects/${id}`, {
       method: 'PUT',
       body: JSON.stringify(subjectData),
@@ -789,7 +789,7 @@ export const subjectApi = {
   },
 
   // Delete subject
-  async delete(id: string): Promise<boolean> {
+  async delete(id: number): Promise<boolean> {
     await apiRequest(`/subjects/${id}`, {
       method: 'DELETE',
     });
@@ -809,7 +809,7 @@ export const subjectApi = {
   },
 
   // Assign subjects to a student
-  async assignStudentSubjects(studentId: number, gradeId: number, subjectIds: string[]): Promise<boolean> {
+  async assignStudentSubjects(studentId: number, gradeId: number, subjectIds: number[]): Promise<boolean> {
     await apiRequest('/subjects/student-assignment', {
       method: 'POST',
       body: JSON.stringify({ studentId, gradeId, subjectIds }),
@@ -818,13 +818,13 @@ export const subjectApi = {
   },
 
   // Get students enrolled in a subject
-  async getSubjectEnrollment(subjectId: string, gradeId: number): Promise<any[]> {
+  async getSubjectEnrollment(subjectId: number, gradeId: number): Promise<any[]> {
     const response = await apiRequest<any[]>(`/subjects/subject-enrollment/${subjectId}/grade/${gradeId}`);
     return response.data;
   },
 
   // Bulk assign students to a subject
-  async bulkEnrollStudents(subjectId: string, gradeId: number, studentIds: number[]): Promise<boolean> {
+  async bulkEnrollStudents(subjectId: number, gradeId: number, studentIds: number[]): Promise<boolean> {
     await apiRequest('/subjects/bulk-student-assignment', {
       method: 'POST',
       body: JSON.stringify({ subjectId, gradeId, studentIds }),
@@ -851,7 +851,7 @@ export const marksApi = {
     created: Mark[];
     errors: Array<{
       student_id: number;
-      subject_id: string;
+      subject_id: number;
       error: string;
     }>;
   }> {
@@ -859,7 +859,7 @@ export const marksApi = {
       created: Mark[];
       errors: Array<{
         student_id: number;
-        subject_id: string;
+        subject_id: number;
         error: string;
       }>;
     }>('/marks/bulk', {
@@ -889,7 +889,7 @@ export const marksApi = {
   },
 
   // Get marks by grade, subject, and term
-  async getByGradeSubjectTerm(gradeId: number, subjectId: string, term: string): Promise<MarkWithDetails[]> {
+  async getByGradeSubjectTerm(gradeId: number, subjectId: number, term: string): Promise<MarkWithDetails[]> {
     const response = await apiRequest<MarkWithDetails[]>(`/marks/grade/${gradeId}/subject/${subjectId}/term/${term}`);
     return response.data;
   },
