@@ -152,8 +152,10 @@ export default function InventoryPage() {
     const [isModalOpen,        setIsModalOpen]        = useState(false);
     const [isReserveModalOpen, setIsReserveModalOpen] = useState(false);
     const [isReturnModalOpen,  setIsReturnModalOpen]  = useState(false);
+    const [isDeleteModalOpen,  setIsDeleteModalOpen]  = useState(false);
 
     const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+    const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
     const [formData,    setFormData]    = useState<Partial<InventoryItem>>({ name: '', category: '', total_quantity: 1, condition: 'New' });
 
     const [reservingItem,   setReservingItem]   = useState<InventoryItem | null>(null);
@@ -182,7 +184,11 @@ export default function InventoryPage() {
     });
     const deleteMutation = useMutation({
         mutationFn: (id: number) => inventoryService.delete(id),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['inventory'] }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+            setIsDeleteModalOpen(false);
+            setItemToDelete(null);
+        },
         onError: (err: any) => alert(err.response?.data?.error || err.message),
     });
     const reserveMutation = useMutation({
@@ -243,8 +249,13 @@ export default function InventoryPage() {
         }
     };
 
-    const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this inventory item?')) deleteMutation.mutate(id);
+    const handleDelete = (item: InventoryItem) => {
+        setItemToDelete(item);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (itemToDelete?.id) deleteMutation.mutate(itemToDelete.id);
     };
 
     const handleReserveSubmit = (e: React.FormEvent) => {
@@ -392,7 +403,7 @@ export default function InventoryPage() {
                                                         title="Edit Item">
                                                         <PencilSquareIcon className="h-4 w-4" />
                                                     </button>
-                                                    <button onClick={() => item.id && handleDelete(item.id)}
+                                                    <button onClick={() => handleDelete(item)}
                                                         className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all"
                                                         title="Delete Item">
                                                         <TrashIcon className="h-4 w-4" />
@@ -769,6 +780,40 @@ export default function InventoryPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Delete Confirmation Modal ────────────────────────────────── */}
+            {isDeleteModalOpen && itemToDelete && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
+                        <div className="p-6 text-center">
+                            <div className="h-16 w-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+                                <TrashIcon className="h-8 w-8 text-red-500" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-800 mb-2">Delete Equipment?</h3>
+                            <p className="text-sm text-gray-500 mb-6 font-medium leading-relaxed px-4">
+                                Are you sure you want to delete <span className="text-[#633194] font-bold">"{itemToDelete.name}"</span>? 
+                                <br /><span className="text-red-500">This action cannot be undone.</span>
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => { setIsDeleteModalOpen(false); setItemToDelete(null); }}
+                                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all active:scale-95"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    disabled={deleteMutation.isPending}
+                                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50"
+                                    style={{ background: 'linear-gradient(135deg,#ef4444,#dc2626)' }}
+                                >
+                                    {deleteMutation.isPending ? 'Deleting…' : 'Delete Now'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
