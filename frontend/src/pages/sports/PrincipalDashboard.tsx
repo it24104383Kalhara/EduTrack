@@ -10,6 +10,9 @@ import BellAlertIcon from '@heroicons/react/24/outline/BellAlertIcon';
 import ClipboardDocumentListIcon from '@heroicons/react/24/outline/ClipboardDocumentListIcon';
 import CalendarDaysIcon from '@heroicons/react/24/outline/CalendarDaysIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
+import ArrowUpIcon from '@heroicons/react/24/outline/ArrowUpIcon';
+import { useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const STATUS_CFG = {
@@ -28,11 +31,30 @@ export default function PrincipalDashboard() {
     const [approveModal,      setApproveModal]      = useState(false);
     const [rejectModal,       setRejectModal]       = useState(false);
     const [teachersToNotify,  setTeachersToNotify]  = useState<{ id: string; grade: string; teacher: string; students: any[] }[]>([]);
+    const [showScrollTop,     setShowScrollTop]     = useState(false);
 
     const { data: reports, isLoading } = useQuery({
         queryKey: ['allReports', statusFilter],
         queryFn: () => reportService.getAll(statusFilter ? { status: statusFilter } : undefined),
     });
+
+    useEffect(() => {
+        const mainEl = document.querySelector('main');
+        if (!mainEl) return;
+
+        const handleScroll = () => {
+            setShowScrollTop(mainEl.scrollTop > 300);
+        };
+        mainEl.addEventListener('scroll', handleScroll);
+        return () => mainEl.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        const mainEl = document.querySelector('main');
+        if (mainEl) {
+            mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
 
     const reviewMutation = useMutation({
         mutationFn: ({ id, status }: { id: number; status: 'Approved' | 'Rejected' }) =>
@@ -381,9 +403,9 @@ export default function PrincipalDashboard() {
             {/* ── Approve & Notify Modal ────────────────────────────────────── */}
             {approveModal && selectedReport && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-100 scrollbar-hide">
                         {/* Header */}
-                        <div className="px-6 py-4 flex items-center justify-between"
+                        <div className="px-6 py-4 flex items-center justify-between sticky top-0 z-10"
                              style={{ background: 'linear-gradient(135deg,#633194,#9b59b6)' }}>
                             <h3 className="text-base font-bold text-white flex items-center gap-2">
                                 <CheckCircleIcon className="h-5 w-5" /> Confirm Approval & Notify
@@ -399,26 +421,26 @@ export default function PrincipalDashboard() {
                             </p>
 
                             {/* Teacher table */}
-                            <div className="border border-gray-200 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
+                            <div className="border border-gray-200 rounded-xl overflow-hidden max-h-32 overflow-y-auto shadow-inner bg-gray-50/30">
                                 <table className="min-w-full text-sm">
-                                    <thead className="bg-[#F4F0FF] text-[#633194] sticky top-0">
+                                    <thead className="bg-[#F4F0FF] text-[#633194] sticky top-0 z-10">
                                         <tr>
-                                            <th className="py-2.5 px-4 text-left text-xs font-bold uppercase tracking-wider">Grade</th>
-                                            <th className="py-2.5 px-4 text-left text-xs font-bold uppercase tracking-wider">Teacher Name</th>
+                                            <th className="py-2 px-4 text-left text-xs font-bold uppercase tracking-wider">Grade</th>
+                                            <th className="py-2 px-4 text-left text-xs font-bold uppercase tracking-wider">Teacher Name</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-100">
+                                    <tbody className="divide-y divide-gray-100 italic">
                                         {teachersToNotify.map(t => (
-                                            <tr key={t.id} className="hover:bg-gray-50">
-                                                <td className="py-2.5 px-4 font-semibold text-gray-700">{t.grade}</td>
-                                                <td className="py-2.5 px-4">
+                                            <tr key={t.id} className="hover:bg-gray-50 bg-white">
+                                                <td className="py-2 px-4 font-semibold text-gray-700">{t.grade}</td>
+                                                <td className="py-2 px-4">
                                                     <input
                                                         type="text"
                                                         value={t.teacher}
                                                         onChange={e => setTeachersToNotify(prev =>
                                                             prev.map(x => x.id === t.id ? { ...x, teacher: e.target.value } : x)
                                                         )}
-                                                        className="w-full p-1 border border-gray-200 rounded-md text-gray-700 focus:ring-1 focus:ring-[#633194] focus:border-[#633194] outline-none"
+                                                        className="w-full p-1.5 border border-gray-200 rounded-lg text-[13px] text-gray-700 focus:ring-1 focus:ring-[#633194] focus:border-[#633194] outline-none transition-all hover:border-[#633194]/30"
                                                     />
                                                 </td>
                                             </tr>
@@ -428,9 +450,9 @@ export default function PrincipalDashboard() {
                             </div>
 
                             {/* Message preview */}
-                             <div className="bg-[#F4F0FF] border border-purple-200 rounded-xl p-4 space-y-3">
-                                <p className="text-xs font-bold text-[#633194] uppercase tracking-wider">Message Preview (Single Alert)</p>
-                                <div className="bg-white/50 border border-purple-100 rounded-lg p-3 text-[11px] text-gray-600 whitespace-pre-line leading-relaxed shadow-sm">
+                             <div className="bg-[#F4F0FF] border border-purple-200 rounded-xl p-3 space-y-2">
+                                <p className="text-[10px] font-bold text-[#633194] uppercase tracking-wider">Message Preview (Single Alert)</p>
+                                <div className="bg-white/80 border border-purple-100 rounded-lg p-3 text-[11px] text-gray-600 whitespace-pre-line leading-relaxed shadow-sm max-h-36 overflow-y-auto">
                                     <p className="font-bold text-[#633194] mb-1">To: Staff/Teacher In-Charge</p>
                                     Attention: Attendance Report Approved{"\n"}
                                     Activity: {selectedReport.activity_name}{"\n"}
@@ -444,7 +466,7 @@ export default function PrincipalDashboard() {
                                 </div>
                              </div>
 
-                            <div className="flex gap-3 pt-2 border-t border-gray-100">
+                            <div className="flex gap-3 pt-3 border-t border-gray-100 sticky bottom-0 bg-white">
                                 <button onClick={() => setApproveModal(false)}
                                     className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all">
                                     Cancel
@@ -495,6 +517,24 @@ export default function PrincipalDashboard() {
                     </div>
                 </div>
             )}
+
+            {/* ── Back to Top Button ────────────────────────────────────────── */}
+            <AnimatePresence>
+                {showScrollTop && (
+                    <motion.button
+                        initial={{ opacity: 0, scale: 0.5, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.5, y: 20 }}
+                        onClick={scrollToTop}
+                        className="fixed bottom-8 right-8 h-12 w-12 rounded-2xl shadow-2xl flex items-center justify-center text-white z-40 transition-transform active:scale-90 group"
+                        style={{ background: 'linear-gradient(135deg, #633194 0%, #9b59b6 100%)' }}
+                        title="Back to Top"
+                    >
+                        <div className="absolute inset-0 rounded-2xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ArrowUpIcon className="h-6 w-6 relative z-10" />
+                    </motion.button>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
