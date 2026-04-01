@@ -30,7 +30,7 @@ const MODULES = [
         accent: 'from-orange-400 to-orange-500',
         desc: 'Manage activities, clubs, attendance tracking and coach reports for all sports & extracurricular programs.',
         stats: '24 Active Clubs',
-        href: '/sports/activities',
+        href: '/sports/dashboard',
     },
     {
         id: 'progress',
