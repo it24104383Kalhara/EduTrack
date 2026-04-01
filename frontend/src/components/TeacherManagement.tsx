@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../services/api';
-import { Users as UsersIcon, Loader2, Edit, Save, Calendar, Phone, Mail, MapPin } from 'lucide-react';
+import { Users as UsersIcon, Loader2, Edit, Save, Calendar, Phone, Mail, MapPin, Clock } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 
 interface Teacher {
@@ -18,6 +18,7 @@ interface Teacher {
   birthday?: string;
   address?: string;
   created_at: string;
+  updated_at: string;
 }
 
 const TeacherManagement: React.FC = () => {
@@ -481,6 +482,19 @@ const TeacherManagement: React.FC = () => {
                     <span style={{ color: '#4B5563', fontSize: '14px', lineHeight: 1.4 }}>{teacher.address || 'N/A'}</span>
                   )}
                 </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px', paddingTop: '12px', borderTop: '1px dotted #E5E7EB' }}>
+                <Clock size={14} color="#9CA3AF" />
+                <span style={{ color: '#9CA3AF', fontSize: '11px', fontWeight: 500 }}>
+                  Approved / Updated: {new Date(teacher.updated_at).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </span>
               </div>
 
               {isEditing && (

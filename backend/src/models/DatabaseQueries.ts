@@ -647,7 +647,7 @@ export const EMAIL_LOG_QUERIES = {
 export const USER_QUERIES = {
     FIND_BY_USERNAME: 'SELECT * FROM users WHERE username = ?',
     FIND_BY_ID: `
-      SELECT u.id, u.username, u.email, u.role, u.status, u.created_at, 
+      SELECT u.id, u.username, u.email, u.role, u.status, u.created_at, u.updated_at,
              COALESCE(t.first_name, u.first_name) as first_name,
              COALESCE(t.last_name, u.last_name) as last_name,
              COALESCE(t.gender, u.gender) as gender,
@@ -665,18 +665,18 @@ export const USER_QUERIES = {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     GET_PENDING: `
-      SELECT id, username, email, role, status, created_at,
+      SELECT id, username, email, role, status, created_at, updated_at,
              first_name, last_name, gender, grade, phone_number, birthday, address
       FROM users
       WHERE status = 'pending' ORDER BY created_at DESC
     `,
     GET_ALL_TEACHERS: `
-      SELECT u.id, u.username, u.email, u.role, u.status, u.created_at, 
+      SELECT u.id, u.username, u.email, u.role, u.status, u.created_at, u.updated_at,
              t.first_name, t.last_name, t.gender, u.grade, t.phone_number, t.birthday, t.address,
              (SELECT id FROM grades WHERE teacher_id = u.id LIMIT 1) as grade_id
       FROM users u
       JOIN teachers t ON u.id = t.user_id
-      WHERE u.role = 'teacher' AND u.status = 'approved' ORDER BY u.created_at DESC
+      WHERE u.role = 'teacher' AND u.status = 'approved' ORDER BY u.updated_at DESC
     `,
     UPDATE_STATUS: 'UPDATE users SET status = ? WHERE id = ?',
     UPDATE_PASSWORD: 'UPDATE users SET password_hash = ? WHERE username = ?',
