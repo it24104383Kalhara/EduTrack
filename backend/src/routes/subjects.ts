@@ -82,7 +82,7 @@ router.get('/type/:type', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const subject = await SubjectModel.findById(id);
+    const subject = await SubjectModel.findById(parseInt(id));
     
     if (!subject) {
       return res.status(404).json({
@@ -109,10 +109,14 @@ router.get('/:id', async (req, res) => {
 // POST /api/subjects - Create new subject
 router.post('/', async (req, res) => {
   try {
+    console.log('🔵 [SUBJECT_CREATE_REQUEST]: Received request body:', req.body);
     const { name, code, grades, stream, type, category, is_optional } = req.body;
+    
+    console.log('🔵 [SUBJECT_CREATE_PARSED]:', { name, code, grades, stream, type, category, is_optional });
     
     // Validation
     if (!name || !code || !grades || !type) {
+      console.log('🔴 [SUBJECT_CREATE_VALIDATION_ERROR]: Missing required fields');
       return res.status(400).json({
         success: false,
         message: 'Missing required fields: name, code, grades, type'
@@ -134,8 +138,11 @@ router.post('/', async (req, res) => {
     }
     
     // Check for duplicate subject code
+    console.log('🔵 [SUBJECT_CREATE_CHECKING_CODE]: Checking for duplicate code:', code);
     const existingCode = await SubjectModel.findByCode(code);
+    console.log('🔵 [SUBJECT_CREATE_CODE_CHECK_RESULT]:', existingCode);
     if (existingCode) {
+      console.log('🔴 [SUBJECT_CREATE_DUPLICATE_CODE]: Code already exists');
       return res.status(400).json({
         success: false,
         message: `Subject code "${code}" already exists`
@@ -143,11 +150,15 @@ router.post('/', async (req, res) => {
     }
     
     // Check for duplicate subjects in selected grades and streams
+    console.log('🔵 [SUBJECT_CREATE_CHECKING_DUPLICATES]: Checking for duplicates in grades:', grades);
     for (const grade of grades) {
-      if (stream && Array.isArray(stream)) {
+      console.log('🔵 [SUBJECT_CREATE_CHECKING_GRADE]: Checking grade:', grade, 'stream:', stream);
+      if (stream && Array.isArray(stream) && stream.length > 0) {
         for (const streamItem of stream) {
+          console.log('🔵 [SUBJECT_CREATE_CHECKING_STREAM]: Checking stream item:', streamItem);
           const existingSubject = await SubjectModel.findDuplicateInGradeStream(name, grade, streamItem);
           if (existingSubject) {
+            console.log('🔴 [SUBJECT_CREATE_DUPLICATE_FOUND]: Found duplicate in grade/stream');
             return res.status(400).json({
               success: false,
               message: `Subject "${name}" is already added to Grade ${grade} in ${streamItem} stream`
@@ -155,8 +166,13 @@ router.post('/', async (req, res) => {
           }
         }
       } else {
-        const existingSubject = await SubjectModel.findDuplicateInGradeStream(name, grade, stream);
+        // If stream is empty array or undefined, treat as no stream
+        const checkStream = (Array.isArray(stream) && stream.length === 0) ? undefined : stream;
+        console.log('🔵 [SUBJECT_CREATE_CHECKING_NO_STREAM]: Checking with checkStream:', checkStream);
+        const existingSubject = await SubjectModel.findDuplicateInGradeStream(name, grade, checkStream);
+        console.log('🔵 [SUBJECT_CREATE_DUPLICATE_CHECK_RESULT]:', existingSubject);
         if (existingSubject) {
+          console.log('🔴 [SUBJECT_CREATE_DUPLICATE_FOUND]: Found duplicate in grade');
           return res.status(400).json({
             success: false,
             message: `Subject "${name}" is already added to Grade ${grade}`
@@ -166,11 +182,12 @@ router.post('/', async (req, res) => {
     }
     
     // Create subject
+    console.log('📝 [SUBJECT_CREATE]: Attempting to create', { name, code, grades, stream, type });
     const newSubject = await SubjectModel.create({
       name: name.trim(),
       code: code.trim(),
       grades,
-      stream,
+      stream: (Array.isArray(stream) && stream.length === 0) ? undefined : stream,
       type,
       category: category || null,
       is_optional: !!is_optional
@@ -181,12 +198,16 @@ router.post('/', async (req, res) => {
       data: newSubject,
       message: 'Subject created successfully'
     });
-  } catch (error) {
-    console.error('Error creating subject:', error);
+  } catch (error: any) {
+    console.error('🔴 [SUBJECT_CREATE_ROUTE_ERROR]:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create subject',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      message: error.message || 'Failed to create subject',
+      error: error.message || 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      data: null,
+      timestamp: new Date().toISOString(),
+      endpoint: '/api/subjects'
     });
   }
 });
@@ -194,7 +215,8 @@ router.post('/', async (req, res) => {
 // PUT /api/subjects/:id - Update subject
 router.put('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id: idRaw } = req.params;
+    const id = parseInt(idRaw);
     const { name, code, grades, stream, type, category, is_optional } = req.body;
     
     // Check if subject exists
@@ -303,7 +325,7 @@ router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     
     // Check if subject exists
-    const existingSubject = await SubjectModel.findById(id);
+    const existingSubject = await SubjectModel.findById(parseInt(id));
     if (!existingSubject) {
       return res.status(404).json({
         success: false,
@@ -312,7 +334,7 @@ router.delete('/:id', async (req, res) => {
     }
     
     // Delete subject
-    const deleted = await SubjectModel.delete(id);
+    const deleted = await SubjectModel.delete(parseInt(id));
     
     if (!deleted) {
       return res.status(500).json({
@@ -362,7 +384,7 @@ router.post('/student-assignment', async (req, res) => {
     // Then assign new ones
     const assignments = subjectIds.map(subjectId => ({
       student_id: studentId,
-      subject_id: subjectId,
+      subject_id: parseInt(String(subjectId)),
       grade_id: gradeId
     }));
     
@@ -379,7 +401,7 @@ router.post('/student-assignment', async (req, res) => {
 router.get('/subject-enrollment/:subjectId/grade/:gradeId', async (req, res) => {
   try {
     const { subjectId, gradeId } = req.params;
-    const students = await StudentSubjectModel.getBySubjectGrade(subjectId, parseInt(gradeId));
+    const students = await StudentSubjectModel.getBySubjectGrade(parseInt(subjectId), parseInt(gradeId));
     res.json({ success: true, data: students });
   } catch (error) {
     console.error('Error fetching subject enrollment:', error);
@@ -396,7 +418,7 @@ router.post('/bulk-student-assignment', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
-    await StudentSubjectModel.syncStudentsForSubject(subjectId, gradeId, studentIds);
+    await StudentSubjectModel.syncStudentsForSubject(parseInt(subjectId), parseInt(gradeId), studentIds);
     res.json({ success: true, message: 'Students enrolled in subject successfully' });
   } catch (error) {
     console.error('Error in bulk student assignment:', error);
