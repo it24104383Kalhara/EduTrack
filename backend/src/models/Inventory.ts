@@ -38,7 +38,10 @@ export interface InventoryReserved {
 
 // Inventory Item CRUD
 export const getAllInventory = async (): Promise<InventoryItem[]> => {
-    const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM sports_inventory');
+    // Sort by name and then by a custom order for condition if needed, but alphabetical/natural is fine for now
+    const [rows] = await pool.query<RowDataPacket[]>(
+        'SELECT * FROM sports_inventory ORDER BY name ASC, `condition` ASC'
+    );
     return rows as InventoryItem[];
 };
 
@@ -60,6 +63,15 @@ export const createInventoryItem = async (item: InventoryItem): Promise<number> 
 };
 
 export const updateInventoryItem = async (id: number, item: Partial<InventoryItem>): Promise<void> => {
+    // If total_quantity is being updated, we should also adjust available_quantity by the same delta
+    if (item.total_quantity !== undefined) {
+        const currentItem = await getInventoryById(id);
+        if (currentItem) {
+            const delta = item.total_quantity - currentItem.total_quantity;
+            item.available_quantity = currentItem.available_quantity + delta;
+        }
+    }
+
     const fields: string[] = [];
     const values: any[] = [];
 
@@ -73,7 +85,7 @@ export const updateInventoryItem = async (id: number, item: Partial<InventoryIte
 
     values.push(id);
     await pool.query(
-        `UPDATE sports_inventory SET ${fields.join(', ')} WHERE id = ?`,
+        `UPDATE sports_inventory SET last_updated = NOW(), ${fields.join(', ')} WHERE id = ?`,
         values
     );
 };

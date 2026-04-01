@@ -326,7 +326,7 @@ export default function InventoryPage() {
                                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Item Name</th>
                                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Category</th>
                                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Condition</th>
-                                <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Available / Total</th>
+                                <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Available</th>
                                 {user?.role !== 'Student' && (
                                     <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                                 )}
@@ -356,7 +356,6 @@ export default function InventoryPage() {
                                 </tr>
                             ) : inventory?.map(item => {
                                 const cfg   = CONDITION_CONFIG[item.condition] ?? CONDITION_CONFIG['Good'];
-                                const ratio = item.total_quantity > 0 ? item.available_quantity / item.total_quantity : 0;
                                 return (
                                     <tr key={item.id} className="hover:bg-[#F4F0FF]/20 transition-colors group">
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -372,19 +371,11 @@ export default function InventoryPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex flex-col items-center gap-1">
-                                                <div className="flex items-center gap-1 font-medium">
-                                                    <span className={item.available_quantity > 0 ? 'text-emerald-600 font-bold' : 'text-red-500 font-bold'}>
-                                                        {item.available_quantity}
+                                            <div className="flex flex-col items-center">
+                                                <div className="flex items-center gap-1.5 font-bold">
+                                                    <span className={clsx('text-base transition-colors', cfg.text)}>
+                                                        {item.available_quantity.toString().padStart(2, '0')}
                                                     </span>
-                                                    <span className="text-gray-300">/</span>
-                                                    <span className="text-gray-500">{item.total_quantity}</span>
-                                                </div>
-                                                <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                                    <div
-                                                        className="h-full rounded-full transition-all"
-                                                        style={{ width: `${ratio * 100}%`, background: ratio > 0.5 ? '#10b981' : ratio > 0.2 ? '#f59e0b' : '#ef4444' }}
-                                                    />
                                                 </div>
                                             </div>
                                         </td>
