@@ -107,7 +107,7 @@ function InventoryAnalytics() {
             </div>
 
             <div className="w-full flex justify-start items-center mb-2 px-1">
-                <h3 className="text-sm font-bold text-gray-800 tracking-tight">Inventory Status</h3>
+                <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wide">Inventory Status</h3>
             </div>
 
             <div className="relative mb-4 drop-shadow-xl h-[180px]">
@@ -161,11 +161,11 @@ function InventoryAnalytics() {
             <div className="flex justify-center gap-4 relative z-10 w-full">
                 <div className="flex items-center gap-1.5 cursor-default">
                     <div className="h-2 w-2 rounded-full" style={{ background: 'linear-gradient(135deg, #6A11CB, #2575FC)' }} />
-                    <span className="text-[10px] font-bold text-gray-500">Available</span>
+                    <span className="text-[12px] font-bold text-gray-500">Available</span>
                 </div>
                 <div className="flex items-center gap-1.5 cursor-default">
                     <div className="h-2 w-2 rounded-full" style={{ background: 'linear-gradient(135deg, #FF7E5F, #FEB47B)' }} />
-                    <span className="text-[10px] font-bold text-gray-500">Reserved</span>
+                    <span className="text-[12px] font-bold text-gray-500">Reserved</span>
                 </div>
             </div>
         </div>
@@ -253,7 +253,7 @@ function ActivityCountGraph({ counts, activities }: { counts: { Sport: number, C
                                         </div>
                                     </motion.div>
                                 </div>
-                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">{item.label}</span>
+                                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-tight">{item.label}</span>
                             </div>
                         );
                     })}
