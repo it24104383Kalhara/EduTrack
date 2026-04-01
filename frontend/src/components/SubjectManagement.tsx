@@ -29,7 +29,7 @@ const SubjectManagement: React.FC = () => {
     is_optional: false
   });
   const [loading, setLoading] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   
   // Custom Confirmation Modal State
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -123,7 +123,7 @@ const SubjectManagement: React.FC = () => {
     }
   };
 
-  const deleteSubject = async (id: string) => {
+  const deleteSubject = async (id: number) => {
     const subject = subjects.find(s => s.id === id);
     if (subject) {
       setSubjectToDelete(subject);
@@ -154,7 +154,7 @@ const SubjectManagement: React.FC = () => {
     setSubjectToDelete(null);
   };
 
-  const editSubject = (id: string) => {
+  const editSubject = (id: number) => {
     const subject = subjects.find(s => s.id === id);
     if (subject) {
       let parsedGrades: string[] = [];
