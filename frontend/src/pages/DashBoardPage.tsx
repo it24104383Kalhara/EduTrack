@@ -5,17 +5,17 @@ import {
     AcademicCapIcon, 
     BriefcaseIcon, 
     TrophyIcon, 
-    CalendarDaysIcon,
     BellAlertIcon,
-    DocumentTextIcon,
-    ChevronRightIcon
+    DocumentTextIcon
 } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 import clsx from "clsx";
+import { useState } from 'react';
 
 // ─── Inventory Analytics Component ──────────────────────────────────────────
 
 function InventoryAnalytics() {
+    const [hoveredItem, setHoveredItem] = useState<'available' | 'reserved' | null>(null);
     const { data: inventory } = useQuery({
         queryKey: ['inventory'],
         queryFn: inventoryService.getAll
@@ -27,29 +27,91 @@ function InventoryAnalytics() {
         return acc;
     }, { total: 0, available: 0 });
 
-    const reserved = stats.total - stats.available;
-    const availablePercent = stats.total > 0 ? (stats.available / stats.total) * 100 : 0;
-    const reservedPercent = stats.total > 0 ? (reserved / stats.total) * 100 : 0;
+    const resCount = stats.total - stats.available;
+    const availPercent = stats.total > 0 ? (stats.available / stats.total) * 100 : 0;
+    const resPercent   = stats.total > 0 ? (resCount / stats.total) * 100 : 0;
 
     const size = 180;
     const center = size / 2;
-    const radiusOuter = 70;
-    const radiusInner = 52;
-    const strokeWidth = 12;
-    const circumferenceOuter = 2 * Math.PI * radiusOuter;
-    const circumferenceInner = 2 * Math.PI * radiusInner;
+    const rOuter = 70;
+    const rInner = 52;
+    const stroke = 12;
+    const cOuter = 2 * Math.PI * rOuter;
+    const cInner = 2 * Math.PI * rInner;
 
-    const offsetOuter = circumferenceOuter - (availablePercent / 100) * circumferenceOuter;
-    const offsetInner = circumferenceInner - (reservedPercent / 100) * circumferenceInner;
+    const offOuter = cOuter - (availPercent / 100) * cOuter;
+    const offInner = cInner - (resPercent / 100) * cInner;
+
+    const getLatestDate = () => {
+        if (!inventory || inventory.length === 0) return 'Never';
+        const latest = inventory.reduce((max, item: any) => {
+            const dStr = item.last_updated || item.updated_at || item.created_at;
+            if (!dStr) return max;
+            const d = new Date(dStr);
+            return d > max ? d : max;
+        }, new Date(0));
+        return latest.getTime() === 0 ? 'Never' : latest.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
+    const latestInv = getLatestDate();
 
     return (
-        <div className="bg-[#F8F9FB] rounded-[24px] border border-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center relative overflow-hidden group h-full">
-            <div className="w-full flex justify-start items-center mb-2 relative z-10">
+        <div className="bg-[#F8F9FB] rounded-[24px] border border-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center relative h-full overflow-visible z-[5]">
+            {/* Stable Legend Tooltips (High Stacking Layer) */}
+            <div className="absolute top-0 inset-x-0 z-[130] pointer-events-none px-4 h-0 overflow-visible">
+                {/* Available Hover Popup (Right-Aligned & Safe) */}
+                <div className={clsx(
+                    "transition-all duration-300 absolute right-4 top-2",
+                    hoveredItem === 'available' ? 'opacity-100 scale-100 -translate-y-full' : 'opacity-0 scale-95 translate-y-0'
+                )}>
+                    <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_40px_80px_rgba(37,117,252,0.3)] border border-blue-100 p-3 flex items-start gap-3 min-w-[210px] pointer-events-auto">
+                        <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 flex-shrink-0">
+                            <DocumentTextIcon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 text-left">
+                            <h4 className="text-[11px] font-black text-gray-800 tracking-tighter uppercase leading-tight">Available Items</h4>
+                            <div className="flex items-baseline gap-1 mb-2">
+                                <span className="text-xl font-black text-blue-600 leading-none">{stats.available}</span>
+                                <span className="text-[9px] font-bold text-gray-400 capitalize">in stock ({availPercent.toFixed(0)}%)</span>
+                            </div>
+                            <div className="pt-2 border-t border-gray-50 flex items-center justify-between">
+                                <span className="text-[8px] font-bold text-gray-500 uppercase">Sync Status</span>
+                                <span className="text-[9px] font-bold text-gray-800">{latestInv}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Reserved Hover Popup (Left-Aligned & Safe) */}
+                <div className={clsx(
+                    "transition-all duration-300 absolute left-4 top-2",
+                    hoveredItem === 'reserved' ? 'opacity-100 scale-100 -translate-y-full' : 'opacity-0 scale-95 translate-y-0'
+                )}>
+                    <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_40px_80px_rgba(249,115,22,0.25)] border border-orange-100 p-3 flex items-start gap-3 min-w-[210px] pointer-events-auto">
+                        <div className="h-8 w-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 flex-shrink-0">
+                            <TrophyIcon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 text-left">
+                            <h4 className="text-[11px] font-black text-gray-800 tracking-tighter uppercase leading-tight">Reserved Items</h4>
+                            <div className="flex items-baseline gap-1 mb-2">
+                                <span className="text-xl font-black text-orange-600 leading-none">{resCount}</span>
+                                <span className="text-[9px] font-bold text-gray-400 capitalize">currently out ({resPercent.toFixed(0)}%)</span>
+                            </div>
+                            <div className="pt-2 border-t border-gray-50 flex items-center justify-between">
+                                <span className="text-[8px] font-bold text-gray-500 uppercase">Last Reservation</span>
+                                <span className="text-[9px] font-bold text-gray-800">{latestInv}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="w-full flex justify-start items-center mb-2 px-1">
                 <h3 className="text-sm font-bold text-gray-800 tracking-tight">Inventory Status</h3>
             </div>
 
             <div className="relative mb-4 drop-shadow-xl h-[180px]">
-                <svg width={size} height={size} className="transform -rotate-90">
+                <svg width={size} height={size} className="overflow-visible">
                     <defs>
                         <linearGradient id="gradAvailable" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stopColor="#6A11CB" />
@@ -60,29 +122,38 @@ function InventoryAnalytics() {
                             <stop offset="100%" stopColor="#FEB47B" />
                         </linearGradient>
                     </defs>
-                    <circle cx={center} cy={center} r={radiusOuter} stroke="#E2E8F0" strokeWidth={strokeWidth} strokeOpacity="0.4" fill="transparent" />
-                    <circle cx={center} cy={center} r={radiusInner} stroke="#E2E8F0" strokeWidth={strokeWidth} strokeOpacity="0.4" fill="transparent" />
                     
-                    <circle
-                        cx={center} cy={center} r={radiusOuter}
-                        stroke="url(#gradAvailable)" strokeWidth={strokeWidth} fill="transparent"
-                        strokeDasharray={circumferenceOuter}
-                        strokeDashoffset={offsetOuter}
-                        strokeLinecap="round"
-                        className="transition-all duration-1000 ease-out"
-                    />
-                    <circle
-                        cx={center} cy={center} r={radiusInner}
-                        stroke="url(#gradReserved)" strokeWidth={strokeWidth} fill="transparent"
-                        strokeDasharray={circumferenceInner}
-                        strokeDashoffset={offsetInner}
-                        strokeLinecap="round"
-                        className="transition-all duration-1000 ease-out"
-                    />
+                    {/* Background Tracks */}
+                    <circle cx={center} cy={center} r={rOuter} stroke="#E2E8F0" strokeWidth={stroke} strokeOpacity="0.4" fill="transparent" />
+                    <circle cx={center} cy={center} r={rInner} stroke="#E2E8F0" strokeWidth={stroke} strokeOpacity="0.4" fill="transparent" />
+                    
+                    {/* Active Loops (Rotated -90) */}
+                    <g transform={`rotate(-90 ${center} ${center})`}>
+                        <circle
+                            cx={center} cy={center} r={rOuter}
+                            stroke="url(#gradAvailable)" strokeWidth={stroke} fill="transparent"
+                            strokeDasharray={cOuter}
+                            strokeDashoffset={offOuter}
+                            strokeLinecap="round"
+                            className="transition-all duration-1000 ease-out cursor-pointer pointer-events-auto"
+                            onMouseEnter={() => setHoveredItem('available')}
+                            onMouseLeave={() => setHoveredItem(null)}
+                        />
+                        <circle
+                            cx={center} cy={center} r={rInner}
+                            stroke="url(#gradReserved)" strokeWidth={stroke} fill="transparent"
+                            strokeDasharray={cInner}
+                            strokeDashoffset={offInner}
+                            strokeLinecap="round"
+                            className="transition-all duration-1000 ease-out cursor-pointer pointer-events-auto"
+                            onMouseEnter={() => setHoveredItem('reserved')}
+                            onMouseLeave={() => setHoveredItem(null)}
+                        />
+                    </g>
                 </svg>
 
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Total</p>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Total</p>
                     <p className="text-[32px] font-black text-gray-800 leading-none tracking-tight">{stats.total}</p>
                 </div>
             </div>
