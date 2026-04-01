@@ -1,14 +1,16 @@
 import { useAuth } from "../utils/auth";
 import { useQuery } from "@tanstack/react-query";
-import { inventoryService } from "../services/api";
+import { inventoryService, activityService } from "../services/api";
 import { 
     AcademicCapIcon, 
     BriefcaseIcon, 
     TrophyIcon, 
     CalendarDaysIcon,
     BellAlertIcon,
-    DocumentTextIcon
+    DocumentTextIcon,
+    ChevronRightIcon
 } from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
 import clsx from "clsx";
 
 // ─── Inventory Analytics Component ──────────────────────────────────────────
@@ -29,12 +31,11 @@ function InventoryAnalytics() {
     const availablePercent = stats.total > 0 ? (stats.available / stats.total) * 100 : 0;
     const reservedPercent = stats.total > 0 ? (reserved / stats.total) * 100 : 0;
 
-    // SVG Circular Chart Logic
-    const size = 220;
+    const size = 180;
     const center = size / 2;
-    const radiusOuter = 82;
-    const radiusInner = 60;
-    const strokeWidth = 14;
+    const radiusOuter = 70;
+    const radiusInner = 52;
+    const strokeWidth = 12;
     const circumferenceOuter = 2 * Math.PI * radiusOuter;
     const circumferenceInner = 2 * Math.PI * radiusInner;
 
@@ -42,21 +43,14 @@ function InventoryAnalytics() {
     const offsetInner = circumferenceInner - (reservedPercent / 100) * circumferenceInner;
 
     return (
-        <div className="bg-[#F8F9FB] rounded-[24px] border border-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center relative overflow-hidden group">
-            {/* Ambient Glows */}
-            <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#6A11CB]/5 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#FF7E5F]/5 rounded-full blur-3xl pointer-events-none" />
-
-            {/* Header */}
-            <div className="w-full flex justify-start items-center mb-4 relative z-10">
-                <h3 className="text-base font-bold text-gray-800 tracking-tight">Inventory Status</h3>
+        <div className="bg-[#F8F9FB] rounded-[24px] border border-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center relative overflow-hidden group h-full">
+            <div className="w-full flex justify-start items-center mb-2 relative z-10">
+                <h3 className="text-sm font-bold text-gray-800 tracking-tight">Inventory Status</h3>
             </div>
 
-            {/* Chart Area */}
-            <div className="relative mb-6 drop-shadow-2xl">
+            <div className="relative mb-4 drop-shadow-xl h-[180px]">
                 <svg width={size} height={size} className="transform -rotate-90">
                     <defs>
-                        {/* Gradients */}
                         <linearGradient id="gradAvailable" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stopColor="#6A11CB" />
                             <stop offset="100%" stopColor="#2575FC" />
@@ -65,37 +59,16 @@ function InventoryAnalytics() {
                             <stop offset="0%" stopColor="#FF7E5F" />
                             <stop offset="100%" stopColor="#FEB47B" />
                         </linearGradient>
-                        
-                        {/* Glow Filter */}
-                        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                            <feGaussianBlur stdDeviation="3" result="blur" />
-                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                        </filter>
-
-                        {/* Drop Shadow for segments */}
-                        <filter id="segmentShadow" x="-10%" y="-10%" width="120%" height="120%">
-                            <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.15" />
-                        </filter>
                     </defs>
-
-                    {/* Background Tracks (Soft Hybrid feel) */}
-                    <circle
-                        cx={center} cy={center} r={radiusOuter}
-                        stroke="#E2E8F0" strokeWidth={strokeWidth} strokeOpacity="0.4" fill="transparent"
-                    />
-                    <circle
-                        cx={center} cy={center} r={radiusInner}
-                        stroke="#E2E8F0" strokeWidth={strokeWidth} strokeOpacity="0.4" fill="transparent"
-                    />
+                    <circle cx={center} cy={center} r={radiusOuter} stroke="#E2E8F0" strokeWidth={strokeWidth} strokeOpacity="0.4" fill="transparent" />
+                    <circle cx={center} cy={center} r={radiusInner} stroke="#E2E8F0" strokeWidth={strokeWidth} strokeOpacity="0.4" fill="transparent" />
                     
-                    {/* Active Segments */}
                     <circle
                         cx={center} cy={center} r={radiusOuter}
                         stroke="url(#gradAvailable)" strokeWidth={strokeWidth} fill="transparent"
                         strokeDasharray={circumferenceOuter}
                         strokeDashoffset={offsetOuter}
                         strokeLinecap="round"
-                        filter="url(#glow)"
                         className="transition-all duration-1000 ease-out"
                     />
                     <circle
@@ -104,133 +77,199 @@ function InventoryAnalytics() {
                         strokeDasharray={circumferenceInner}
                         strokeDashoffset={offsetInner}
                         strokeLinecap="round"
-                        filter="url(#glow)"
                         className="transition-all duration-1000 ease-out"
                     />
                 </svg>
 
-                {/* Center Content */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Total Items</p>
-                    <p className="text-[44px] font-black text-gray-800 leading-none tracking-tight">
-                        {stats.total}
-                    </p>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Total</p>
+                    <p className="text-[32px] font-black text-gray-800 leading-none tracking-tight">{stats.total}</p>
                 </div>
             </div>
 
-            {/* Legend */}
-            <div className="flex justify-center gap-6 mt-2 relative z-10 w-full px-2">
-                <div className="flex items-center gap-2 group/item cursor-default">
-                    <div className="h-3 w-3 rounded-full shadow-sm" style={{ background: 'linear-gradient(135deg, #6A11CB, #2575FC)' }} />
-                    <span className="text-xs font-bold text-gray-500 group-hover/item:text-gray-700 transition-colors">Available</span>
+            <div className="flex justify-center gap-4 relative z-10 w-full">
+                <div className="flex items-center gap-1.5 cursor-default">
+                    <div className="h-2 w-2 rounded-full" style={{ background: 'linear-gradient(135deg, #6A11CB, #2575FC)' }} />
+                    <span className="text-[10px] font-bold text-gray-500">Available</span>
                 </div>
-                <div className="flex items-center gap-2 group/item cursor-default">
-                    <div className="h-3 w-3 rounded-full shadow-sm" style={{ background: 'linear-gradient(135deg, #FF7E5F, #FEB47B)' }} />
-                    <span className="text-xs font-bold text-gray-500 group-hover/item:text-gray-700 transition-colors">Reserved</span>
+                <div className="flex items-center gap-1.5 cursor-default">
+                    <div className="h-2 w-2 rounded-full" style={{ background: 'linear-gradient(135deg, #FF7E5F, #FEB47B)' }} />
+                    <span className="text-[10px] font-bold text-gray-500">Reserved</span>
                 </div>
             </div>
         </div>
     );
 }
 
-// ─── Inventory Analytics Component ──────────────────────────────────────────
+// ─── Activity Count Graph Component ───────────────────────────────────────
+
+function ActivityCountGraph({ counts, activities }: { counts: { Sport: number, Club: number, Society: number }, activities: any[] }) {
+    const maxValue = Math.max(counts.Sport, counts.Club, counts.Society, 5);
+
+    const getLatestDate = (type: string) => {
+        const filtered = activities.filter(a => a.type === type);
+        if (filtered.length === 0) return 'Never';
+        const latest = filtered.reduce((max, a) => {
+            const date = new Date(a.updated_at || a.created_at);
+            return date > max ? date : max;
+        }, new Date(0));
+        return latest.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
+    const data = [
+        { label: 'Sports', value: counts.Sport, color: 'linear-gradient(180deg, #FFB38A 0%, #F97316 100%)', latest: getLatestDate('Sport'), icon: TrophyIcon, iconColor: 'text-orange-500', iconBg: 'bg-orange-50', border: 'border-orange-100', tooltipPos: 'left-0' },
+        { label: 'Clubs', value: counts.Club, color: 'linear-gradient(180deg, #93C5FD 0%, #3B82F6 100%)', latest: getLatestDate('Club'), icon: BriefcaseIcon, iconColor: 'text-blue-500', iconBg: 'bg-blue-50', border: 'border-blue-100', tooltipPos: 'left-1/2 -translate-x-1/2' },
+        { label: 'Societies', value: counts.Society, color: 'linear-gradient(180deg, #86EFAC 0%, #16A34A 100%)', latest: getLatestDate('Society'), icon: AcademicCapIcon, iconColor: 'text-emerald-500', iconBg: 'bg-emerald-50', border: 'border-emerald-100', tooltipPos: 'right-0' },
+    ];
+
+    return (
+        <div className="bg-white rounded-[24px] border border-gray-100 p-4 shadow-sm flex flex-col relative group h-full">
+            <div className="flex justify-between items-center mb-6 px-1">
+                <div className="flex items-center gap-1.5">
+                    <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wide">Activity Status</h3>
+                </div>
+            </div>
+
+            <div className="flex flex-1 gap-2">
+                <div className="flex-1 flex justify-around items-end h-full min-h-[140px] pb-6 relative pr-1">
+                    <div className="absolute left-0 right-0 top-0 h-[1px] bg-gray-50/50" />
+                    <div className="absolute left-0 right-0 bottom-[24px] h-[1px] bg-gray-50/50" />
+
+                    {data.map((item, i) => {
+                        const height = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
+                        return (
+                            <div key={item.label} className="flex flex-col items-center gap-2 flex-1 relative z-10 group/bar max-w-[60px]">
+                                <div className="w-full max-w-[32px] rounded-full h-[120px] relative flex items-end bg-transparent">
+                                    <motion.div
+                                        initial={{ height: 0 }}
+                                        animate={{ height: `${height}%` }}
+                                        transition={{ duration: 1, delay: i * 0.1, ease: "easeOut" }}
+                                        className="w-full rounded-2xl border-r-2 border-white/20 shadow-[0_4px_15px_rgba(0,0,0,0.1),inset_0_2px_4px_rgba(255,255,255,0.3)] relative"
+                                        style={{ background: item.color }}
+                                    >
+                                        {/* Activity Creation Themed Tooltip */}
+                                        <div className={clsx(
+                                            "absolute bottom-full mb-3 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 scale-95 group-hover/bar:scale-100 pointer-events-none z-50",
+                                            item.tooltipPos
+                                        )}>
+                                            <div className={clsx(
+                                                "bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_20px_50px_rgba(99,49,148,0.2)] border p-3 flex items-start gap-3 min-w-[200px]",
+                                                item.border
+                                            )}>
+                                                <div className={clsx("h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0", item.iconBg, item.iconColor)}>
+                                                    <item.icon className="h-4 w-4" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center justify-between mb-0.5">
+                                                        <h4 className="text-[11px] font-black text-gray-800 tracking-tighter uppercase">{item.label}</h4>
+                                                        <span className="text-[9px] font-bold text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded-full">ACTIVE</span>
+                                                    </div>
+                                                    <div className="flex items-baseline gap-1 mb-2">
+                                                        <span className={clsx("text-xl font-black", item.iconColor)}>{item.value}</span>
+                                                        <span className="text-[9px] font-bold text-gray-400 capitalize">registered items</span>
+                                                    </div>
+                                                    <div className="pt-2 border-t border-gray-50 flex items-center justify-between">
+                                                        <span className="text-[8px] font-bold text-gray-500 uppercase">Last Updated</span>
+                                                        <span className="text-[9px] font-bold text-gray-800">{item.latest}</span>
+                                                    </div>
+                                                </div>
+                                                {/* Arrow logic logic logic... but for simple tooltips just use a generic one or none */}
+                                                <div className={clsx(
+                                                    "absolute top-full -mt-1 border-[6px] border-transparent border-t-white/95",
+                                                    item.label === 'Sports' ? 'left-4' : item.label === 'Societies' ? 'right-4' : 'left-1/2 -translate-x-1/2'
+                                                )} />
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                </div>
+                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">{item.label}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── Main Dashboard ────────────────────────────────────────────────────────
 
 export default function DashBoardPage() {
     const { user } = useAuth();
+    const { data: activities } = useQuery({
+        queryKey: ['activities'],
+        queryFn: activityService.getAll
+    });
+
+    const activityCounts = { 
+        Sport: (activities ?? []).filter(a => a.type === 'Sport').length,
+        Club: (activities ?? []).filter(a => a.type === 'Club').length,
+        Society: (activities ?? []).filter(a => a.type === 'Society').length,
+    };
+
+    const totalActivities = activityCounts.Sport + activityCounts.Club + activityCounts.Society;
 
     return (
-        <div className="space-y-6">
-            {/* Page Title */}
-            <div>
-                <h1 className="text-2xl font-bold text-gray-800">{user?.role} Dashboard</h1>
-                <p className="text-sm text-gray-500 mt-1">Welcome back, {user?.name}!</p>
-            </div>
-
-            {/* Stats Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {/* Students Card */}
-                <div className="bg-[#E1F5FE] p-5 rounded-2xl flex items-center justify-between hover:shadow-md transition-all duration-300 group cursor-default">
-                    <div>
-                        <p className="text-sm font-medium text-blue-600">Students</p>
-                        <p className="text-3xl font-bold text-gray-800 mt-1">1,248</p>
-                    </div>
-                    <div className="h-12 w-12 rounded-xl bg-white/70 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
-                        <AcademicCapIcon className="h-7 w-7" />
-                    </div>
-                </div>
-
-                {/* Employees Card */}
-                <div className="bg-[#F4F0FF] p-5 rounded-2xl flex items-center justify-between hover:shadow-md transition-all duration-300 group cursor-default">
-                    <div>
-                        <p className="text-sm font-medium text-purple-600">Employees</p>
-                        <p className="text-3xl font-bold text-gray-800 mt-1">132</p>
-                    </div>
-                    <div className="h-12 w-12 rounded-xl bg-white/70 flex items-center justify-center text-[#633194] group-hover:scale-110 transition-transform">
-                        <BriefcaseIcon className="h-7 w-7" />
-                    </div>
-                </div>
-
-                {/* Activities Card */}
-                <div className="bg-[#FFF0E6] p-5 rounded-2xl flex items-center justify-between hover:shadow-md transition-all duration-300 group cursor-default">
-                    <div>
-                        <p className="text-sm font-medium text-orange-600">Activities</p>
-                        <p className="text-3xl font-bold text-gray-800 mt-1">24</p>
-                    </div>
-                    <div className="h-12 w-12 rounded-xl bg-white/70 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
-                        <TrophyIcon className="h-7 w-7" />
-                    </div>
+        <div className="space-y-4 max-h-screen overflow-hidden">
+            <div className="flex justify-between items-end mb-2">
+                <div>
+                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">{user?.role} Portal</h1>
+                    <p className="text-[12px] text-gray-500">Welcome, {user?.name}</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Inventory Analytics Graph */}
-                <div className="lg:col-span-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                    { label: 'Students', val: '1,248', color: 'bg-[#E1F5FE]', txt: 'text-blue-600', icon: AcademicCapIcon },
+                    { label: 'Employees', val: '132', color: 'bg-[#F4F0FF]', txt: 'text-purple-600', icon: BriefcaseIcon },
+                    { label: 'Activities', val: totalActivities || 24, color: 'bg-[#FFF0E6]', txt: 'text-orange-600', icon: TrophyIcon }
+                ].map((s, i) => (
+                    <div key={i} className={clsx("p-4 rounded-2xl flex items-center justify-between", s.color)}>
+                        <div>
+                            <p className="text-[11px] font-bold uppercase tracking-wider opacity-70">{s.label}</p>
+                            <p className="text-2xl font-black text-gray-800 mt-0.5">{s.val}</p>
+                        </div>
+                        <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
+                            <s.icon className={clsx("h-6 w-6", s.txt)} />
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <InventoryAnalytics />
+                    <ActivityCountGraph counts={activityCounts} activities={activities ?? []} />
                 </div>
 
-                {/* Info Cards Column */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-md transition-all duration-300">
-                            <div className="flex items-center gap-3 mb-3">
-                                <div className="h-9 w-9 rounded-xl bg-[#E1F5FE] flex items-center justify-center text-blue-500">
-                                    <CalendarDaysIcon className="h-5 w-5" />
-                                </div>
-                                <h3 className="text-base font-semibold text-gray-800">Upcoming Events</h3>
+                <div className="lg:col-span-1 space-y-4">
+                    <div className="bg-white rounded-[24px] border border-gray-100 p-5 hover:shadow-md transition-all">
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="h-7 w-7 rounded-lg bg-[#FFF0E6] flex items-center justify-center text-orange-500">
+                                <BellAlertIcon className="h-4 w-4" />
                             </div>
-                            <p className="text-sm text-gray-500">No events scheduled for today.</p>
+                            <h3 className="text-xs font-bold text-gray-800 uppercase">Alerts</h3>
                         </div>
-                        <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-md transition-all duration-300">
-                            <div className="flex items-center gap-3 mb-3">
-                                <div className="h-9 w-9 rounded-xl bg-[#FFF0E6] flex items-center justify-center text-orange-500">
-                                    <BellAlertIcon className="h-5 w-5" />
-                                </div>
-                                <h3 className="text-base font-semibold text-gray-800">Active Alerts</h3>
-                            </div>
-                            <p className="text-sm text-gray-500">3 pending alerts requiring attention.</p>
-                        </div>
+                        <p className="text-[11px] text-gray-500">3 pending alerts requiring review.</p>
                     </div>
 
-                    {/* Recent Updates */}
-                    <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-base font-semibold text-gray-800">Recent Updates</h3>
-                        </div>
-                        <div className="space-y-3">
+                    <div className="bg-white rounded-[24px] border border-gray-100 p-5 overflow-hidden">
+                        <h3 className="text-xs font-bold text-gray-800 uppercase mb-3 px-1">Updates</h3>
+                        <div className="space-y-2">
                             {[
-                                { label: 'New Activity Added', desc: 'Basketball club added to activities', time: 'Just now', color: 'bg-[#E1F5FE]', textColor: 'text-blue-500', icon: TrophyIcon },
-                                { label: 'Attendance Report', desc: 'Swimming club report submitted for review', time: 'Today', color: 'bg-[#FFF0E6]', textColor: 'text-orange-500', icon: DocumentTextIcon },
-                                { label: 'New Alert', desc: 'Grade 10 teacher notification pending', time: 'Yesterday', color: 'bg-[#F4F0FF]', textColor: 'text-[#633194]', icon: BellAlertIcon },
+                                { label: 'Basketball', desc: 'New group added', time: 'Just now', color: 'bg-[#E1F5FE]', txt: 'text-blue-500', icon: TrophyIcon },
+                                { label: 'Swimming', desc: 'Sync complete', time: 'Today', color: 'bg-[#FFF0E6]', txt: 'text-orange-500', icon: DocumentTextIcon },
+                                { label: 'System', desc: 'Notification sent', time: 'Yesterday', color: 'bg-[#F4F0FF]', txt: 'text-[#633194]', icon: BellAlertIcon },
                             ].map((item, i) => (
-                                <div key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                                    <div className={clsx("h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0", item.color)}>
-                                        <item.icon className={clsx("h-5 w-5", item.textColor)} />
+                                <div key={i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                                    <div className={clsx("h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0", item.color)}>
+                                        <item.icon className={clsx("h-4 w-4", item.txt)} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-gray-800">{item.label}</p>
-                                        <p className="text-xs text-gray-500 truncate">{item.desc}</p>
+                                        <p className="text-[11px] font-bold text-gray-800 truncate">{item.label}</p>
+                                        <p className="text-[10px] text-gray-500 truncate">{item.desc}</p>
                                     </div>
-                                    <span className="text-xs text-gray-400 flex-shrink-0">{item.time}</span>
+                                    <span className="text-[9px] text-gray-400">{item.time}</span>
                                 </div>
                             ))}
                         </div>
