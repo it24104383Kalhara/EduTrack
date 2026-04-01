@@ -28,6 +28,16 @@ const SubjectManagement: React.FC = () => {
     category: '',
     is_optional: false
   });
+
+  // Handle Tab Switch
+  const handleTabSwitch = (type: '6-11' | '12-13') => {
+    setActiveFormTab(type);
+    setFormData(prev => ({
+      ...prev,
+      grades: [],
+      streams: []
+    }));
+  };
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   
@@ -108,15 +118,24 @@ const SubjectManagement: React.FC = () => {
     }
     try {
       setLoading(true);
-      const newSub = await subjectApi.create({
-        ...formData,
+      const payload = {
+        name: formData.name.trim(),
+        code: formData.code.trim(),
+        grades: formData.grades,
+        stream: activeFormTab === '12-13' ? formData.streams : undefined,
         type: activeFormTab,
-        stream: activeFormTab === '12-13' ? formData.streams : undefined
-      });
+        category: formData.category || undefined,
+        is_optional: formData.is_optional
+      };
+      
+      console.log('📤 [SUBJECT_CREATE_FRONTEND]: Sending payload', payload);
+      
+      const newSub = await subjectApi.create(payload);
       setSubjects(prev => [...prev, newSub]);
       setFormData({ name: '', code: '', grades: [], streams: [], category: '', is_optional: false });
       showToast('Subject created successfully!', 'success');
     } catch (error: any) {
+      console.error('🔴 [SUBJECT_CREATE_FRONTEND_ERROR]:', error);
       showToast(error.message || 'Failed to add subject.', 'error');
     } finally {
       setLoading(false);
@@ -314,7 +333,7 @@ const SubjectManagement: React.FC = () => {
               {(['6-11' , '12-13'] as const).map(type => (
                 <button
                   key={type}
-                  onClick={() => setActiveFormTab(type)}
+                  onClick={() => handleTabSwitch(type)}
                   style={{
                     flex: 1,
                     padding: '6px 12px',
@@ -599,8 +618,12 @@ const SubjectManagement: React.FC = () => {
                         } else {
                           displayGrades = [subject.grades as string];
                         }
-                        return displayGrades.map(g => (
-                          <span key={g} style={{ background: '#F8FAFC', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: '700', border: '1px solid #E2E8F0', color: '#475569' }}>
+                        
+                        // Deduplicate grades to prevent key warnings
+                        const uniqueGrades = Array.from(new Set(displayGrades));
+                        
+                        return uniqueGrades.map(g => (
+                          <span key={`grade-${subject.id}-${g}`} style={{ background: '#F8FAFC', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: '700', border: '1px solid #E2E8F0', color: '#475569' }}>
                             G{g}
                           </span>
                         ));
