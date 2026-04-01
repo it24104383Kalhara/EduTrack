@@ -234,8 +234,8 @@ const GradeManagement: React.FC = () => {
           return subjectStreams.some(stream => {
             const streamStr = stream.toLowerCase();
             // Handle edge cases like "Arts" matching "Art A", or "Technology" matching "Tech A"
-            const normalizedStream = streamStr === 'arts' ? 'art' : 
-                                     streamStr === 'technology' ? 'tech' : streamStr;
+            const normalizedStream = streamStr === 'arts' ? 'art' :
+              streamStr === 'technology' ? 'tech' : streamStr;
             return gradePart.includes(normalizedStream) || streamStr.includes(gradePart.split(' ')[0]);
           });
         }

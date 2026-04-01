@@ -54,14 +54,14 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 router.get('/type/:type', async (req, res) => {
   try {
     const { type } = req.params;
-    
+
     if (type !== '6-11' && type !== '12-13') {
       return res.status(400).json({
         success: false,
         message: 'Invalid subject type. Must be "6-11" or "12-13"'
       });
     }
-    
+
     const subjects = await SubjectModel.findByType(type as '6-11' | '12-13');
     res.json({
       success: true,
@@ -83,14 +83,14 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const subject = await SubjectModel.findById(parseInt(id));
-    
+
     if (!subject) {
       return res.status(404).json({
         success: false,
         message: 'Subject not found'
       });
     }
-    
+
     res.json({
       success: true,
       data: subject,
@@ -111,9 +111,9 @@ router.post('/', async (req, res) => {
   try {
     console.log('🔵 [SUBJECT_CREATE_REQUEST]: Received request body:', req.body);
     const { name, code, grades, stream, type, category, is_optional } = req.body;
-    
+
     console.log('🔵 [SUBJECT_CREATE_PARSED]:', { name, code, grades, stream, type, category, is_optional });
-    
+
     // Validation
     if (!name || !code || !grades || !type) {
       console.log('🔴 [SUBJECT_CREATE_VALIDATION_ERROR]: Missing required fields');
@@ -122,21 +122,21 @@ router.post('/', async (req, res) => {
         message: 'Missing required fields: name, code, grades, type'
       });
     }
-    
+
     if (type !== '6-11' && type !== '12-13') {
       return res.status(400).json({
         success: false,
         message: 'Invalid subject type. Must be "6-11" or "12-13"'
       });
     }
-    
+
     if (!Array.isArray(grades) || grades.length === 0) {
       return res.status(400).json({
         success: false,
         message: 'Grades must be a non-empty array'
       });
     }
-    
+
     // Check for duplicate subject code
     console.log('🔵 [SUBJECT_CREATE_CHECKING_CODE]: Checking for duplicate code:', code);
     const existingCode = await SubjectModel.findByCode(code);
@@ -148,7 +148,7 @@ router.post('/', async (req, res) => {
         message: `Subject code "${code}" already exists`
       });
     }
-    
+
     // Check for duplicate subjects in selected grades and streams
     console.log('🔵 [SUBJECT_CREATE_CHECKING_DUPLICATES]: Checking for duplicates in grades:', grades);
     for (const grade of grades) {
@@ -180,7 +180,7 @@ router.post('/', async (req, res) => {
         }
       }
     }
-    
+
     // Create subject
     console.log('📝 [SUBJECT_CREATE]: Attempting to create', { name, code, grades, stream, type });
     const newSubject = await SubjectModel.create({
@@ -192,7 +192,7 @@ router.post('/', async (req, res) => {
       category: category || null,
       is_optional: !!is_optional
     });
-    
+
     res.status(201).json({
       success: true,
       data: newSubject,
@@ -218,7 +218,7 @@ router.put('/:id', async (req, res) => {
     const { id: idRaw } = req.params;
     const id = parseInt(idRaw);
     const { name, code, grades, stream, type, category, is_optional } = req.body;
-    
+
     // Check if subject exists
     const existingSubject = await SubjectModel.findById(id);
     if (!existingSubject) {
@@ -227,7 +227,7 @@ router.put('/:id', async (req, res) => {
         message: 'Subject not found'
       });
     }
-    
+
     // Validate type if provided
     if (type && type !== '6-11' && type !== '12-13') {
       return res.status(400).json({
@@ -235,7 +235,7 @@ router.put('/:id', async (req, res) => {
         message: 'Invalid subject type. Must be "6-11" or "12-13"'
       });
     }
-    
+
     // Validate grades if provided
     if (grades && (!Array.isArray(grades) || grades.length === 0)) {
       return res.status(400).json({
@@ -243,7 +243,7 @@ router.put('/:id', async (req, res) => {
         message: 'Grades must be a non-empty array'
       });
     }
-    
+
     // Check for duplicate subject code if code is being updated
     if (code && code !== existingSubject.code) {
       const existingCode = await SubjectModel.findByCode(code, id);
@@ -254,13 +254,13 @@ router.put('/:id', async (req, res) => {
         });
       }
     }
-    
+
     // Check for duplicate subjects in selected grades and streams if name or grades are being updated
     if (name || grades) {
       const checkName = name || existingSubject.name;
       const checkGrades = grades || existingSubject.grade_array;
       const checkStream = stream !== undefined ? stream : existingSubject.stream_array;
-      
+
       for (const grade of checkGrades) {
         if (checkStream && Array.isArray(checkStream)) {
           for (const streamItem of checkStream) {
@@ -283,7 +283,7 @@ router.put('/:id', async (req, res) => {
         }
       }
     }
-    
+
     // Prepare updates
     const updates: Partial<Omit<any, 'id' | 'created_at' | 'updated_at'>> = {};
     if (name !== undefined) updates.name = name.trim();
@@ -293,17 +293,17 @@ router.put('/:id', async (req, res) => {
     if (type !== undefined) updates.type = type;
     if (category !== undefined) updates.category = category;
     if (is_optional !== undefined) updates.is_optional = is_optional;
-    
+
     // Update subject
     const updatedSubject = await SubjectModel.update(id, updates);
-    
+
     if (!updatedSubject) {
       return res.status(500).json({
         success: false,
         message: 'Failed to update subject'
       });
     }
-    
+
     res.json({
       success: true,
       data: updatedSubject,
@@ -323,7 +323,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Check if subject exists
     const existingSubject = await SubjectModel.findById(parseInt(id));
     if (!existingSubject) {
@@ -332,17 +332,17 @@ router.delete('/:id', async (req, res) => {
         message: 'Subject not found'
       });
     }
-    
+
     // Delete subject
     const deleted = await SubjectModel.delete(parseInt(id));
-    
+
     if (!deleted) {
       return res.status(500).json({
         success: false,
         message: 'Failed to delete subject'
       });
     }
-    
+
     res.json({
       success: true,
       message: 'Subject deleted successfully'
@@ -373,23 +373,23 @@ router.get('/student/:studentId/grade/:gradeId', async (req, res) => {
 router.post('/student-assignment', async (req, res) => {
   try {
     const { studentId, gradeId, subjectIds } = req.body;
-    
+
     if (!studentId || !gradeId || !Array.isArray(subjectIds)) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
     // First remove existing
     await StudentSubjectModel.removeForStudent(studentId, gradeId);
-    
+
     // Then assign new ones
     const assignments = subjectIds.map(subjectId => ({
       student_id: studentId,
       subject_id: parseInt(String(subjectId)),
       grade_id: gradeId
     }));
-    
+
     await StudentSubjectModel.assignBulk(assignments);
-    
+
     res.json({ success: true, message: 'Student subjects updated successfully' });
   } catch (error) {
     console.error('Error assigning subjects:', error);
@@ -413,7 +413,7 @@ router.get('/subject-enrollment/:subjectId/grade/:gradeId', async (req, res) => 
 router.post('/bulk-student-assignment', async (req, res) => {
   try {
     const { subjectId, gradeId, studentIds } = req.body;
-    
+
     if (!subjectId || !gradeId || !Array.isArray(studentIds)) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }

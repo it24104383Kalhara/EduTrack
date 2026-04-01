@@ -53,7 +53,7 @@ export interface AttendanceReport {
  * Refactored to use attendance_mark table as the single source of truth for attendance.
  */
 export class AttendanceModel {
-  
+
   /**
    * Helper to get current date/time for marking
    */
@@ -70,10 +70,10 @@ export class AttendanceModel {
   static async markAttendanceBulk(attendanceRecords: Omit<Attendance, 'id' | 'created_at' | 'updated_at' | 'marked_at'>[]): Promise<boolean> {
     const connection = await pool.getConnection();
     const { currentDate, currentTime } = this.getCurrentTimeInfo();
-    
+
     try {
       await connection.beginTransaction();
-      
+
       for (const record of attendanceRecords) {
         await connection.execute(ATTENDANCE_MARK_QUERIES.MARK, [
           record.student_id,
@@ -88,7 +88,7 @@ export class AttendanceModel {
           currentTime  // updated_time
         ]);
       }
-      
+
       await connection.commit();
       return true;
     } catch (error) {
@@ -118,9 +118,9 @@ export class AttendanceModel {
         currentDate, // updated_date
         currentTime  // updated_time
       ]);
-      
+
       const attendance = await this.getAttendanceByStudentAndDate(
-        attendanceData.student_id, 
+        attendanceData.student_id,
         attendanceData.date
       );
       if (!attendance) {
@@ -141,7 +141,7 @@ export class AttendanceModel {
       const [rows] = await pool.execute(ATTENDANCE_MARK_QUERIES.FIND_BY_STUDENT_DATE, [studentId, date]);
       const attendance = rows as any[];
       if (attendance.length === 0) return null;
-      
+
       const row = attendance[0];
       return {
         id: row.id,
@@ -170,9 +170,9 @@ export class AttendanceModel {
       const [gradeRows] = await pool.execute('SELECT grade, grade_part FROM grades WHERE id = ?', [gradeId]);
       const grades = gradeRows as any[];
       if (grades.length === 0) return [];
-      
+
       const { grade, grade_part } = grades[0];
-      
+
       const [rows] = await pool.execute(ATTENDANCE_MARK_QUERIES.FIND_BY_GRADE_DATE, [grade, grade_part, date]);
       return (rows as any[]).map(row => ({
         id: row.id,
@@ -201,13 +201,13 @@ export class AttendanceModel {
       const [gradeRows] = await pool.execute('SELECT grade, grade_part FROM grades WHERE id = ?', [gradeId]);
       const grades = gradeRows as any[];
       if (grades.length === 0) return null;
-      
+
       const { grade, grade_part } = grades[0];
-      
+
       const [rows] = await pool.execute(ATTENDANCE_MARK_QUERIES.GET_SUMMARY, [grade, grade_part, date]);
       const summaries = rows as any[];
       if (summaries.length === 0) return null;
-      
+
       const summary = summaries[0];
       return {
         grade_id: gradeId,
@@ -235,9 +235,9 @@ export class AttendanceModel {
       const [gradeRows] = await pool.execute('SELECT grade, grade_part FROM grades WHERE id = ?', [gradeId]);
       const grades = gradeRows as any[];
       if (grades.length === 0) return [];
-      
+
       const { grade, grade_part } = grades[0];
-      
+
       // We don't have a direct query for this in ATTENDANCE_MARK_QUERIES but we can easily query
       const [rows] = await pool.execute(
         'SELECT DISTINCT marked_date as date FROM attendance_mark WHERE grade = ? AND section = ? ORDER BY marked_date DESC',
@@ -269,7 +269,7 @@ export class AttendanceModel {
         WHERE student_id = ?
       `;
       const params: any[] = [studentId];
-      
+
       if (startDate && endDate) {
         query += ' AND marked_date BETWEEN ? AND ?';
         params.push(startDate, endDate);
@@ -280,12 +280,12 @@ export class AttendanceModel {
         query += ' AND marked_date <= ?';
         params.push(endDate);
       }
-      
+
       query += ' GROUP BY student_id, student_name';
-      
+
       const [rows] = await pool.execute(query, params);
       const reports = rows as any[];
-      
+
       if (reports.length === 0) {
         // Fetch student name if no records found
         const [studentRows] = await pool.execute('SELECT first_name, last_name FROM students WHERE id = ?', [studentId]);
@@ -300,7 +300,7 @@ export class AttendanceModel {
           attendance_percentage: 0
         };
       }
-      
+
       return reports[0];
     } catch (error) {
       console.error('🔴 [ATTENDANCE_STUDENT_REPORT_ERROR]:', error);
@@ -316,9 +316,9 @@ export class AttendanceModel {
       const [gradeRows] = await pool.execute('SELECT grade, grade_part FROM grades WHERE id = ?', [gradeId]);
       const grades = gradeRows as any[];
       if (grades.length === 0) return [];
-      
+
       const { grade, grade_part } = grades[0];
-      
+
       let query = `
         SELECT 
           student_id,
@@ -332,14 +332,14 @@ export class AttendanceModel {
         WHERE grade = ? AND section = ?
       `;
       const params: any[] = [grade, grade_part];
-      
+
       if (startDate && endDate) {
         query += ' AND marked_date BETWEEN ? AND ?';
         params.push(startDate, endDate);
       }
-      
+
       query += ' GROUP BY student_id, student_name ORDER BY student_name ASC';
-      
+
       const [rows] = await pool.execute(query, params);
       return rows as AttendanceReport[];
     } catch (error) {
@@ -356,9 +356,9 @@ export class AttendanceModel {
       const [gradeRows] = await pool.execute('SELECT grade, grade_part FROM grades WHERE id = ?', [gradeId]);
       const grades = gradeRows as any[];
       if (grades.length === 0) return false;
-      
+
       const { grade, grade_part } = grades[0];
-      
+
       const [result] = await pool.execute(ATTENDANCE_MARK_QUERIES.DELETE_BY_GRADE_DATE, [grade, grade_part, date]);
       return (result as any).affectedRows > 0;
     } catch (error) {
@@ -379,15 +379,15 @@ export class AttendanceModel {
     averageAttendance: number;
   }> {
     const today = new Date().toLocaleDateString('en-CA');
-    
+
     try {
       const [rows] = await pool.execute(ATTENDANCE_MARK_QUERIES.GET_STATISTICS, [today, today, today, today]);
       const stats = rows as any[];
-      
+
       // Total historical students count for relative percentage calculation
       const [totalStudentsResult] = await pool.execute('SELECT COUNT(*) as count FROM students');
       const totalStudents = (totalStudentsResult as any[])[0].count || 1;
-      
+
       const presentToday = stats[0].presentToday || 0;
       const lateToday = stats[0].lateToday || 0;
       const todayTotalMarked = stats[0].todayRecords || 1;
@@ -457,8 +457,8 @@ export class AttendanceModel {
         grade_name: row.grade_name || 'System Overall',
         day: row.day,
         attendance_percentage: parseFloat(row.attendance_percentage || 0),
-        date: row.date ? (row.date instanceof Date ? 
-          `${row.date.getFullYear()}-${String(row.date.getMonth() + 1).padStart(2, '0')}-${String(row.date.getDate()).padStart(2, '0')}` : 
+        date: row.date ? (row.date instanceof Date ?
+          `${row.date.getFullYear()}-${String(row.date.getMonth() + 1).padStart(2, '0')}-${String(row.date.getDate()).padStart(2, '0')}` :
           row.date.toString().split('T')[0]) : ''
       }));
     } catch (error) {

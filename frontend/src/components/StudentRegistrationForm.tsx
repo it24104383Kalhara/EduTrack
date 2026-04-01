@@ -33,10 +33,10 @@ const StudentRegistrationForm: React.FC = () => {
           padding: '64px 48px', textAlign: 'center', maxWidth: '500px', width: '100%',
           boxShadow: '0 15px 35px -5px rgba(99, 49, 148, 0.1)'
         }}>
-          <div style={{ 
-            width: '80px', height: '80px', background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)', 
-            borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-            margin: '0 auto 24px', boxShadow: '0 8px 16px rgba(99, 49, 148, 0.25)' 
+          <div style={{
+            width: '80px', height: '80px', background: 'linear-gradient(135deg, #633194 0%, #4B2380 100%)',
+            borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 24px', boxShadow: '0 8px 16px rgba(99, 49, 148, 0.25)'
           }}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -111,7 +111,7 @@ const StudentRegistrationForm: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    
+
     // Special handling for phone number - only allow exactly 10 digits
     if (name === 'parent_phone') {
       const onlyNums = value.replace(/[^0-9]/g, '').slice(0, 10);
@@ -125,7 +125,7 @@ const StudentRegistrationForm: React.FC = () => {
         [name]: value
       }));
     }
-    
+
     if (step1Error) setStep1Error(null);
   };
 
@@ -151,9 +151,9 @@ const StudentRegistrationForm: React.FC = () => {
       const maxDob = new Date('2016-01-31');
 
       if (dob < minDob || dob > maxDob) {
-        setNotification({ 
-          message: 'Registration Denied: Student must be born between Dec 31, 2006 and Jan 31, 2016.', 
-          type: 'error' 
+        setNotification({
+          message: 'Registration Denied: Student must be born between Dec 31, 2006 and Jan 31, 2016.',
+          type: 'error'
         });
         return;
       }
@@ -391,8 +391,8 @@ const StudentRegistrationForm: React.FC = () => {
           maxWidth: '400px'
         }}>
           <div style={{
-            background: notification.type === 'error' 
-              ? 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)' 
+            background: notification.type === 'error'
+              ? 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)'
               : 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
             border: `1px solid ${notification.type === 'error' ? '#FECACA' : '#A7F3D0'}`,
             borderRadius: '16px',
@@ -424,7 +424,7 @@ const StudentRegistrationForm: React.FC = () => {
                 {notification.message}
               </div>
             </div>
-            <button 
+            <button
               onClick={() => setNotification(null)}
               style={{
                 marginLeft: 'auto',
@@ -560,13 +560,13 @@ const StudentRegistrationForm: React.FC = () => {
                     const diffMs = Date.now() - dob.getTime();
                     const age = diffMs >= 0 ? Math.abs(new Date(diffMs).getUTCFullYear() - 1970) : 0;
                     return (
-                      <span style={{ 
-                        fontSize: '11px', 
-                        background: '#F4F0FF', 
-                        color: '#633194', 
-                        padding: '2px 8px', 
-                        borderRadius: '10px', 
-                        fontWeight: '700' 
+                      <span style={{
+                        fontSize: '11px',
+                        background: '#F4F0FF',
+                        color: '#633194',
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                        fontWeight: '700'
                       }}>
                         {age} yrs
                       </span>

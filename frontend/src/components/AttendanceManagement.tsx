@@ -44,7 +44,11 @@ const AttendanceManagement: React.FC = () => {
 
 
   const loadAttendanceDates = useCallback(async () => {
-    if (!selectedGrade) return;
+    // VALIDATION: Ensure grade is selected before proceeding
+    if (!selectedGrade) {
+      console.log('VALIDATION: No grade selected - cannot load attendance dates');
+      return;
+    }
 
     try {
       console.log('Loading dates for grade:', selectedGrade.grade, '-', selectedGrade.grade_part);
@@ -58,11 +62,18 @@ const AttendanceManagement: React.FC = () => {
         .filter(record => record.grade === selectedGrade.grade && record.section === selectedGrade.grade_part);
       console.log('Filtered records for grade', selectedGrade.grade, '-', selectedGrade.grade_part, ':', filteredRecords);
 
+      // VALIDATION: Convert dates and remove duplicates
       const gradeDates = filteredRecords
         .map(record => {
           const date = new Date(record.marked_date);
+          // Validate date conversion
+          if (isNaN(date.getTime())) {
+            console.warn('VALIDATION: Invalid date found:', record.marked_date);
+            return null;
+          }
           return date.toLocaleDateString('en-CA'); // Convert to YYYY-MM-DD format
         })
+        .filter((date): date is string => date !== null) // Remove invalid dates
         .filter((date, index, self) => self.indexOf(date) === index) // Remove duplicates
         .sort((a, b) => new Date(b).getTime() - new Date(a).getTime()); // Sort by date descending
 
@@ -134,17 +145,28 @@ const AttendanceManagement: React.FC = () => {
   };
 
   const handleDateSelect = async () => {
-    // Leave day check (Weekend or Public Holiday)
+    // VALIDATION: Leave day check (Weekend or Public Holiday)
     if (checkIsLeaveDay(selectedDate)) {
+      console.log('VALIDATION: Selected date is a holiday:', selectedDate);
       showToast("Selected date is a school holiday (weekend or public holiday). Attendance cannot be marked for this day.", "warning");
       return;
     }
 
-    // Calculate historical attendance stats
+    // VALIDATION: Calculate historical attendance stats with safety checks
     if (selectedGrade) {
       try {
         const allAtt = await attendanceMarkApi.getAllAttendance();
-        const records = allAtt.attendance.filter(r => r.grade === selectedGrade.grade && r.section === selectedGrade.grade_part && new Date(r.marked_date) <= new Date(selectedDate));
+        // Validate and filter records
+        const records = allAtt.attendance.filter(r => {
+          // Validate record structure and date logic
+          if (!r.grade || !r.section || !r.marked_date) {
+            console.warn('VALIDATION: Invalid record structure:', r);
+            return false;
+          }
+          return r.grade === selectedGrade.grade && 
+                 r.section === selectedGrade.grade_part && 
+                 new Date(r.marked_date) <= new Date(selectedDate);
+        });
 
         const uniqueDates = new Set(records.map(r => r.marked_date));
         const totalDays = uniqueDates.size;
@@ -152,21 +174,33 @@ const AttendanceManagement: React.FC = () => {
         const statsMap: { [key: number]: { present: number, total: number, percentage: number } } = {};
 
         records.forEach(r => {
+          // VALIDATION: Ensure student_id exists and is valid
+          if (!r.student_id || typeof r.student_id !== 'number') {
+            console.warn('VALIDATION: Invalid student_id in record:', r);
+            return;
+          }
+          
           if (!statsMap[r.student_id]) {
             statsMap[r.student_id] = { present: 0, total: 0, percentage: 0 };
           }
+          // VALIDATION: Check status is valid
           if (r.status === 'present' || r.status === 'late') {
             statsMap[r.student_id].present += 1;
           }
         });
 
-        // Initialize missing students and calculate percentages
-        students.filter(s => selectedGrade.students?.some(gs => gs.id === s.id)).forEach(student => {
+        // VALIDATION: Initialize missing students with safety checks
+        students.filter(s => {
+          // Validate student belongs to selected grade
+          return selectedGrade.students?.some(gs => gs.id === s.id);
+        }).forEach(student => {
           if (!statsMap[student.id]) {
             statsMap[student.id] = { present: 0, total: totalDays, percentage: 0 };
           } else {
             statsMap[student.id].total = totalDays;
-            statsMap[student.id].percentage = totalDays > 0 ? Math.round((statsMap[student.id].present / totalDays) * 100) : 0;
+            // VALIDATION: Prevent division by zero
+            statsMap[student.id].percentage = totalDays > 0 ? 
+              Math.round((statsMap[student.id].present / totalDays) * 100) : 0;
           }
         });
 
@@ -227,10 +261,32 @@ const AttendanceManagement: React.FC = () => {
   };
 
   const getGradeStudents = () => {
-    if (!selectedGrade) return [];
-    return students.filter(student =>
-      selectedGrade.students?.some(s => s.id === student.id)
-    );
+    // VALIDATION: Ensure grade is selected before filtering students
+    if (!selectedGrade) {
+      console.log('VALIDATION: No grade selected for student filtering');
+      return [];
+    }
+    
+    // VALIDATION: Filter students with safety check for grade.students
+    const gradeStudents = students.filter(student => {
+      // Validate student structure and grade assignment
+      if (!student || !student.id) {
+        console.warn('VALIDATION: Invalid student structure:', student);
+        return false;
+      }
+      
+      return selectedGrade.students?.some(s => {
+        // Validate grade student structure
+        if (!s || !s.id) {
+          console.warn('VALIDATION: Invalid grade student structure:', s);
+          return false;
+        }
+        return s.id === student.id;
+      });
+    });
+    
+    console.log('VALIDATION: Found', gradeStudents.length, 'students for grade', selectedGrade.grade, '-', selectedGrade.grade_part);
+    return gradeStudents;
   };
 
   const handleSubmitAttendance = async () => {
@@ -238,19 +294,48 @@ const AttendanceManagement: React.FC = () => {
     console.log('Date:', selectedDate);
     console.log('Attendance data to save:', attendanceData);
 
+    // VALIDATION: Ensure grade is selected before submission
     if (!selectedGrade) {
+      console.error('VALIDATION: No grade selected for attendance submission');
       showToast('No grade selected', 'error');
       return;
     }
 
+    // VALIDATION: Check if any attendance data exists
+    if (Object.keys(attendanceData).length === 0) {
+      console.warn('VALIDATION: No attendance data to submit');
+      showToast('No attendance data marked. Please mark attendance before submitting.', 'warning');
+      return;
+    }
+
     try {
-      // Prepare attendance records for bulk marking (exclude not-marked entries)
+      // VALIDATION: Prepare attendance records for bulk marking with safety checks
       const attendanceRecords = Object.entries(attendanceData)
-        .filter(([, status]) => status !== 'not-marked')
+        .filter(([, status]) => {
+          // Validate status and exclude not-marked entries
+          const validStatuses = ['present', 'absent', 'late'];
+          const isValid = validStatuses.includes(status);
+          if (!isValid) {
+            console.warn('VALIDATION: Invalid attendance status:', status);
+          }
+          return status !== 'not-marked' && isValid;
+        })
         .map(([studentId, status]) => {
-          const student = getGradeStudents().find(s => s.id === parseInt(studentId));
+          // VALIDATION: Parse and validate student ID
+          const parsedStudentId = parseInt(studentId);
+          if (isNaN(parsedStudentId)) {
+            console.error('VALIDATION: Invalid student ID:', studentId);
+            return null;
+          }
+          
+          const student = getGradeStudents().find(s => s.id === parsedStudentId);
+          if (!student) {
+            console.warn('VALIDATION: Student not found in grade list:', parsedStudentId);
+            return null;
+          }
+          
           return {
-            student_id: parseInt(studentId),
+            student_id: parsedStudentId,
             student_name: student ? `${student.first_name} ${student.last_name}` : 'Unknown Student',
             grade: selectedGrade.grade,
             section: selectedGrade.grade_part,
@@ -258,7 +343,8 @@ const AttendanceManagement: React.FC = () => {
             marked_date: selectedDate,
             marked_by: 'System'
           };
-        });
+        })
+        .filter((record): record is NonNullable<typeof record> => record !== null); // Remove null records from validation failures
 
       console.log('Sending attendance records:', attendanceRecords);
 
@@ -297,7 +383,19 @@ const AttendanceManagement: React.FC = () => {
 
 
   const downloadSingleDatePDF = async (date: string) => {
-    if (!selectedGrade) return;
+    // VALIDATION: Ensure grade is selected before PDF generation
+    if (!selectedGrade) {
+      console.error('VALIDATION: No grade selected for PDF generation');
+      showToast('Please select a grade before generating PDF', 'error');
+      return;
+    }
+    
+    // VALIDATION: Validate date format
+    if (!date || typeof date !== 'string') {
+      console.error('VALIDATION: Invalid date provided for PDF:', date);
+      showToast('Invalid date selected for PDF generation', 'error');
+      return;
+    }
 
     try {
       // Get attendance data for the specific date
@@ -469,8 +567,10 @@ const AttendanceManagement: React.FC = () => {
   };
 
   const downloadCompleteAttendancePDF = async () => {
+    // VALIDATION: Ensure grade is selected before complete PDF generation
     if (!selectedGrade) {
-      console.log('downloadCompleteAttendancePDF: No selectedGrade, returning.');
+      console.error('VALIDATION: No grade selected for complete PDF generation');
+      showToast('Please select a grade before generating complete attendance report', 'error');
       return;
     }
 
@@ -494,7 +594,9 @@ const AttendanceManagement: React.FC = () => {
         .sort((a, b) => new Date(a).getTime() - new Date(b).getTime()); // Sort by date ascending
       console.log('downloadCompleteAttendancePDF: attendanceDates', attendanceDates);
 
+      // VALIDATION: Check if any attendance data exists for this grade
       if (attendanceDates.length === 0) {
+        console.warn('VALIDATION: No attendance records found for grade:', selectedGrade.grade, '-', selectedGrade.grade_part);
         showToast('No attendance data found for this grade', 'warning');
         return;
       }
@@ -848,12 +950,48 @@ const AttendanceManagement: React.FC = () => {
   };
 
   const downloadLeaveReportPDF = async () => {
+    // VALIDATION: Ensure grade is selected before leave report generation
+    if (!selectedGrade) {
+      console.error('VALIDATION: No grade selected for leave report generation');
+      showToast('Please select a grade before generating leave report', 'error');
+      return;
+    }
+
+    // VALIDATION: Validate selected date before processing
+    if (!selectedDate || typeof selectedDate !== 'string') {
+      console.error('VALIDATION: Invalid selected date for leave report:', selectedDate);
+      showToast('Invalid date selected for leave report', 'error');
+      return;
+    }
+
     const currentMonth = new Date(selectedDate).getMonth();
     const currentYear = new Date(selectedDate).getFullYear();
+    
+    // VALIDATION: Validate date components
+    if (isNaN(currentMonth) || isNaN(currentYear)) {
+      console.error('VALIDATION: Invalid date components extracted:', { currentMonth, currentYear });
+      showToast('Invalid date provided for leave report', 'error');
+      return;
+    }
+    
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const leaveDays: any[] = [];
+    
+    // VALIDATION: Validate days in month calculation
+    if (daysInMonth < 1 || daysInMonth > 31) {
+      console.error('VALIDATION: Invalid days in month calculated:', daysInMonth);
+      return;
+    }
+    
     for (let d = 1; d <= daysInMonth; d++) {
       const leaveDate = new Date(currentYear, currentMonth, d);
+      
+      // VALIDATION: Validate date creation
+      if (isNaN(leaveDate.getTime())) {
+        console.warn('VALIDATION: Failed to create valid date for day:', d);
+        continue;
+      }
+      
       const dateStr = leaveDate.toLocaleDateString('en-CA');
       if (checkIsLeaveDay(dateStr)) {
         const day = leaveDate.getDay();
@@ -866,7 +1004,9 @@ const AttendanceManagement: React.FC = () => {
       }
     }
 
+    // VALIDATION: Check if any leave days were found
     if (leaveDays.length === 0) {
+      console.warn('VALIDATION: No leave days found for month:', currentMonth + 1, currentYear);
       showToast('No school leave days found for this month', 'warning');
       return;
     }

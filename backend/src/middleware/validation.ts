@@ -120,7 +120,7 @@ export const validateStudentRegistration = (req: Request, res: Response, next: N
 
   // Required fields check
   const requiredFields = ['first_name', 'last_name', 'date_of_birth', 'gender', 'religion', 'ethnicity', 'address', 'nationality', 'parent_type', 'parent_name', 'parent_phone', 'parent_address', 'parent_gender'];
-  
+
   for (const field of requiredFields) {
     if (!student[field as keyof Student] || (typeof student[field as keyof Student] === 'string' && String(student[field as keyof Student]).trim() === '')) {
       errors.push({

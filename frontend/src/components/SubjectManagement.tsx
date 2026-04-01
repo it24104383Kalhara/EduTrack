@@ -58,6 +58,7 @@ const SubjectManagement: React.FC = () => {
 
   const { user } = useAuth();
 
+  // VALIDATION: Authorization check - only admin users can access subject management
   if (user?.role !== 'admin') {
     return (
       <div style={{ padding: '48px 24px', display: 'flex', justifyContent: 'center' }}>
@@ -83,9 +84,17 @@ const SubjectManagement: React.FC = () => {
   const fetchSubjects = async () => {
     try {
       setLoading(true);
+      // VALIDATION: Fetch all subjects from API
       const subjectsData = await subjectApi.getAll();
+      // VALIDATION: Ensure subjects data is valid array
+      if (!Array.isArray(subjectsData)) {
+        console.error('VALIDATION: Invalid subjects data received:', subjectsData);
+        showToast('Invalid subjects data received', 'error');
+        return;
+      }
       setSubjects(subjectsData);
     } catch (error) {
+      // VALIDATION: Log fetch error with details
       console.error('Failed to fetch subjects:', error);
       showToast('Failed to load subjects. Please try again.', 'error');
     } finally {
@@ -112,10 +121,38 @@ const SubjectManagement: React.FC = () => {
   };
 
   const handleAddSubject = async () => {
+    // VALIDATION: Check required fields for subject creation
     if (!formData.name || !formData.code || formData.grades.length === 0) {
+      console.warn('VALIDATION: Missing required fields:', { 
+        name: !!formData.name, 
+        code: !!formData.code, 
+        gradesCount: formData.grades.length 
+      });
       showToast('Please fill in Name, Code and select at least one Grade.', 'warning');
       return;
     }
+    
+    // VALIDATION: Check subject name length
+    if (formData.name.trim().length < 2) {
+      console.warn('VALIDATION: Subject name too short:', formData.name);
+      showToast('Subject name must be at least 2 characters long', 'error');
+      return;
+    }
+    
+    // VALIDATION: Check subject code format
+    if (formData.code.trim().length < 2) {
+      console.warn('VALIDATION: Subject code too short:', formData.code);
+      showToast('Subject code must be at least 2 characters long', 'error');
+      return;
+    }
+    
+    // VALIDATION: For A/L subjects, check if streams are selected
+    if (activeFormTab === '12-13' && formData.streams.length === 0) {
+      console.warn('VALIDATION: A/L subject missing streams');
+      showToast('Please select at least one stream for A/L subjects', 'warning');
+      return;
+    }
+    
     try {
       setLoading(true);
       const payload = {
@@ -131,6 +168,13 @@ const SubjectManagement: React.FC = () => {
       console.log('📤 [SUBJECT_CREATE_FRONTEND]: Sending payload', payload);
       
       const newSub = await subjectApi.create(payload);
+      // VALIDATION: Ensure new subject was created successfully
+      if (!newSub || !newSub.id) {
+        console.error('VALIDATION: Invalid subject created:', newSub);
+        showToast('Failed to create subject - invalid response', 'error');
+        return;
+      }
+      
       setSubjects(prev => [...prev, newSub]);
       setFormData({ name: '', code: '', grades: [], streams: [], category: '', is_optional: false });
       showToast('Subject created successfully!', 'success');
@@ -143,15 +187,38 @@ const SubjectManagement: React.FC = () => {
   };
 
   const deleteSubject = async (id: number) => {
-    const subject = subjects.find(s => s.id === id);
-    if (subject) {
-      setSubjectToDelete(subject);
-      setShowDeleteConfirm(true);
+    // VALIDATION: Check if subject ID is valid
+    if (!id || typeof id !== 'number') {
+      console.error('VALIDATION: Invalid subject ID for deletion:', id);
+      showToast('Invalid subject selected for deletion', 'error');
+      return;
     }
+    
+    const subject = subjects.find(s => s.id === id);
+    // VALIDATION: Check if subject exists
+    if (!subject) {
+      console.error('VALIDATION: Subject not found for deletion:', id);
+      showToast('Subject not found', 'error');
+      return;
+    }
+    
+    setSubjectToDelete(subject);
+    setShowDeleteConfirm(true);
   };
 
   const confirmDeleteSubject = async () => {
-    if (!subjectToDelete) return;
+    // VALIDATION: Check if subject is selected for deletion
+    if (!subjectToDelete) {
+      console.error('VALIDATION: No subject selected for deletion');
+      showToast('No subject selected for deletion', 'error');
+      return;
+    }
+    
+    // VALIDATION: Check if deletion is already in progress
+    if (isDeleting) {
+      console.warn('VALIDATION: Subject deletion already in progress');
+      return;
+    }
     
     try {
       setIsDeleting(true);
@@ -161,6 +228,7 @@ const SubjectManagement: React.FC = () => {
       setShowDeleteConfirm(false);
       setSubjectToDelete(null);
     } catch (error) {
+      // VALIDATION: Log deletion error with details
       console.error('Failed to delete subject:', error);
       showToast('Failed to delete subject. Please try again.', 'error');
     } finally {
@@ -174,67 +242,155 @@ const SubjectManagement: React.FC = () => {
   };
 
   const editSubject = (id: number) => {
-    const subject = subjects.find(s => s.id === id);
-    if (subject) {
-      let parsedGrades: string[] = [];
-      if (Array.isArray(subject.grades)) {
-        parsedGrades = subject.grades.flatMap(g => {
-          if (typeof g === 'string' && g.startsWith('[')) {
-            try { return JSON.parse(g); } catch { return g; }
-          }
-          return g;
-        });
-      } else if (typeof subject.grades === 'string' && (subject.grades as string).startsWith('[')) {
-        try { parsedGrades = JSON.parse(subject.grades as string); } catch { parsedGrades = [subject.grades as string]; }
-      } else {
-        parsedGrades = [subject.grades as string];
-      }
-
-      let parsedStreams: string[] = [];
-      if (subject.stream) {
-        if (Array.isArray(subject.stream)) {
-          parsedStreams = subject.stream.flatMap(s => {
-            if (typeof s === 'string' && s.startsWith('[')) {
-              try { return JSON.parse(s); } catch { return s; }
-            }
-            return s;
-          });
-        } else if (typeof subject.stream === 'string' && (subject.stream as string).startsWith('[')) {
-          try { parsedStreams = JSON.parse(subject.stream as string); } catch { parsedStreams = [subject.stream as string]; }
-        } else {
-          parsedStreams = [subject.stream as string];
-        }
-      }
-
-      setEditForm({
-        name: subject.name,
-        code: subject.code,
-        grades: parsedGrades,
-        streams: parsedStreams,
-        type: subject.type,
-        category: subject.category || '',
-        is_optional: !!subject.is_optional
-      });
-      setEditingId(id);
+    // VALIDATION: Check if subject ID is valid
+    if (!id || typeof id !== 'number') {
+      console.error('VALIDATION: Invalid subject ID for editing:', id);
+      showToast('Invalid subject selected for editing', 'error');
+      return;
     }
+    
+    const subject = subjects.find(s => s.id === id);
+    // VALIDATION: Check if subject exists
+    if (!subject) {
+      console.error('VALIDATION: Subject not found for editing:', id);
+      showToast('Subject not found', 'error');
+      return;
+    }
+    
+    // VALIDATION: Parse grades data with error handling
+    let parsedGrades: string[] = [];
+    if (Array.isArray(subject.grades)) {
+      parsedGrades = subject.grades.flatMap(g => {
+        if (typeof g === 'string' && g.startsWith('[')) {
+          try { return JSON.parse(g); } catch { 
+            console.warn('VALIDATION: Failed to parse grade JSON:', g);
+            return g; 
+          }
+        }
+        return g;
+      });
+    } else if (typeof subject.grades === 'string' && (subject.grades as string).startsWith('[')) {
+      try { parsedGrades = JSON.parse(subject.grades as string); } catch { 
+        console.warn('VALIDATION: Failed to parse grades string:', subject.grades);
+        parsedGrades = [subject.grades as string]; 
+      }
+    } else {
+      parsedGrades = [subject.grades as string];
+    }
+
+    // VALIDATION: Parse streams data with error handling
+    let parsedStreams: string[] = [];
+    if (subject.stream) {
+      if (Array.isArray(subject.stream)) {
+        parsedStreams = subject.stream.flatMap(s => {
+          if (typeof s === 'string' && s.startsWith('[')) {
+            try { return JSON.parse(s); } catch { 
+              console.warn('VALIDATION: Failed to parse stream JSON:', s);
+              return s; 
+            }
+          }
+          return s;
+        });
+      } else if (typeof subject.stream === 'string' && (subject.stream as string).startsWith('[')) {
+        try { parsedStreams = JSON.parse(subject.stream as string); } catch { 
+          console.warn('VALIDATION: Failed to parse streams string:', subject.stream);
+          parsedStreams = [subject.stream as string]; 
+        }
+      } else {
+        parsedStreams = [subject.stream as string];
+      }
+    }
+
+    // VALIDATION: Ensure parsed data is valid arrays
+    if (!Array.isArray(parsedGrades)) {
+      console.warn('VALIDATION: Invalid parsed grades, using empty array');
+      parsedGrades = [];
+    }
+    
+    if (!Array.isArray(parsedStreams)) {
+      console.warn('VALIDATION: Invalid parsed streams, using empty array');
+      parsedStreams = [];
+    }
+
+    setEditForm({
+      name: subject.name,
+      code: subject.code,
+      grades: parsedGrades,
+      streams: parsedStreams,
+      type: subject.type,
+      category: subject.category || '',
+      is_optional: !!subject.is_optional
+    });
+    setEditingId(id);
   };
 
   const saveEdit = async () => {
-    if (!editingId) return;
+    // VALIDATION: Check if editing ID is valid
+    if (!editingId || typeof editingId !== 'number') {
+      console.error('VALIDATION: Invalid editing ID:', editingId);
+      showToast('Invalid subject selected for editing', 'error');
+      return;
+    }
+    
+    // VALIDATION: Check if edit form data is valid
+    if (!editForm.name || !editForm.code || editForm.grades.length === 0) {
+      console.warn('VALIDATION: Missing required fields in edit form:', { 
+        name: !!editForm.name, 
+        code: !!editForm.code, 
+        gradesCount: editForm.grades.length 
+      });
+      showToast('Please fill in Name, Code and select at least one Grade.', 'warning');
+      return;
+    }
+    
+    // VALIDATION: Check subject name length
+    if (editForm.name.trim().length < 2) {
+      console.warn('VALIDATION: Subject name too short in edit:', editForm.name);
+      showToast('Subject name must be at least 2 characters long', 'error');
+      return;
+    }
+    
+    // VALIDATION: Check subject code format
+    if (editForm.code.trim().length < 2) {
+      console.warn('VALIDATION: Subject code too short in edit:', editForm.code);
+      showToast('Subject code must be at least 2 characters long', 'error');
+      return;
+    }
+    
+    // VALIDATION: For A/L subjects, check if streams are selected
+    if (editForm.type === '12-13' && editForm.streams.length === 0) {
+      console.warn('VALIDATION: A/L subject missing streams in edit');
+      showToast('Please select at least one stream for A/L subjects', 'warning');
+      return;
+    }
+    
     try {
-      const updatedSubject = await subjectApi.update(editingId, {
-        name: editForm.name,
-        code: editForm.code,
+      const payload = {
+        name: editForm.name.trim(),
+        code: editForm.code.trim(),
         grades: editForm.grades,
         stream: editForm.type === '12-13' ? editForm.streams : undefined,
         type: editForm.type,
         category: editForm.category || undefined,
         is_optional: editForm.is_optional
-      });
+      };
+      
+      console.log('📤 [SUBJECT_UPDATE_FRONTEND]: Sending payload', payload);
+      
+      const updatedSubject = await subjectApi.update(editingId, payload);
+      
+      // VALIDATION: Ensure subject was updated successfully
+      if (!updatedSubject || !updatedSubject.id) {
+        console.error('VALIDATION: Invalid subject updated:', updatedSubject);
+        showToast('Failed to update subject - invalid response', 'error');
+        return;
+      }
+      
       setSubjects(prev => prev.map(s => s.id === editingId ? updatedSubject : s));
       setEditingId(null);
       showToast('Subject updated successfully!', 'success');
     } catch (error: any) {
+      console.error('🔴 [SUBJECT_UPDATE_FRONTEND_ERROR]:', error);
       showToast(error.message || 'Failed to update subject.', 'error');
     }
   };

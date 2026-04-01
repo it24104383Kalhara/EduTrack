@@ -48,9 +48,9 @@ router.post('/register', async (req: Request, res: Response) => {
 
     // Send email to teacher
     if (role === 'teacher') {
-        emailService.sendTeacherRegistrationWaitEmail(email, username).catch((err: any) => {
-            console.error('Error sending registration wait email:', err);
-        });
+      emailService.sendTeacherRegistrationWaitEmail(email, username).catch((err: any) => {
+        console.error('Error sending registration wait email:', err);
+      });
     }
 
     res.status(201).json({
@@ -168,7 +168,7 @@ router.get('/me', async (req: any, res: Response) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as any;
     const user = await UserModel.findById(decoded.id);
-    
+
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
