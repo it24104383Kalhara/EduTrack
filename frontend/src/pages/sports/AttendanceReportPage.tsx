@@ -32,8 +32,20 @@ export default function AttendanceReportPage() {
     const [reportDate, setReportDate] = useState(today);
     const [notes, setNotes] = useState('');
     const [submitted, setSubmitted] = useState(false);
+    const [dateError, setDateError] = useState<string | null>(null);
     const [selectedReport, setSelectedReport] = useState<any | null>(null);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+    const handleDateChange = (v: string) => {
+        setReportDate(v);
+        setSubmitted(false);
+        // Simple string comparison works for YYYY-MM-DD
+        if (v > today) {
+            setDateError('Future dates are not allowed for attendance reports.');
+        } else {
+            setDateError(null);
+        }
+    };
 
     const { data: activities } = useQuery({
         queryKey: ['activities'],
@@ -70,6 +82,7 @@ export default function AttendanceReportPage() {
     const handleGenerate = (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedActivityId) { alert('Please select an activity'); return; }
+        if (dateError) return;
         setShowConfirmModal(true);
     };
 
@@ -132,8 +145,14 @@ export default function AttendanceReportPage() {
                                 mode="date"
                                 required
                                 value={reportDate}
-                                onChange={v => { setReportDate(v); setSubmitted(false); }}
+                                onChange={handleDateChange}
                             />
+                            {dateError && (
+                                <p className="text-[11px] text-red-500 font-bold mt-2 flex items-center gap-1 animate-pulse">
+                                    <XMarkIcon className="h-3.5 w-3.5" />
+                                    {dateError}
+                                </p>
+                            )}
                         </div>
 
                         {/* Notes */}
@@ -163,7 +182,7 @@ export default function AttendanceReportPage() {
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            disabled={generateMutation.isPending || !selectedActivityId}
+                            disabled={generateMutation.isPending || !selectedActivityId || !!dateError}
                             className={clsx(
                                 'w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all shadow-md disabled:opacity-50',
                                 submitted
