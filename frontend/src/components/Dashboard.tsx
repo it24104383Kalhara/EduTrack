@@ -208,10 +208,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div style={{ padding: '16px 20px', background: '#F8F7FF', minHeight: '100%', fontFamily: 'Inter, sans-serif', boxSizing: 'border-box' }}>
+    <div style={{ padding: '12px 20px', background: '#F8F7FF', height: '100vh', overflow: 'hidden', fontFamily: 'Inter, sans-serif', boxSizing: 'border-box' }}>
 
       {/* ── Header ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 900, color: '#1e1b4b', letterSpacing: '-0.3px' }}>
             {user?.role === 'teacher' 
@@ -233,7 +233,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* ── Holiday Banner ── */}
       {isTodayHoliday && (
-        <div style={{ background: 'linear-gradient(135deg, #633194, #4B2380)', color: '#fff', borderRadius: '10px', padding: '10px 16px', marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ background: 'linear-gradient(135deg, #633194, #4B2380)', color: '#fff', borderRadius: '10px', padding: '8px 16px', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Calendar size={16} />
             <div>
@@ -246,7 +246,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       )}
 
       {/* ── Stat Cards Row ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '14px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '12px' }}>
         {[
           { label: 'Enrolled Students', value: studentCount, icon: Users, iconColor: '#4F90E6', iconBg: '#EFF6FF' },
           { label: 'Active Grades', value: gradeCount, icon: GraduationCap, iconColor: '#9333ea', iconBg: '#F3E8FF' },
@@ -281,10 +281,10 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div style={{ display: 'flex', gap: '12px' }}>
 
             {/* Gender Breakdown */}
-            <div style={{ ...card, width: '38%', flexShrink: 0, minHeight: '230px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ ...card, width: '36%', flexShrink: 0, minHeight: '210px', display: 'flex', flexDirection: 'column' }}>
               <h3 style={{ margin: '0 0 10px', fontSize: '10px', fontWeight: 800, color: '#4B2380', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' }}>Gender Breakdown</h3>
               <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ width: '160px', height: '160px', position: 'relative' }}>
+                <div style={{ width: '150px', height: '150px', position: 'relative' }}>
                   <Doughnut
                     data={genderChartData}
                     options={{ ...commonScaleOptions, cutout: '72%', scales: undefined } as any}
@@ -307,7 +307,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             {/* Avg Score by Grade */}
-            <div style={{ ...card, flex: 1, minHeight: '230px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ ...card, flex: 1, minHeight: '210px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                 <h3 style={{ margin: 0, fontSize: '10px', fontWeight: 800, color: '#4B2380', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Avg. Score by Grade</h3>
                 <TrendingUp size={12} color="#8B5CF6" />
@@ -319,7 +319,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* Weekly Attendance Trends */}
-          <div style={{ ...card, minHeight: '220px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ ...card, minHeight: '190px', display: 'flex', flexDirection: 'column' }}>
             <h3 style={{ margin: '0 0 10px', fontSize: '10px', fontWeight: 800, color: '#4B2380', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Weekly Attendance Trends</h3>
             <div style={{ flex: 1 }}>
               <Line data={attendanceChartData} options={commonScaleOptions as any} />
@@ -331,9 +331,9 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div style={{ width: '280px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
           {/* Leave Summary Card */}
-          <div style={{ ...card, padding: '14px' }}>
+          <div style={{ ...card, padding: '12px' }}>
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Calendar size={13} color="#8B5CF6" />
                 <span style={{ fontSize: '10px', fontWeight: 800, color: '#4B2380', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Leave Summary</span>
@@ -364,7 +364,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: '12px',
+              marginBottom: '10px',
               boxShadow: '0 4px 16px rgba(99,49,148,0.25)',
             }}>
               <span style={{ fontSize: '13px', fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
@@ -381,7 +381,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Recent System Updates */}
             <div>
               <h4 style={{ margin: '0 0 8px', fontSize: '9px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.09em' }}>Recent System Updates</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '260px', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '200px', overflowY: 'auto' }}>
                 {recentActivity.length === 0 ? (
                   <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>No recent activity.</p>
                 ) : recentActivity.map((activity, idx) => (

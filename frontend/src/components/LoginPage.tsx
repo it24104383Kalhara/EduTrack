@@ -150,6 +150,8 @@ const LoginPage: React.FC = () => {
     <div style={{
       display: 'flex',
       minHeight: '100vh',
+      height: '100vh',
+      overflow: 'hidden',
       fontFamily: 'Inter, sans-serif',
       flexDirection: 'row'
     }}>
@@ -171,7 +173,7 @@ const LoginPage: React.FC = () => {
       <div className="login-left-panel" style={{
         flex: 1,
         background: 'linear-gradient(135deg, #7A43B6 0%, #5E2A8C 100%)',
-        padding: '48px',
+        padding: '32px 48px',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -191,7 +193,7 @@ const LoginPage: React.FC = () => {
         }}></div>
 
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '120px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '80px' }}>
             <div style={{
               width: '40px',
               height: '40px',
@@ -217,7 +219,7 @@ const LoginPage: React.FC = () => {
             </div>
           </div>
 
-          <h1 style={{ fontSize: '42px', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.2, marginBottom: '24px' }}>
+          <h1 style={{ fontSize: '36px', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.1, marginBottom: '16px' }}>
             Manage your school<br />with confidence.
           </h1>
           <p style={{ fontSize: '15px', lineHeight: 1.6, opacity: 0.9, maxWidth: '420px', marginBottom: '32px' }}>
@@ -241,12 +243,6 @@ const LoginPage: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ position: 'relative', zIndex: 1, marginTop: 'auto', paddingTop: '64px' }}>
-          <p style={{ fontStyle: 'italic', opacity: 0.8, fontSize: '13px', marginBottom: '8px', maxWidth: '420px', lineHeight: 1.5 }}>
-            "Education is the most powerful weapon which you can use to change the world."
-          </p>
-          <p style={{ fontSize: '12px', opacity: 0.6, fontWeight: 500 }}>— Nelson Mandela</p>
-        </div>
       </div>
 
       {/* Right Panel - Form */}
@@ -261,7 +257,7 @@ const LoginPage: React.FC = () => {
       }}>
         <div style={{ width: '100%', maxWidth: '380px' }}>
           <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#1F2937', marginBottom: '8px' }}>EduTrack Portal</h1>
-          <p style={{ color: '#6B7280', fontSize: '14px', marginBottom: '32px' }}>
+          <p style={{ color: '#6B7280', fontSize: '13px', marginBottom: '24px' }}>
             {isForgotPassword ? 'Reset your password' : isRegister ? 'Register for a new teacher account' : 'Sign in to access the dashboard'}
           </p>
 
@@ -515,7 +511,7 @@ const LoginPage: React.FC = () => {
             )}
 
             {!isRegister && !isForgotPassword && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px', marginTop: '-12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px', marginTop: '-12px' }}>
                 <button
                   type="button"
                   onClick={() => {
@@ -574,7 +570,7 @@ const LoginPage: React.FC = () => {
               ) : (isForgotPassword ? 'Change Password' : isRegister ? 'Create Account' : 'Sign In')}
             </button>
 
-            <div style={{ marginTop: '24px', textAlign: 'center' }}>
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
               <button
                 type="button"
                 onClick={() => {

@@ -34,7 +34,7 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
   } catch (error) {
     return res.status(403).json({
       success: false,
-      message: 'Invalid or expired token.',
+      message: 'Time Out ,Again Login.',
       error: 'Forbidden'
     });
   }
