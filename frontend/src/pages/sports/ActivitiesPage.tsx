@@ -38,6 +38,7 @@ export default function ActivitiesPage() {
     const [search, setSearch] = useState('');
     const [typeFilter, setTypeFilter] = useState<string>('All');
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [duplicateError, setDuplicateError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         name: '',
         type: 'Sport',
@@ -54,9 +55,8 @@ export default function ActivitiesPage() {
         mutationFn: activityService.create,
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['activities'] });
-            setIsModalOpen(false);
+            closeModal();
             setSuccessMessage((data as any).name);
-            setFormData({ name: '', type: 'Sport', description: '', in_charge_staff_id: user?.id || 1 });
             setTimeout(() => setSuccessMessage(null), 3000);
         },
     });
@@ -73,6 +73,18 @@ export default function ActivitiesPage() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        
+        const isDuplicate = activities?.some(a => 
+            a.name.toLowerCase().trim() === formData.name.toLowerCase().trim() && 
+            a.type === formData.type
+        );
+
+        if (isDuplicate) {
+            setDuplicateError(`An activity named "${formData.name}" already exists as a ${formData.type}.`);
+            return;
+        }
+
+        setDuplicateError(null);
         createMutation.mutate(formData as any);
     };
 
@@ -82,6 +94,17 @@ export default function ActivitiesPage() {
                 onSuccess: () => setDeleteModal({ isOpen: false, id: null, name: '' }),
             });
         }
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setDuplicateError(null);
+        setFormData({
+            name: '',
+            type: 'Sport',
+            description: '',
+            in_charge_staff_id: user?.id || 1,
+        });
     };
 
     const filtered = (activities ?? []).filter(a => {
@@ -261,7 +284,7 @@ export default function ActivitiesPage() {
                                 <h2 className="text-base font-bold text-white">Create New Activity</h2>
                             </div>
                             <button
-                                onClick={() => setIsModalOpen(false)}
+                                onClick={closeModal}
                                 className="p-1 rounded-lg text-white/70 hover:text-white hover:bg-white/20 transition-all"
                             >
                                 <XMarkIcon className="h-5 w-5" />
@@ -278,7 +301,7 @@ export default function ActivitiesPage() {
                                     required
                                     className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 transition-all bg-gray-50 focus:bg-white"
                                     value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    onChange={e => { setFormData({ ...formData, name: e.target.value }); setDuplicateError(null); }}
                                     placeholder="e.g. Football Team"
                                 />
                             </div>
@@ -294,7 +317,7 @@ export default function ActivitiesPage() {
                                             <button
                                                 key={t}
                                                 type="button"
-                                                onClick={() => setFormData({ ...formData, type: t })}
+                                                onClick={() => { setFormData({ ...formData, type: t }); setDuplicateError(null); }}
                                                 className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold border transition-all ${formData.type === t
                                                         ? `${tc.badgeBg} ${tc.badgeText} ${tc.border} shadow-sm`
                                                         : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300'
@@ -321,10 +344,17 @@ export default function ActivitiesPage() {
                                 />
                             </div>
 
+                            {duplicateError && (
+                                <div className="bg-red-50 border border-red-100 rounded-xl p-3 flex items-start gap-2.5 animate-pulse">
+                                    <XMarkIcon className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                                    <p className="text-xs font-bold text-red-700 leading-normal">{duplicateError}</p>
+                                </div>
+                            )}
+
                             <div className="flex gap-3 pt-2">
                                 <button
                                     type="button"
-                                    onClick={() => setIsModalOpen(false)}
+                                    onClick={closeModal}
                                     className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all"
                                 >
                                     Cancel
