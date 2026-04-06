@@ -1,0 +1,180 @@
+================================================================
+GUIDE 1: SETTING UP FIREBASE FOR EDUTRACK TRANSPORT
+A Step-by-Step Tutorial for Beginners
+================================================================
+
+Written for: Students new to Firebase
+Goal: Set up Firebase Realtime Database and connect it to the EduTrack web app
+
+
+WHAT IS FIREBASE?
+-----------------
+Firebase is a platform made by Google that gives your app a cloud backend
+without writing server code. We use two parts of it:
+
+  1. Realtime Database  — stores GPS location data that updates live
+  2. Cloud Messaging    — sends push notifications to phones (e.g. SOS, delays)
+
+Think of the Realtime Database like a big JSON object stored in the cloud.
+Any app that is "listening" to it will see changes the instant they happen.
+This is what makes the live map work — the driver's phone writes its location
+every few seconds, and the admin web app reads it immediately.
+
+
+STEP 1: CREATE A FIREBASE PROJECT
+-----------------------------------
+1. Go to https://console.firebase.google.com
+2. Click "Add project"
+3. Name it something like "edutrack-transport"
+4. You can turn off Google Analytics for now (it's optional)
+5. Click "Create project" and wait for it to finish
+6. Click "Continue" when done
+
+
+STEP 2: CREATE A WEB APP IN YOUR PROJECT
+-----------------------------------------
+1. In the Firebase console, click the "</>" (Web) icon
+2. Give your app a nickname, e.g. "EduTrack Web"
+3. Do NOT check "Firebase Hosting" for now
+4. Click "Register app"
+5. You will see a screen like this:
+
+   const firebaseConfig = {
+     apiKey: "AIzaSy...",
+     authDomain: "your-project.firebaseapp.com",
+     databaseURL: "https://your-project-default-rtdb.asia-...",
+     projectId: "your-project-id",
+     storageBucket: "your-project.appspot.com",
+     messagingSenderId: "123456789000",
+     appId: "1:123456789000:web:abc123def456"
+   };
+
+6. COPY THESE VALUES — you will need them in Step 4
+
+
+STEP 3: ENABLE REALTIME DATABASE
+----------------------------------
+1. In the left sidebar, click "Build" → "Realtime Database"
+2. Click "Create Database"
+3. Choose the closest region to Sri Lanka: "asia-southeast1 (Singapore)"
+4. Choose "Start in test mode" for now (you can lock it down later)
+5. Click "Enable"
+
+You will now see an empty database that looks like:
+
+   your-project-rtdb : null
+
+That is your live database. It is empty right now.
+
+
+STEP 4: ADD FIREBASE CONFIG TO YOUR WEB APP
+--------------------------------------------
+1. Open the file: frontend/.env  (create it if it does not exist)
+   You can copy from: frontend/.env.example
+
+2. Fill in the values from Step 2:
+
+   VITE_FIREBASE_API_KEY=AIzaSy...
+   VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+   VITE_FIREBASE_DATABASE_URL=https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app
+   VITE_FIREBASE_PROJECT_ID=your-project-id
+   VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=123456789000
+   VITE_FIREBASE_APP_ID=1:123456789000:web:abc123def456
+
+3. IMPORTANT: Never commit your .env file to Git!
+   The .gitignore file already excludes it.
+
+4. Restart the frontend dev server after editing .env:
+   npm run dev
+
+
+STEP 5: UNDERSTAND THE DATABASE STRUCTURE
+-------------------------------------------
+The EduTrack app expectation and sync path is:
+
+   /tracking
+     /WP-AB-1234
+       latitude:  6.9271
+       longitude: 79.8612
+       speed:     35
+       timestamp: 1711515600000
+       driverName: "Suresh P"
+
+Each bus writes its own entry under /tracking/{busPlate}.
+The web admin app listens to ALL entries under /tracking/ and updates markers live.
+
+
+STEP 6: SET DATABASE SECURITY RULES (IMPORTANT)
+-------------------------------------------------
+For production, you must lock down the database. 
+
+In Firebase Console → Realtime Database → Rules, use these rules:
+
+  {
+    "rules": {
+      "tracking": {
+        ".read":  true,
+        ".write": true 
+      },
+      "events": {
+        ".read":  true,
+        ".write": true
+      }
+    }
+  }
+
+NOTE: Since the driver app currently uses mock login, we allow ".write": true.
+Once you implement Firebase Auth, you should change .write to "auth != null".
+
+This means:
+  - Anyone can READ tracking data (so the web map can show it)
+  - Only logged-in apps can WRITE tracking data (so only the driver app can update it)
+  - Messages require login to read or write
+
+
+STEP 7: TEST THE LIVE MAP
+---------------------------
+1. Make sure your .env file has the correct Firebase credentials
+2. Run the frontend: npm run dev (in the frontend folder)
+3. Navigate to Transport → Live Map
+4. If Firebase is connected correctly, the yellow notice bar at the top will disappear
+5. Any data you wrote in Step 5 will appear as map markers
+
+
+TIMING CONSTANTS (how to adjust)
+-----------------------------------
+Open: frontend/src/transport/pages/LiveMap.tsx
+
+  const MAP_UPDATE_INTERVAL_MS = 5000;    // Map refreshes every 5 seconds
+  const DELAY_IDLE_THRESHOLD_MS = 20000;  // Alert fires after 20s idle
+
+Change the numbers (milliseconds) to adjust these timings.
+Example: to update the map every 10 seconds, set MAP_UPDATE_INTERVAL_MS = 10000
+
+
+COMMON ERRORS
+--------------
+Error: "Firebase: Error (auth/invalid-api-key)"
+  → Your VITE_FIREBASE_API_KEY in .env is wrong. Copy it again from the console.
+
+Error: "PERMISSION_DENIED"
+  → Your database rules are blocking access. Go to Firebase → Realtime Database → Rules
+    and temporarily set ".read": true to test.
+
+Error: Map shows "Demo mode — Firebase not connected"
+  → The VITE_FIREBASE_DATABASE_URL is missing or wrong. Check your .env file.
+    The URL format is: https://your-project-default-rtdb.REGION.firebasedatabase.app
+
+
+WHAT'S NEXT?
+-------------
+After setting up Firebase:
+  - The driver mobile app (React Native + Expo) will write GPS data to /tracking/
+  - The web admin dashboard will read it in real-time
+  - Emergency alerts from the driver app (SOS button) will also write to /alerts/
+  - See expo_reactnative_guide.txt for how to build the driver mobile app
+
+================================================================
+END OF FIREBASE GUIDE
+================================================================

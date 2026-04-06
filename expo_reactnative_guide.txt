@@ -1,0 +1,362 @@
+================================================================
+GUIDE 2: BUILDING THE DRIVER MOBILE APP WITH EXPO GO + REACT NATIVE
+A Step-by-Step Tutorial for Beginners
+================================================================
+
+Written for: Students new to mobile development
+Goal: Create the EduTrack driver app using React Native and Expo Go
+Note: Build the web app first. Do NOT start this until the web app is approved.
+
+
+WHAT IS REACT NATIVE?
+----------------------
+React Native is a framework made by Facebook/Meta that lets you write
+mobile apps (for both Android and iPhone) using JavaScript and React —
+the same language you use for the EduTrack web app.
+
+Instead of using HTML elements like <div> and <p>, you use mobile elements
+like <View> and <Text>. But the logic (useState, fetch, Firebase) works the same.
+
+
+WHAT IS EXPO?
+-------------
+Expo is a set of tools that makes React Native much easier to use.
+Instead of installing Android Studio or Xcode (which take hours),
+you just scan a QR code with your phone using the Expo Go app.
+
+Expo Go = a free app you install on your real phone (Android or iPhone)
+         that runs your React Native code instantly.
+
+
+STEP 1: INSTALL NODE.JS
+-------------------------
+If you do not have Node.js installed:
+1. Go to https://nodejs.org
+2. Download the "LTS" version (e.g. 20.x)
+3. Install it with the default settings
+
+To check: open a terminal and type:
+  node -v
+  npm -v
+
+Both should print version numbers.
+
+
+STEP 2: INSTALL EXPO GO ON YOUR PHONE
+---------------------------------------
+Android: Open Google Play Store → Search "Expo Go" → Install
+iPhone:  Open App Store → Search "Expo Go" → Install
+
+Create a free Expo account at https://expo.dev (you will need this to scan QR codes)
+
+
+STEP 3: CREATE YOUR REACT NATIVE PROJECT
+-----------------------------------------
+Open a terminal on your computer. Navigate to where you want to create the project.
+For example:
+  cd C:\Users\YourName\Projects
+
+Then run:
+  npx create-expo-app@latest DriverApp
+
+This will create a new folder called "DriverApp" with all the necessary files.
+
+Navigate into it:
+  cd DriverApp
+
+Start the development server:
+  npx expo start
+
+You will see a QR code in the terminal. Open Expo Go on your phone and scan it.
+Your app will appear on your phone almost instantly!
+
+
+STEP 4: UNDERSTAND THE FOLDER STRUCTURE
+-----------------------------------------
+DriverApp/
+  app/              ← screens/pages go here
+    index.tsx       ← home screen (shown first)
+  components/       ← reusable UI pieces
+  assets/           ← images, fonts, etc.
+  package.json      ← dependencies list
+
+The app/ folder uses "file-based routing" like Next.js.
+Each file becomes a screen in the app.
+
+
+STEP 5: INSTALL REQUIRED PACKAGES
+------------------------------------
+In your DriverApp folder, run these commands:
+
+  npx expo install expo-location
+  npx expo install expo-notifications
+  npm install firebase
+
+  - expo-location  : reads the phone's GPS coordinates
+  - expo-notifications : sends push notifications to the phone
+  - firebase       : connects to Firebase (same as the web app)
+
+
+STEP 6: SET UP FIREBASE IN THE MOBILE APP
+------------------------------------------
+Create a file: DriverApp/firebaseConfig.ts
+
+  import { initializeApp } from 'firebase/app';
+  import { getDatabase }   from 'firebase/database';
+
+  const firebaseConfig = {
+    apiKey:            "YOUR_API_KEY",
+    authDomain:        "your-project.firebaseapp.com",
+    databaseURL:       "https://your-project-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "your-project-id",
+    storageBucket:     "your-project.appspot.com",
+    messagingSenderId: "000000000000",
+    appId:             "1:000000000000:web:abc123",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  export const db = getDatabase(app);
+
+IMPORTANT: Use the SAME Firebase project as the web app. This way the
+driver app and admin dashboard share the same live data.
+
+
+STEP 7: READ GPS AND WRITE TO FIREBASE
+----------------------------------------
+This is the core feature of the driver app. Create: DriverApp/app/index.tsx
+
+  import { useEffect, useRef, useState } from 'react';
+  import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+  import * as Location from 'expo-location';
+  import { ref, set } from 'firebase/database';
+  import { db } from '../firebaseConfig';
+
+  // ── ADJUSTABLE: How often GPS is sent to Firebase (milliseconds) ──────────
+  const GPS_SEND_INTERVAL_MS = 5000; // 5 seconds — change here to adjust
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const VEHICLE_ID = 'BUS-01'; // Change this for each driver's phone
+
+  export default function HomeScreen() {
+    const [tracking, setTracking] = useState(false);
+    const [coords,   setCoords]   = useState<{ lat: number; lng: number } | null>(null);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    async function startTracking() {
+      // Ask for GPS permission
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission denied', 'Please allow location access.');
+        return;
+      }
+      setTracking(true);
+
+      // Send GPS every GPS_SEND_INTERVAL_MS
+      intervalRef.current = setInterval(async () => {
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+
+        const { latitude, longitude, speed } = location.coords;
+        setCoords({ lat: latitude, lng: longitude });
+
+        // Write to Firebase under /tracking/VEHICLE_ID
+        await set(ref(db, `tracking/${VEHICLE_ID}`), {
+          latitude,
+          longitude,
+          speed:     Math.round((speed || 0) * 3.6), // convert m/s to km/h
+          timestamp: Date.now(),
+          driverName: 'Suresh Perera', // replace with actual logged-in driver name
+          busNumber:  VEHICLE_ID,
+          busPlate:   'WP-AB-1234',    // replace with actual plate
+        });
+      }, GPS_SEND_INTERVAL_MS);
+    }
+
+    function stopTracking() {
+      setTracking(false);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
+
+    useEffect(() => {
+      return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    }, []);
+
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>EduTrack Driver</Text>
+        <Text style={styles.vehicleId}>{VEHICLE_ID}</Text>
+
+        {coords && (
+          <Text style={styles.coords}>
+            Lat: {coords.lat.toFixed(5)} · Lng: {coords.lng.toFixed(5)}
+          </Text>
+        )}
+
+        <TouchableOpacity
+          style={[styles.btn, tracking ? styles.btnStop : styles.btnStart]}
+          onPress={tracking ? stopTracking : startTracking}
+        >
+          <Text style={styles.btnText}>
+            {tracking ? 'Stop Tracking' : 'Start Tracking'}
+          </Text>
+        </TouchableOpacity>
+
+        <Text style={styles.status}>
+          {tracking ? '🟢 Sending GPS every 5s' : '⚫ Not tracking'}
+        </Text>
+      </View>
+    );
+  }
+
+  const styles = StyleSheet.create({
+    container:  { flex:1, alignItems:'center', justifyContent:'center', backgroundColor:'#0f172a', padding:24 },
+    title:      { fontSize:28, fontWeight:'800', color:'white', marginBottom:6 },
+    vehicleId:  { fontSize:16, color:'#93c5fd', marginBottom:24 },
+    coords:     { fontSize:13, color:'#64748b', marginBottom:20 },
+    btn:        { paddingVertical:16, paddingHorizontal:40, borderRadius:12, marginBottom:16 },
+    btnStart:   { backgroundColor:'#1d4ed8' },
+    btnStop:    { backgroundColor:'#dc2626' },
+    btnText:    { fontSize:16, fontWeight:'700', color:'white' },
+    status:     { fontSize:14, color:'#94a3b8' },
+  });
+
+
+STEP 8: ADD THE SOS EMERGENCY BUTTON
+--------------------------------------
+Add an SOS button that writes to Firebase /alerts/:
+
+  async function sendSOS() {
+    await set(ref(db, `alerts/${VEHICLE_ID}_${Date.now()}`), {
+      vehicle_id:  VEHICLE_ID,
+      driver_name: 'Suresh Perera',
+      bus_plate:   'WP-AB-1234',
+      type:        'SOS',
+      message:     'Emergency! Driver needs help.',
+      timestamp:   Date.now(),
+      latitude:    coords?.lat || 0,
+      longitude:   coords?.lng || 0,
+      is_active:   true,
+    });
+    Alert.alert('SOS Sent', 'Emergency alert sent to admin dashboard.');
+  }
+
+  // In your return JSX, add:
+  <TouchableOpacity style={styles.sosBtn} onPress={sendSOS}>
+    <Text style={styles.sosBtnText}>SOS</Text>
+  </TouchableOpacity>
+
+  // Add to styles:
+  sosBtn:    { backgroundColor:'#dc2626', width:80, height:80, borderRadius:40, alignItems:'center', justifyContent:'center' },
+  sosBtnText:{ fontSize:18, fontWeight:'900', color:'white' },
+
+
+STEP 9: TEST ON YOUR PHONE
+----------------------------
+1. Run the app: npx expo start
+2. Scan the QR code with Expo Go
+3. Tap "Start Tracking"
+4. Open the EduTrack admin web app at http://localhost:5173
+5. Navigate to Transport → Live Map
+6. You should see a marker on the map moving as you walk around!
+
+
+STEP 10: THE ROUTES SCREEN (Second screen)
+-------------------------------------------
+From the wireframe, the driver app has a routes screen.
+Create: DriverApp/app/routes.tsx
+
+  import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+  import { useState } from 'react';
+
+  const STOPS = ['Stop A - Colombo 7', 'Stop B - Nugegoda', 'Stop C - Maharagama'];
+
+  export default function RoutesScreen() {
+    const [completed, setCompleted] = useState<number[]>([]);
+
+    const toggle = (i: number) =>
+      setCompleted(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i]);
+
+    return (
+      <ScrollView style={styles.container}>
+        <Text style={styles.title}>Route Stops</Text>
+        {STOPS.map((stop, i) => (
+          <View key={i} style={styles.stop}>
+            <Text style={[styles.stopText, completed.includes(i) && styles.done]}>{stop}</Text>
+            <TouchableOpacity style={styles.checkBtn} onPress={() => toggle(i)}>
+              <Text style={styles.checkText}>{completed.includes(i) ? '✓ Done' : 'Mark'}</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </ScrollView>
+    );
+  }
+
+  const styles = StyleSheet.create({
+    container: { flex:1, backgroundColor:'#0f172a', padding:20 },
+    title:     { fontSize:22, fontWeight:'800', color:'white', marginBottom:20 },
+    stop:      { flexDirection:'row', alignItems:'center', justifyContent:'space-between', backgroundColor:'#1e293b', padding:16, borderRadius:10, marginBottom:10 },
+    stopText:  { fontSize:15, color:'white', flex:1 },
+    done:      { textDecorationLine:'line-through', color:'#64748b' },
+    checkBtn:  { backgroundColor:'#1d4ed8', paddingHorizontal:14, paddingVertical:8, borderRadius:8 },
+    checkText: { color:'white', fontWeight:'600', fontSize:13 },
+  });
+
+
+COMMON ERRORS
+--------------
+Error: "Location permission not granted"
+  → You must tap "Allow" when the app asks for location permission.
+    On Android, go to Settings → Apps → DriverApp → Permissions → Location → Allow.
+
+Error: "Network request failed" (Firebase)
+  → Your phone and computer must be on the SAME Wi-Fi network.
+    Also check your firebaseConfig.ts has correct values.
+
+Error: "Cannot read property of undefined" on coords
+  → GPS has not loaded yet. Add a null check: if (!coords) return;
+
+Error: QR code scan not working
+  → Make sure Expo Go is installed. Try pressing "s" in the terminal to switch to
+    "Expo Go" mode instead of development build mode.
+
+
+SUMMARY: THE FLOW
+------------------
+Driver opens app → Taps "Start Tracking"
+  ↓
+App reads GPS position every 5 seconds (GPS_SEND_INTERVAL_MS)
+  ↓
+App writes to Firebase: /tracking/BUS-01 → { lat, lng, speed, timestamp }
+  ↓
+Admin web app reads /tracking/ in real-time from Firebase
+  ↓
+Map markers update every 5 seconds (MAP_UPDATE_INTERVAL_MS in LiveMap.tsx)
+  ↓
+If a bus stays in the same spot for 20 seconds → Admin gets a delay alert
+  (DELAY_IDLE_THRESHOLD_MS in LiveMap.tsx)
+
+Driver presses SOS → Firebase /alerts/ gets a new entry → Admin web sees it
+
+================================================================
+NEXT STEPS BEFORE MOBILE APP CODING
+================================================================
+Before writing the full mobile app, show the completed web app to the project
+supervisor. The following changes should be discussed:
+
+1. Authentication — drivers should log in with their username/password
+   (stored in MySQL) before the app allows GPS tracking to start.
+
+2. Notification delivery — to send push notifications TO the driver's phone
+   (not just from it), you need Expo Push Tokens. This requires a backend
+   endpoint that stores each driver's token when they log in.
+
+3. Background tracking — by default, Expo stops the GPS when the app is closed.
+   You need expo-task-manager + expo-background-fetch for GPS in background.
+
+4. Build for production — when ready to distribute the app to drivers:
+   npx expo build:android (generates an APK file for Android)
+
+================================================================
+END OF EXPO GO + REACT NATIVE GUIDE
+================================================================
