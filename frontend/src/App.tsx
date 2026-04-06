@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Student Progress Components
 import StudentList from './components/StudentList';
 import StudentRegistrationForm from './components/StudentRegistrationForm';
 import GradeManagement from './components/GradeManagement';
@@ -15,8 +19,23 @@ import { gradeApi, studentApi, subjectApi, marksApi, attendanceApi, dashboardApi
 import type { RecentActivity } from './services/api';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
-import LoginPage from './components/LoginPage';
+import StudentLoginPage from './components/LoginPage';
 import './App.css';
+
+// Sport Management Components
+import LandingPage from "./pages/LandingPage";
+import SportsLoginPage from "./pages/auth/LoginPage";
+import DashboardLayout from "./components/layout/DashboardLayout";
+import ActivitiesPage from "./pages/sports/ActivitiesPage";
+import ActivityMembersPage from "./pages/sports/ActivityMembersPage";
+import AttendancePage from "./pages/sports/AttendancePage";
+import AttendanceReportPage from "./pages/sports/AttendanceReportPage";
+import PrincipalDashboard from "./pages/sports/PrincipalDashboard";
+import TeacherNotificationsPage from "./pages/sports/TeacherNotificationsPage";
+import InventoryPage from "./pages/sports/InventoryPage";
+import AchievementsPage from "./pages/sports/AchievementsPage";
+import DashBoardPage from "./pages/DashBoardPage";
+import { ProtectedRoute } from "./utils/auth";
 
 // Extend Window interface for global refresh function
 declare global {
@@ -25,8 +44,15 @@ declare global {
   }
 }
 
-function MainApp() {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'register' | 'list' | 'grades' | 'subjects' | 'marks' | 'attendance' | 'email-alerts' | 'results' | 'approvals' | 'teachers'>('dashboard');
+// Student Progress Layout and Routing
+function StudentProgressLayout() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Map route to currentView for Sidebar highlighting
+  const currentPath = location.pathname.split('/').pop() || '';
+  const currentView = ['academic', ''].includes(currentPath) ? 'dashboard' : currentPath;
+
   const [loading, setLoading] = useState(true);
   const [gradeCount, setGradeCount] = useState(0);
   const [studentCount, setStudentCount] = useState(0);
@@ -49,20 +75,18 @@ function MainApp() {
     if (user?.role === 'teacher') {
       const adminOnlyViews = ['register', 'list', 'grades', 'subjects', 'approvals', 'teachers'];
       if (adminOnlyViews.includes(currentView)) {
-        setCurrentView('dashboard');
+        navigate('/academic');
       }
     }
-  }, [user, currentView]);
+  }, [user, currentView, navigate]);
 
   const fetchCounts = async () => {
     try {
       setLoading(true);
 
-      // Fetch grades from backend API
       const gradesData = await gradeApi.getAll();
       setGradeCount(gradesData.length);
 
-      // Fetch students from backend API only (no more localStorage)
       let maleCount = 0;
       let femaleCount = 0;
 
@@ -70,7 +94,6 @@ function MainApp() {
         const backendStudents = await studentApi.getAll();
         setStudentCount(backendStudents.length);
 
-        // Count genders
         backendStudents.forEach(student => {
           if (student.gender?.toLowerCase() === 'male') {
             maleCount++;
@@ -86,7 +109,6 @@ function MainApp() {
         setGenderData({ male: 0, female: 0 });
       }
 
-      // Fetch subjects from backend API
       try {
         const subjectsData = await subjectApi.getAll();
         setSubjectCount(subjectsData.length);
@@ -95,7 +117,6 @@ function MainApp() {
         setSubjectCount(0);
       }
 
-      // Fetch dashboard chart data
       try {
         const perfData = await marksApi.getAllGradesPerformance('First Term');
         setPerformanceData(perfData);
@@ -118,14 +139,6 @@ function MainApp() {
     }
   };
 
-  // Refresh counts when switching views
-  useEffect(() => {
-    if (currentView === 'dashboard' && user) {
-      fetchCounts();
-    }
-  }, [currentView, user]);
-
-  // Global refresh function that child components can call
   window.refreshDashboard = fetchCounts;
 
   if (authLoading) {
@@ -137,49 +150,32 @@ function MainApp() {
   }
 
   if (!user) {
-    return <LoginPage />;
+    return <Navigate to="/login" replace />;
   }
 
   return (
     <div className="App" style={{ minHeight: '100vh', display: 'flex', background: '#F9FAFB', fontFamily: 'Inter, sans-serif' }}>
-      <Sidebar currentView={currentView} onViewChange={setCurrentView} />
+      <Sidebar 
+        currentView={currentView} 
+        onViewChange={(view) => navigate(`/academic${view === 'dashboard' ? '' : `/${view}`}`)} 
+      />
 
       {/* Main Content Area */}
-      <div style={{
-        flex: 1,
-        width: '100%',
-        minWidth: 0,
-        background: '#F8F7FF',
-        display: 'flex',
-        flexDirection: 'column',
-        marginLeft: '260px',
-      }}>
-        {/* Scrollable Content Container */}
-        <div style={{
-          flex: 1,
-          padding: currentView === 'attendance' ? '0' : '16px' // Zero padding for attendance to fill space
-        }}>
-          {currentView === 'dashboard' ? (
-            <Dashboard
-              gradeCount={gradeCount}
-              studentCount={studentCount}
-              subjectCount={subjectCount}
-              genderData={genderData}
-              performanceData={performanceData}
-              attendanceTrends={attendanceTrends}
-              recentActivity={recentActivity}
-              loading={loading}
-            />
-          ) : currentView === 'register' ? <StudentRegistrationForm /> :
-            currentView === 'list' ? <StudentList /> :
-              currentView === 'grades' ? <GradeManagement /> :
-                currentView === 'subjects' ? <SubjectManagement /> :
-                  currentView === 'marks' ? <MarksManagement /> :
-                    currentView === 'attendance' ? <AttendanceManagement /> :
-                      currentView === 'email-alerts' ? <EmailAlertLogs /> :
-                        currentView === 'results' ? <StudentResults /> : 
-                          currentView === 'approvals' ? <AdminApprovals /> : 
-                            currentView === 'teachers' ? <TeacherManagement /> : <StudentList />}
+      <div style={{ flex: 1, width: '100%', minWidth: 0, background: '#F8F7FF', display: 'flex', flexDirection: 'column', marginLeft: '260px' }}>
+        <div style={{ flex: 1, padding: currentView === 'attendance' ? '0' : '16px' }}>
+          <Routes>
+            <Route path="/" element={<Dashboard gradeCount={gradeCount} studentCount={studentCount} subjectCount={subjectCount} genderData={genderData} performanceData={performanceData} attendanceTrends={attendanceTrends} recentActivity={recentActivity} loading={loading} />} />
+            <Route path="register" element={<StudentRegistrationForm />} />
+            <Route path="list" element={<StudentList />} />
+            <Route path="grades" element={<GradeManagement />} />
+            <Route path="subjects" element={<SubjectManagement />} />
+            <Route path="marks" element={<MarksManagement />} />
+            <Route path="attendance" element={<AttendanceManagement />} />
+            <Route path="email-alerts" element={<EmailAlertLogs />} />
+            <Route path="results" element={<StudentResults />} />
+            <Route path="approvals" element={<AdminApprovals />} />
+            <Route path="teachers" element={<TeacherManagement />} />
+          </Routes>
         </div>
       </div>
     </div>
@@ -187,12 +183,40 @@ function MainApp() {
 }
 
 function App() {
+  const [queryClient] = useState(() => new QueryClient());
+
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <MainApp />
-      </ToastProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ToastProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<StudentLoginPage />} />
+              <Route path="/sports/login" element={<SportsLoginPage />} />
+
+              {/* Student Progress (Academic) Routes */}
+              <Route path="/academic/*" element={<StudentProgressLayout />} />
+
+              {/* Sport Management Routes */}
+              <Route path="/sports" element={<Navigate to="/sports/dashboard" replace />} />
+              <Route path="/sports/dashboard" element={<ProtectedRoute><DashboardLayout><DashBoardPage /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/sports/activities" element={<ProtectedRoute><DashboardLayout><ActivitiesPage /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/sports/activities/:id/members" element={<ProtectedRoute><DashboardLayout><ActivityMembersPage /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/sports/attendance" element={<ProtectedRoute allowedRoles={['Admin', 'Coach']}><DashboardLayout><AttendancePage /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/sports/attendance/report" element={<ProtectedRoute allowedRoles={['Admin', 'Coach']}><DashboardLayout><AttendanceReportPage /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/sports/inventory" element={<ProtectedRoute allowedRoles={['Admin', 'Coach']}><DashboardLayout><InventoryPage /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/sports/achievements" element={<ProtectedRoute><DashboardLayout><AchievementsPage /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/sports/principal" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><PrincipalDashboard /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/sports/teacher-notifications" element={<ProtectedRoute allowedRoles={['Admin', 'Teacher']}><DashboardLayout><TeacherNotificationsPage /></DashboardLayout></ProtectedRoute>} />
+
+              <Route path="*" element={<Navigate to="/academic" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </ToastProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

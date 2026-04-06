@@ -2,6 +2,15 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import sportActivityRoutes from './routes/sportActivityRoutes';
+import membershipRoutes from './routes/membershipRoutes';
+import inventoryRoutes from './routes/inventoryRoutes';
+import facilityRoutes from './routes/facilityRoutes';
+import sportAttendanceRoutes from './routes/attendanceRoutes';
+import alertRoutes from './routes/alertRoutes';
+import achievementRoutes from './routes/achievementRoutes';
+import sportStudentRoutes from './routes/studentRoutes';
+import attendanceReportRoutes from './routes/attendanceReportRoutes';
 
 // Load environment variables first
 dotenv.config();
@@ -33,6 +42,21 @@ app.use(express.json());
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
+});
+
+// Routes
+app.use('/api/sports', sportActivityRoutes);
+app.use('/api/sports/memberships', membershipRoutes);
+app.use('/api/sports/inventory', inventoryRoutes);
+app.use('/api/sports/facilities', facilityRoutes);
+app.use('/api/sports/attendance', attendanceRoutes); // Wait, line 9 is attendanceRoutes from sport, line 21 is attendanceRoutes from student. I will rename line 9.
+app.use('/api/sports/alerts', alertRoutes);
+app.use('/api/sports/achievements', achievementRoutes);
+app.use('/api/sports/students', studentRoutes);
+app.use('/api/sports/reports', attendanceReportRoutes);
+
+app.get('/', (req, res) => {
+    res.send('EduTrack Backend is running!');
 });
 
 // Health check endpoint

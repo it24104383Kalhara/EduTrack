@@ -1,6 +1,14 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+    --font-sans: 'Inter', 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --color-brand-purple: #633194;
+    --color-brand-lavender: #F4F0FF;
+    --color-brand-blue: #E1F5FE;
+    --color-brand-peach: #FFF0E6;
+    --color-brand-green: #E8F5E9;
+}
 
 :root {
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -40,7 +48,13 @@ a:hover {
   color: #4B2380;
 }
 
-html,
+html {
+    scroll-behavior: smooth;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+}
+
 body,
 #root {
   height: 100%;
@@ -49,14 +63,19 @@ body,
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100%;
+    margin: 0;
+    min-width: 320px;
+    min-height: 100%;
+    font-family: var(--font-sans);
+    background-color: #F9FAFB;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
 }
 
 button {
@@ -107,4 +126,37 @@ button:focus-visible {
   border-color: #633194 !important;
   box-shadow: 0 0 0 4px rgba(99, 49, 148, 0.08); 
   background-color: #FFFFFF !important;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d1c4e9;
+    border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9b59b6;
+}
+
+/* Purple focus ring for inputs */
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+}
+
+/* Smooth transitions everywhere */
+* {
+    transition-property: color, background-color, border-color, opacity, box-shadow, transform;
+    transition-duration: 150ms;
+    transition-timing-function: ease;
+}
+
+/* Override for animations that should be faster */
+button,
+a {
+    transition-duration: 200ms;
 }

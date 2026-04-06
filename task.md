@@ -1,0 +1,63 @@
+# Sport & Extra Curriculum Activities - Task List
+
+- [/] **Phase 0: Project Setup & Initialization**
+    - [x] Create base project structure (Monorepo/Folder separation for Frontend/Backend) <!-- id: 0 -->
+    - [x] Initialize Git repository (main branch) <!-- id: 1 -->
+    - [x] Create member branches (6 members + merge branch) <!-- id: 2 -->
+    - [x] Setup initial README and documentation <!-- id: 3 -->
+
+- [/] **Phase 1: Database Design & Backend Setup**
+    - [x] Design Database Schema (MySQL) specifically for Sports component <!-- id: 4 -->
+        - [x] Users (Coaches, Admins, Students) ... <!-- id: 5 -->
+        - [x] Sports / Activities <!-- id: 6 -->
+        - [x] Inventory / Resources <!-- id: 7 -->
+        - [x] Events / Matches <!-- id: 8 -->
+        - [x] Attendance Records <!-- id: 9 -->
+    - [x] Setup Node.js + Express with TypeScript <!-- id: 10 -->
+    - [x] Configure MySQL connection (Cloud DB) <!-- id: 11 -->
+
+- [/] **Phase 2: Core Feature Implementation (Backend)**
+    - [x] Implement Authentication & Authorization (Roles: Admin, Coach, Teacher, Student) <!-- id: 12 -->
+    - [x] **Athlete & Activity Registration API** <!-- id: 13 -->
+        - [x] CRUD for Sports/Clubs (Enhanced) <!-- id: 14 -->
+        - [x] Register Student to Sport/Club (Functionality) <!-- id: 15 -->
+    - [x] **Resource & Inventory Management API** <!-- id: 16 -->
+        - [x] Inventory Tracking (Add/Edit/Delete equipment) <!-- id: 17 -->
+        - [x] Booking System (Grounds/Rooms) <!-- id: 18 -->
+    - [x] **Attendance Validation API** <!-- id: 19 -->
+        - [x] Create Practice Sessions <!-- id: 20 -->
+        - [x] Mark Attendance <!-- id: 21 -->
+    - [x] **Real-Time Verification & Alerts API** <!-- id: 22 -->
+        - [x] Alert Logic (Missing students) <!-- id: 23 -->
+    - [x] **Achievement Tracking API** <!-- id: 24 -->
+        - [x] Record Match Results <!-- id: 25 -->
+        - [x] Calculate Merit Points <!-- id: 26 -->
+
+- [ ] **Phase 3: Frontend Implementation (React + TypeScript)**
+    - [x] Setup React project with TypeScript <!-- id: 27 -->
+    - [x] **Activity Management UI** <!-- id: 28 -->
+        - [x] List all sports/clubs <!-- id: 41 -->
+        - [x] Form to add new sport/club <!-- id: 42 -->
+    - [x] **Registration UI** <!-- id: 32 -->
+        - [x] Student Lookup & Assignment <!-- id: 33 -->
+    - [x] **Attendance Interface** <!-- id: 34 -->
+        - [x] Mobile-friendly check-in for coaches <!-- id: 35 -->
+        - [x] **Sport Attendance Report Workflow** <!-- id: 50 -->
+            - [x] Coach: Generate daily sport attendance report <!-- id: 51 -->
+            - [x] Coach: Submit report to Principal (via API) <!-- id: 52 -->
+            - [x] Principal Dashboard (Demo): View submitted reports <!-- id: 53 -->
+            - [x] Principal: Approve/Reject report <!-- id: 54 -->
+            - [x] Principal: Notify Teacher to adjust class attendance <!-- id: 55 -->
+            - [x] Teacher: Receive notification & update class attendance <!-- id: 56 -->
+            - [x] Enhancement: Capture class teacher name and grade during registration
+            - [x] Enhancement: Detailed view with student grades & teacher names in reports
+            - [x] Enhancement: Automated teacher notification targeting based on attendees' grades
+            - [x] Enhancement: Principal confirmation modal prior to approval/notification
+            - [ ] ⚠️ Merge with team member's Student Progress / Principal Dashboard module <!-- id: 57 -->
+    - [x] **Inventory Management Interface** <!-- id: 36 -->
+    - [ ] **Reports & Analytics View** <!-- id: 37 -->
+
+- [ ] **Phase 4: Integration & Testing**
+    - [ ] Unit Testing (Jest) <!-- id: 38 -->
+    - [ ] Integration Testing <!-- id: 39 -->
+    - [ ] Final Review & Polish <!-- id: 40 -->
