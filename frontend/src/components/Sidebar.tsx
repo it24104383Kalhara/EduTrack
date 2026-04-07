@@ -1,4 +1,4 @@
-import "./Sidebar.css";
+import "../css/Sidebar.css";
 
 interface SidebarProps {
   activeTab: string;
@@ -14,7 +14,8 @@ export default function Sidebar({
     { id: "borrowings", label: "Borrowings" },
     { id: "overdue", label: "Overdue & Fines" },
     { id: "attendance", label: "Attendance Records" },
-    { id: "rooms", label: "Meeting Rooms & Labs" },
+    //{ id: "rooms", label: "Meeting Rooms & Labs" },
+    { id: "analytics", label: "Analytics" },
   ];
 
   return (

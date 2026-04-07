@@ -2,6 +2,7 @@ import express from "express";
 import db from "./config/db";
 import cors from "cors";
 import booksRouter from "./routes/bookRouter";
+import libraryEntryRouter from "./routes/libraryEntryRouter";   
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.get("/test", async (req, res) => {
 });
 
 app.use("/books", booksRouter);
+app.use("/library", libraryEntryRouter);   
 
 app.listen(3000, () => {
   console.log("Server running on port 3000");

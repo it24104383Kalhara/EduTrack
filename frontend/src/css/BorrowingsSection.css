@@ -1,0 +1,347 @@
+/* BorrowingsSection.css - Modern Light Theme with Deep Purple Accents */
+
+.borrowings-section {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Poppins', Roboto, sans-serif;
+  background: #F9FAFB;
+  min-height: 100vh;
+}
+
+.borrowings-section h2 {
+  color: #111827;
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #633194 0%, #7B46B0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+}
+
+/* Search Container */
+.search-container {
+  margin-bottom: 1.5rem;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 0.875rem 1rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #633194;
+  box-shadow: 0 0 0 3px rgba(99, 49, 148, 0.1);
+}
+
+.search-input::placeholder {
+  color: #9CA3AF;
+}
+
+/* Action Buttons Container */
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+/* Button Styles - Matching Sidebar Gradient Style */
+.borrow-btn,
+.return-btn {
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.28s ease;
+  font-family: inherit;
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  box-shadow: inset 0 1px 4px rgba(255, 255, 255, 0.15), 0 2px 8px rgba(99, 49, 148, 0.25);
+  backdrop-filter: blur(1px);
+}
+
+.borrow-btn {
+  background: linear-gradient(135deg, 
+    rgba(99, 49, 148, 0.9) 0%,
+    rgba(123, 70, 176, 0.95) 35%,
+    rgba(147, 97, 200, 0.85) 65%,
+    rgba(171, 125, 224, 0.8) 100%
+  );
+}
+
+.return-btn {
+  background: linear-gradient(135deg, 
+    rgba(245, 158, 11, 0.9) 0%,
+    rgba(251, 191, 36, 0.95) 35%,
+    rgba(252, 211, 77, 0.85) 65%,
+    rgba(253, 230, 138, 0.8) 100%
+  );
+  box-shadow: inset 0 1px 4px rgba(255, 255, 255, 0.15), 0 2px 8px rgba(245, 158, 11, 0.25);
+}
+
+.borrow-btn::before,
+.return-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    transparent 100%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.borrow-btn:hover,
+.return-btn:hover {
+  transform: translateY(-2px);
+}
+
+.borrow-btn:hover {
+  background: linear-gradient(135deg, 
+    rgba(99, 49, 148, 1) 0%,
+    rgba(123, 70, 176, 1) 35%,
+    rgba(147, 97, 200, 0.95) 65%,
+    rgba(171, 125, 224, 0.9) 100%
+  );
+  box-shadow: inset 0 1px 6px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(99, 49, 148, 0.35);
+}
+
+.return-btn:hover {
+  background: linear-gradient(135deg, 
+    rgba(245, 158, 11, 1) 0%,
+    rgba(251, 191, 36, 1) 35%,
+    rgba(252, 211, 77, 0.95) 65%,
+    rgba(253, 230, 138, 0.9) 100%
+  );
+  box-shadow: inset 0 1px 6px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(245, 158, 11, 0.35);
+}
+
+.borrow-btn:hover::before,
+.return-btn:hover::before {
+  opacity: 0.5;
+}
+
+.borrow-btn:active,
+.return-btn:active {
+  transform: translateY(0);
+}
+
+/* Table Styles */
+.borrowings-table {
+  width: 100%;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #F0F0F0;
+}
+
+.borrowings-table thead {
+  background: #F9FAFB;
+}
+
+.borrowings-table th {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #E5E7EB;
+  font-size: 0.875rem;
+}
+
+.borrowings-table td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #F3F4F6;
+  color: #6B7280;
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+.borrowings-table tr:hover {
+  background: #F9FAFB;
+  transition: background 0.2s ease;
+}
+
+.borrowings-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  gap: 0.25rem;
+}
+
+.status-borrowed {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.status-borrowed::before {
+  content: "📖";
+  margin-right: 0.25rem;
+}
+
+.status-returned {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.status-returned::before {
+  content: "✓";
+  margin-right: 0.25rem;
+  font-weight: bold;
+}
+
+.status-overdue {
+  background: #FEF2F2;
+  color: #991B1B;
+}
+
+.status-overdue::before {
+  content: "⚠️";
+  margin-right: 0.25rem;
+}
+
+/* Loading State */
+.borrowings-section > p:first-of-type {
+  text-align: center;
+  padding: 3rem;
+  background: white;
+  border-radius: 16px;
+  color: #6B7280;
+  font-size: 0.875rem;
+  border: 1px solid #F0F0F0;
+}
+
+/* Error State */
+.borrowings-section > p[style*="color: red"] {
+  padding: 1rem 1.25rem;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 12px;
+  color: #991B1B;
+  font-size: 0.875rem;
+}
+
+/* Fine Amount Styling */
+.borrowings-table td:last-child {
+  font-weight: 600;
+  color: #DC2626;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .borrowings-section {
+    padding: 1.5rem;
+  }
+  
+  .borrowings-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .borrowings-table th,
+  .borrowings-table td {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .borrowings-section {
+    padding: 1rem;
+  }
+  
+  .borrowings-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .search-input {
+    max-width: 100%;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .borrow-btn,
+  .return-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .borrowings-table th,
+  .borrowings-table td {
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .status-badge {
+    padding: 0.2rem 0.6rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.borrowings-table tbody tr {
+  animation: fadeIn 0.3s ease;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F3F4F6;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}

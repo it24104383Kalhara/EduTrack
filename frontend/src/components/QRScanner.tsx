@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import "./QRScanner.css";
+import "../css/QRScanner.css";
 
 interface QRScannerProps {
   onScan: (text: string) => void;

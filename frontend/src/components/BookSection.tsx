@@ -1,30 +1,60 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";   // ✅ added
-import "./BookSection.css";
+import { Link } from "react-router-dom";
+import "../css/BookSection.css";
 import type { Book } from "../types/Book";
 
+interface BookWithCopies extends Book {
+  copy_count?: number;
+}
+
 export default function ManageBooks() {
-  const [books, setBooks] = useState<Book[]>([]);
+  const [books, setBooks] = useState<BookWithCopies[]>([]);
   const [search, setSearch] = useState("");
-  const [editingBook, setEditingBook] = useState<Book | null>(null);
+  const [editingBook, setEditingBook] = useState<BookWithCopies | null>(null);
   const [updatedTitle, setUpdatedTitle] = useState("");
   const [updatedAuthor, setUpdatedAuthor] = useState("");
   const [updatedPublisher, setUpdatedPublisher] = useState("");
   const [updatedYear, setUpdatedYear] = useState("");
-  const [showScanner, setShowScanner] = useState(false);
+  const [loadingCopies, setLoadingCopies] = useState(false);
 
   useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        const res = await fetch("http://localhost:3000/books");
-        const data: Book[] = await res.json();
-        setBooks(data);
-      } catch (err) {
-        console.error("Error fetching books:", err);
-      }
-    };
     fetchBooks();
   }, []);
+
+  const fetchBooks = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/books");
+      const data: Book[] = await res.json();
+      setBooks(data);
+      
+      // Fetch copy counts for each book
+      fetchCopyCounts(data);
+    } catch (err) {
+      console.error("Error fetching books:", err);
+    }
+  };
+
+  const fetchCopyCounts = async (books: Book[]) => {
+    setLoadingCopies(true);
+    try {
+      const booksWithCounts = await Promise.all(
+        books.map(async (book) => {
+          try {
+            const res = await fetch(`http://localhost:3000/esp/book/${book.book_id}`);
+            const copies = await res.json();
+            return { ...book, copy_count: copies.length };
+          } catch (err) {
+            return { ...book, copy_count: 0 };
+          }
+        })
+      );
+      setBooks(booksWithCounts);
+    } catch (err) {
+      console.error("Error fetching copy counts:", err);
+    } finally {
+      setLoadingCopies(false);
+    }
+  };
 
   const filteredBooks = books.filter((book) =>
     book.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -32,7 +62,7 @@ export default function ManageBooks() {
     book.isbn.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleEditClick = (book: Book) => {
+  const handleEditClick = (book: BookWithCopies) => {
     setEditingBook(book);
     setUpdatedTitle(book.title);
     setUpdatedAuthor(book.author || "");
@@ -62,7 +92,7 @@ export default function ManageBooks() {
       setBooks((prev) =>
         prev.map((b) =>
           b.book_id === editingBook.book_id
-            ? { ...b, ...payload } as Book
+            ? { ...b, ...payload } as BookWithCopies
             : b
         )
       );
@@ -74,7 +104,7 @@ export default function ManageBooks() {
     }
   };
 
-  const handleDelete = async (book: Book) => {
+  const handleDelete = async (book: BookWithCopies) => {
     const confirmed = window.confirm(`Are you sure you want to delete "${book.title}"?`);
     if (!confirmed) return;
 
@@ -93,14 +123,19 @@ export default function ManageBooks() {
     <div className="book-section">
       <h2>Manage Books</h2>
 
-    <div className="book-buttons">
-      <Link to="/scan-book">
-        <button className="add-book-btn">
-            ➕ Add New Book (Scan ISBN)
-        </button>
-      </Link>
-    </div>
-      
+      <div className="book-buttons">
+        <Link to="/scan-book">
+          <button className="add-book-btn">
+             Add New Book (Scan ISBN)
+          </button>
+        </Link>
+
+        <Link to="/add-book-copy">
+          <button className="add-copy-btn">
+            Add Book Copy (Scan RFID)
+          </button>
+        </Link>
+      </div>
 
       <input
         type="text"
@@ -121,6 +156,7 @@ export default function ManageBooks() {
               <th>Author</th>
               <th>Publisher</th>
               <th>Year</th>
+              <th>Copies</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -143,6 +179,15 @@ export default function ManageBooks() {
                     <td>{book.published_year}</td>
                   </>
                 )}
+                <td className="copy-count-cell">
+                  {loadingCopies ? (
+                    <span className="loading-copies">...</span>
+                  ) : (
+                    <span className={`copy-count ${book.copy_count === 0 ? "no-copies" : "has-copies"}`}>
+                      {book.copy_count || 0} {book.copy_count === 1 ? "copy" : "copies"}
+                    </span>
+                  )}
+                </td>
                 <td>
                   {editingBook?.book_id === book.book_id ? (
                     <>

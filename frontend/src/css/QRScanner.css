@@ -1,0 +1,222 @@
+/* QRScanner.css 
+   Modern Purple Theme - Matching Dashboard Style
+*/
+
+/* ────────────────────────────────────────────────
+   Root / Theme variables 
+───────────────────────────────────────────────── */
+:root {
+  --bg-main: #F9FAFB;           /* light grey background */
+  --bg-darker: #FFFFFF;         /* white background */
+  --primary: #633194;           /* deep purple */
+  --primary-dark: #7B46B0;      /* lighter purple for hover */
+  --primary-light: #F4F0FF;     /* soft lavender */
+  --accent: #1F2937;            /* dark text */
+  --danger: #EF4444;            /* red for stop button */
+  --border: #E5E7EB;            /* light border color */
+}
+
+/* ────────────────────────────────────────────────
+   Main container
+───────────────────────────────────────────────── */
+#qr-reader {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto 1.5rem;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--bg-darker);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border);
+}
+
+/* Video element inside scanner */
+#qr-reader video {
+  width: 100% !important;
+  height: auto !important;
+  border-radius: 16px 16px 0 0;
+}
+
+/* Scanner overlay / qrbox border */
+.html5-qrcode__scan-region-highlight {
+  border: 3px solid var(--primary) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 0 0 9999px rgba(99, 49, 148, 0.3) !important;
+}
+
+/* Message box (permission, error, etc.) */
+#qr-reader > .html5-qrcode-message {
+  color: var(--accent);
+  background: var(--primary-light);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 12px;
+  font-size: 0.875rem;
+  font-family: 'Inter', sans-serif;
+  border: 1px solid var(--border);
+}
+
+/* ────────────────────────────────────────────────
+   Buttons
+───────────────────────────────────────────────── */
+button {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Poppins', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  margin: 0.5rem;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.28s ease;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    transparent 100%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+button:hover::before {
+  opacity: 0.5;
+}
+
+button {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  box-shadow: 0 2px 8px rgba(99, 49, 148, 0.2);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 49, 148, 0.3);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Stop button - red gradient */
+button[onclick*="stopScanner"],
+button:has(> :contains("Stop")) {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+button[onclick*="stopScanner"]:hover,
+button:has(> :contains("Stop")):hover {
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Start button */
+button[onclick*="startScanner"] {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+button[onclick*="startScanner"]:hover {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* ────────────────────────────────────────────────
+   Scanner Container Wrapper
+───────────────────────────────────────────────── */
+.scanner-container {
+  background: var(--bg-main);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Instruction text */
+.info-text {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #6B7280;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* Scanner title */
+.scanner-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Optional: make the scanner area bigger on desktop */
+@media (min-width: 768px) {
+  #qr-reader {
+    max-width: 500px;
+  }
+}
+
+/* Loading state */
+.loading-text {
+  text-align: center;
+  color: #6B7280;
+  font-size: 0.875rem;
+  padding: 1rem;
+}
+
+/* Error message */
+.error-message {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #991B1B;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  text-align: center;
+  margin: 1rem auto;
+  max-width: 400px;
+  font-size: 0.875rem;
+}
+
+/* Success message */
+.success-message {
+  background: #F0FDF4;
+  border: 1px solid #86EFAC;
+  color: #166534;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  text-align: center;
+  margin: 1rem auto;
+  max-width: 400px;
+  font-size: 0.875rem;
+}
+
+/* Button group */
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  button {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+  }
+  
+  .scanner-title {
+    font-size: 1.25rem;
+  }
+}

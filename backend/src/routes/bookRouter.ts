@@ -42,4 +42,46 @@ router.post("/", async (req, res) => {
   }
 });
 
+// ✅ UPDATE book
+router.put("/:id", async (req, res) => {
+  const { id } = req.params;
+  const { title, author, publisher, published_year } = req.body;
+
+  try {
+    const [result] = await db.query<OkPacket>(
+      `UPDATE books 
+       SET title = ?, author = ?, publisher = ?, published_year = ?
+       WHERE book_id = ?`,
+      [title, author || null, publisher || null, published_year || null, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Book not found" });
+    }
+
+    res.json({ message: "Book updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error updating book" });
+  }
+});
+
+// ✅ DELETE book
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.query<OkPacket>("DELETE FROM books WHERE book_id = ?", [id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Book not found" });
+    }
+
+    res.json({ message: "Book deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error deleting book" });
+  }
+});
+
 export default router;

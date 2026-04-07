@@ -1,4 +1,4 @@
-import { Router } from "express";
+/*import { Router } from "express";
 import type { OkPacket } from "mysql2";
 import db from "../config/db";
 
@@ -40,4 +40,4 @@ router.post("/", async (req, res) => {
   }
 });
 
-export default router;
+export default router;*/

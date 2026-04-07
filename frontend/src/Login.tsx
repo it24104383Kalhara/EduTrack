@@ -6,6 +6,7 @@ export default function Login() {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [message, setMessage] = useState<string>("");
+  const [messageType, setMessageType] = useState<"success" | "error">("error");
 
   const navigate = useNavigate();
 
@@ -29,6 +30,7 @@ export default function Login() {
         throw new Error(data.message);
       }
 
+      setMessageType("success");
       setMessage(data.message);
 
       // Redirect depending on role
@@ -39,6 +41,7 @@ export default function Login() {
       }
 
     } catch (err) {
+      setMessageType("error");
       if (err instanceof Error) {
         setMessage(err.message);
       } else {
@@ -48,30 +51,51 @@ export default function Login() {
   };
 
   return (
-    <div style={{ maxWidth: 300, margin: "50px auto", textAlign: "center" }}>
-      <h2>Login</h2>
+    <div className="login-container">
+      <div className="login-card">
+        <div className="login-header">
+          <h2>Welcome Back</h2>
+          <p>Sign in to your account</p>
+        </div>
 
-      <input
-        type="text"
-        placeholder="Username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        style={{ display: "block", marginBottom: 10, width: "100%", padding: 5 }}
-      />
+        <form className="login-form" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+          <div className="input-group">
+            <label>Username</label>
+            <input
+              type="text"
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        style={{ display: "block", marginBottom: 10, width: "100%", padding: 5 }}
-      />
+          <div className="input-group">
+            <label>Password</label>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  handleLogin();
+                }
+              }}
+            />
+          </div>
 
-      <button onClick={handleLogin} style={{ width: "100%", padding: 5 }}>
-        Login
-      </button>
+          <button type="submit" className="login-button">
+            Sign In
+          </button>
+        </form>
 
-      {message && <p style={{ marginTop: 10 }}>{message}</p>}
+        {message && (
+          <div className={`message ${messageType}`}>
+            {message}
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }

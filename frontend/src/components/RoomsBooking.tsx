@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./RoomsBooking.css";
+import "../css/RoomsBooking.css";
 
 const RoomsBooking: React.FC = () => {
   const [className, setClassName] = useState("");

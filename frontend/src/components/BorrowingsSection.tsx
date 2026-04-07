@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";   // ✅ added
-import "./BorrowingsSection.css";
+import { Link } from "react-router-dom";
+import "../css/BorrowingsSection.css";
 
 interface Borrowing {
   borrowing_id: number;
@@ -11,21 +11,27 @@ interface Borrowing {
   return_date?: string;
   fine_amount: number;
   status: string;
+  student_name?: string;
+  book_title?: string;
+  book_author?: string;
 }
 
 export default function BorrowingsSection() {
   const [borrowings, setBorrowings] = useState<Borrowing[]>([]);
+  const [filteredBorrowings, setFilteredBorrowings] = useState<Borrowing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:3000/borrowings")
+    fetch("http://localhost:3000/api/borrowings")
       .then((res) => {
         if (!res.ok) throw new Error(`Server responded with ${res.status}`);
         return res.json();
       })
       .then((data) => {
         setBorrowings(data);
+        setFilteredBorrowings(data);
         setLoading(false);
       })
       .catch((err) => {
@@ -35,15 +41,71 @@ export default function BorrowingsSection() {
       });
   }, []);
 
+  // Search functionality
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredBorrowings(borrowings);
+    } else {
+      const filtered = borrowings.filter(
+        (borrowing) =>
+          borrowing.student_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          borrowing.book_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          borrowing.book_author?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredBorrowings(filtered);
+    }
+  }, [searchTerm, borrowings]);
+
   return (
     <div className="borrowings-section">
       <h2>⏳ Borrowings</h2>
 
-      {/* ✅ NEW BUTTON */}
-      <div style={{ marginBottom: "1rem" }}>
+      {/* Search Bar */}
+      <div className="search-container" style={{ marginBottom: "1rem" }}>
+        <input
+          type="text"
+          placeholder="🔍 Search by student name or book title..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+          style={{
+            padding: "10px",
+            width: "100%",
+            maxWidth: "400px",
+            borderRadius: "5px",
+            border: "1px solid #ddd",
+            fontSize: "14px"
+          }}
+        />
+      </div>
+
+      {/* Action Buttons */}
+      <div style={{ marginBottom: "1rem", display: "flex", gap: "10px" }}>
         <Link to="/borrow-book">
-          <button className="borrow-btn">
+          <button className="borrow-btn" style={{
+            backgroundColor: "#4CAF50",
+            color: "white",
+            padding: "10px 20px",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+            fontSize: "16px"
+          }}>
             ➕ Borrow a Book
+          </button>
+        </Link>
+        
+        <Link to="/return-book">
+          <button className="return-btn" style={{
+            backgroundColor: "#ff9800",
+            color: "white",
+            padding: "10px 20px",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+            fontSize: "16px"
+          }}>
+            🔄 Return a Book
           </button>
         </Link>
       </div>
@@ -57,7 +119,8 @@ export default function BorrowingsSection() {
           <thead>
             <tr>
               <th>ID</th>
-              <th>Student</th>
+              <th>Student Name</th>
+              <th>Book Title</th>
               <th>Copy ID</th>
               <th>Borrow Date</th>
               <th>Due Date</th>
@@ -66,21 +129,26 @@ export default function BorrowingsSection() {
             </tr>
           </thead>
           <tbody>
-            {borrowings.length === 0 ? (
+            {filteredBorrowings.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: "center" }}>
-                  No borrowings found
+                <td colSpan={8} style={{ textAlign: "center" }}>
+                  {searchTerm ? "No matching borrowings found" : "No borrowings found"}
                 </td>
               </tr>
             ) : (
-              borrowings.map((b) => (
+              filteredBorrowings.map((b) => (
                 <tr key={b.borrowing_id}>
                   <td>{b.borrowing_id}</td>
-                  <td>{b.student_id}</td>
+                  <td>{b.student_name || b.student_id}</td>
+                  <td>{b.book_title || b.copy_id}</td>
                   <td>{b.copy_id}</td>
-                  <td>{b.borrow_date}</td>
-                  <td>{b.due_date}</td>
-                  <td>{b.status}</td>
+                  <td>{new Date(b.borrow_date).toLocaleDateString()}</td>
+                  <td>{new Date(b.due_date).toLocaleDateString()}</td>
+                  <td>
+                    <span className={`status-badge status-${b.status.toLowerCase()}`}>
+                      {b.status}
+                    </span>
+                  </td>
                   <td>Rs. {b.fine_amount}</td>
                 </tr>
               ))

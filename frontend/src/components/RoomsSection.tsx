@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import "./RoomsSection.css";
+import "../css/RoomsSection.css";
 
 interface Room {
   room_id: number;
