@@ -1,0 +1,307 @@
+.fee-management-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 15%, #0f3460 30%, #533483 50%, #e94560 75%, #ff6b6b 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 22s ease infinite;
+  min-height: 100vh;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.fee-management-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 80%, rgba(83, 52, 131, 0.4) 0%, transparent 60%),
+              radial-gradient(circle at 80% 20%, rgba(233, 69, 96, 0.3) 0%, transparent 60%),
+              radial-gradient(circle at 50% 50%, rgba(255, 107, 107, 0.2) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.fee-management-container > * {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.page-subtitle {
+  color: #7f8c8d;
+  font-size: 1.1rem;
+}
+
+.rooms-section h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.room-card {
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  background: white;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.room-card:hover {
+  border-color: #3498db;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.room-card.selected {
+  border-color: #2ecc71;
+  background-color: #f0f9ff;
+}
+
+.room-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.room-header h3 {
+  font-size: 1.5rem;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.student-count-badge {
+  background-color: #3498db;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.room-info p {
+  margin: 5px 0;
+  color: #7f8c8d;
+}
+
+.no-rooms-message {
+  text-align: center;
+  padding: 40px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #dee2e6;
+}
+
+.no-rooms-message h3 {
+  color: #6c757d;
+  margin-bottom: 10px;
+}
+
+.no-rooms-message p {
+  color: #6c757d;
+}
+
+.blank-page {
+  padding: 40px;
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  min-height: 400px;
+}
+
+.student-payment-page {
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+}
+
+.payment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.payment-header h2 {
+  color: #2c3e50;
+  margin: 0;
+}
+
+.student-basic-info {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.student-basic-info p {
+  margin: 5px 0;
+  color: #7f8c8d;
+}
+
+.payment-details h3 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+.payment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.payment-item {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.payment-item h4 {
+  color: #2c3e50;
+  margin: 0 0 10px 0;
+}
+
+.payment-item p {
+  margin: 5px 0;
+  color: #7f8c8d;
+}
+
+.payment-item .amount {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.payment-item .status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.payment-item .status.paid {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.payment-item .status.pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.payment-item .status.overdue {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.payment-actions {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.pay-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-right: 10px;
+}
+
+.pay-btn:hover {
+  background-color: #218838;
+}
+
+.back-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.back-btn:hover {
+  background-color: #5a6268;
+}
+
+.students-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.student-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.student-card:hover {
+  border-color: #3498db;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.student-info h4 {
+  color: #2c3e50;
+  margin: 0 0 10px 0;
+}
+
+.student-info p {
+  margin: 5px 0;
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.no-students-message {
+  text-align: center;
+  padding: 40px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px dashed #dee2e6;
+}
+
+.no-students-message p {
+  color: #6c757d;
+  margin: 0;
+}

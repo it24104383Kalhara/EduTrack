@@ -10,8 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/styled-jsx": "^2.2.9",
+    "axios": "^1.14.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "styled-jsx": "^5.1.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

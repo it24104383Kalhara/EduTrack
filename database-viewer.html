@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduTrack MySQL Database Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .table-header {
+            background: #667eea;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-content {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .refresh-btn:hover {
+            background: #5a67d8;
+        }
+        
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            background: #667eea;
+            color: white;
+            border-bottom-color: #5a67d8;
+        }
+        
+        .tab:hover {
+            background: #f8f9fa;
+        }
+        
+        .tab.active:hover {
+            background: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🗄️ EduTrack MySQL Database Viewer</h1>
+        <p>Real-time view of your hostel management database</p>
+    </div>
+    
+    <div class="stats-grid" id="statsGrid">
+        <!-- Stats will be loaded here -->
+    </div>
+    
+    <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
+    
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('rooms')">🏠 Rooms</div>
+        <div class="tab" onclick="switchTab('students')">👥 Students</div>
+        <div class="tab" onclick="switchTab('payments')">💳 Payments</div>
+        <div class="tab" onclick="switchTab('summary')">📊 Summary</div>
+    </div>
+    
+    <div id="roomsTab" class="tab-content active">
+        <div class="table-container">
+            <div class="table-header">
+                <span>🏠 Rooms</span>
+                <span id="roomsCount">Loading...</span>
+            </div>
+            <div class="table-content">
+                <table id="roomsTable">
+                    <thead>
+                        <tr>
+                            <th>Room Number</th>
+                            <th>Capacity</th>
+                            <th>Current Occupancy</th>
+                            <th>Available Spaces</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="roomsTableBody">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div id="studentsTab" class="tab-content">
+        <div class="table-container">
+            <div class="table-header">
+                <span>👥 Students</span>
+                <span id="studentsCount">Loading...</span>
+            </div>
+            <div class="table-content">
+                <table id="studentsTable">
+                    <thead>
+                        <tr>
+                            <th>Registration Number</th>
+                            <th>Name</th>
+                            <th>Grade</th>
+                            <th>Room Number</th>
+                            <th>Parent Email</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div id="paymentsTab" class="tab-content">
+        <div class="table-container">
+            <div class="table-header">
+                <span>💳 Payments</span>
+                <span id="paymentsCount">Loading...</span>
+            </div>
+            <div class="table-content">
+                <table id="paymentsTable">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Payment Type</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Due Date</th>
+                            <th>Payment Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentsTableBody">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div id="summaryTab" class="tab-content">
+        <div class="table-container">
+            <div class="table-header">
+                <span>📊 Database Summary</span>
+            </div>
+            <div class="table-content">
+                <div id="summaryContent">
+                    <!-- Summary will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:5005/api';
+        
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Load data from API
+        async function loadData() {
+            try {
+                // Load statistics
+                await loadStats();
+                
+                // Load tables
+                await Promise.all([
+                    loadRooms(),
+                    loadStudents(),
+                    loadPayments()
+                ]);
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showError('Failed to load data from database');
+            }
+        }
+        
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/rooms`);
+                const rooms = await response.json();
+                
+                const stats = {
+                    totalRooms: rooms.data.length,
+                    occupiedRooms: rooms.data.filter(r => r.current_occupancy > 0).length,
+                    totalCapacity: rooms.data.reduce((sum, r) => sum + r.capacity, 0),
+                    currentOccupancy: rooms.data.reduce((sum, r) => sum + r.current_occupancy, 0)
+                };
+                
+                document.getElementById('statsGrid').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.totalRooms}</div>
+                        <div class="stat-label">Total Rooms</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.occupiedRooms}</div>
+                        <div class="stat-label">Occupied Rooms</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.currentOccupancy}</div>
+                        <div class="stat-label">Current Occupancy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.totalCapacity - stats.currentOccupancy}</div>
+                        <div class="stat-label">Available Spaces</div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        async function loadRooms() {
+            try {
+                const response = await fetch(`${API_BASE}/rooms`);
+                const result = await response.json();
+                
+                document.getElementById('roomsCount').textContent = `${result.data.length} rooms`;
+                
+                const tbody = document.getElementById('roomsTableBody');
+                tbody.innerHTML = result.data.map(room => `
+                    <tr>
+                        <td>${room.room_number}</td>
+                        <td>${room.capacity}</td>
+                        <td>${room.current_occupancy}</td>
+                        <td>${room.capacity - room.current_occupancy}</td>
+                        <td>
+                            <span class="badge ${getStatusClass(room.current_occupancy, room.capacity)}">
+                                ${getRoomStatus(room.current_occupancy, room.capacity)}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading rooms:', error);
+            }
+        }
+        
+        async function loadStudents() {
+            try {
+                const response = await fetch(`${API_BASE}/students`);
+                const result = await response.json();
+                
+                document.getElementById('studentsCount').textContent = `${result.data.length} students`;
+                
+                const tbody = document.getElementById('studentsTableBody');
+                tbody.innerHTML = result.data.map(student => `
+                    <tr>
+                        <td>${student.registration_number}</td>
+                        <td>${student.student_name}</td>
+                        <td>${student.grade}</td>
+                        <td>${student.assigned_room_number || 'Not Assigned'}</td>
+                        <td>${student.parent_email || 'N/A'}</td>
+                        <td>
+                            <span class="badge ${student.status === 'active' ? 'badge-success' : 'badge-warning'}">
+                                ${student.status}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading students:', error);
+            }
+        }
+        
+        async function loadPayments() {
+            try {
+                const response = await fetch(`${API_BASE}/payments`);
+                const result = await response.json();
+                
+                document.getElementById('paymentsCount').textContent = `${result.data.length} payments`;
+                
+                const tbody = document.getElementById('paymentsTableBody');
+                tbody.innerHTML = result.data.map(payment => `
+                    <tr>
+                        <td>${payment.student_name || 'N/A'}</td>
+                        <td>${payment.payment_type.replace('_', ' ').toUpperCase()}</td>
+                        <td>$${payment.amount.toLocaleString()}</td>
+                        <td>
+                            <span class="badge ${getPaymentStatusClass(payment.status)}">
+                                ${payment.status.toUpperCase()}
+                            </span>
+                        </td>
+                        <td>${new Date(payment.due_date).toLocaleDateString()}</td>
+                        <td>${payment.payment_date ? new Date(payment.payment_date).toLocaleDateString() : 'Not Paid'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading payments:', error);
+            }
+        }
+        
+        function getStatusClass(occupancy, capacity) {
+            if (occupancy === 0) return 'badge-success';
+            if (occupancy >= capacity) return 'badge-danger';
+            return 'badge-warning';
+        }
+        
+        function getRoomStatus(occupancy, capacity) {
+            if (occupancy === 0) return 'Available';
+            if (occupancy >= capacity) return 'Full';
+            return 'Partially Filled';
+        }
+        
+        function getPaymentStatusClass(status) {
+            switch (status) {
+                case 'paid': return 'badge-success';
+                case 'pending': return 'badge-warning';
+                case 'overdue': return 'badge-danger';
+                default: return 'badge-info';
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            document.body.insertBefore(errorDiv, document.body.firstChild);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+        
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>
