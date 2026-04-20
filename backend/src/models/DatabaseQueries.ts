@@ -216,6 +216,144 @@ export const SCHEMA_QUERIES = {
                 INDEX idx_email_type (email_type),
                 INDEX idx_created_at (created_at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+        SPORTS_ACTIVITIES: `
+            CREATE TABLE IF NOT EXISTS sports_activities (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100) NOT NULL UNIQUE,
+                type ENUM('Sport', 'Club', 'Society') NOT NULL,
+                in_charge_staff_id INT,
+                description TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (in_charge_staff_id) REFERENCES users(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+        SPORTS_MEMBERSHIPS: `
+            CREATE TABLE IF NOT EXISTS sports_memberships (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                student_id INT NOT NULL,
+                activity_id INT NOT NULL,
+                role ENUM('Member', 'Captain', 'Vice-Captain', 'President', 'Secretary', 'Treasurer') DEFAULT 'Member',
+                joined_at DATE NOT NULL,
+                quit_at DATE,
+                FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+                FOREIGN KEY (activity_id) REFERENCES sports_activities(id) ON DELETE CASCADE,
+                UNIQUE KEY unique_membership (student_id, activity_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+        SPORTS_INVENTORY: `
+            CREATE TABLE IF NOT EXISTS sports_inventory (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                category VARCHAR(50),
+                total_quantity INT DEFAULT 0,
+                available_quantity INT DEFAULT 0,
+                \`condition\` ENUM('New', 'Good', 'Fair', 'Poor', 'Broken') DEFAULT 'Good',
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+        SPORTS_INVENTORY_LOGS: `
+            CREATE TABLE IF NOT EXISTS sports_inventory_logs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                item_id INT NOT NULL,
+                borrowed_by_id INT NOT NULL,
+                borrowed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                returned_at TIMESTAMP NULL,
+                status ENUM('Borrowed', 'Returned', 'Lost', 'Damaged') DEFAULT 'Borrowed',
+                FOREIGN KEY (item_id) REFERENCES sports_inventory(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+        SPORTS_FACILITIES: `
+            CREATE TABLE IF NOT EXISTS sports_facilities (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                type ENUM('Ground', 'Room', 'Hall', 'Court', 'Pool') NOT NULL,
+                capacity INT,
+                location_description TEXT
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+        SPORTS_BOOKINGS: `
+            CREATE TABLE IF NOT EXISTS sports_bookings (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                facility_id INT NOT NULL,
+                booked_by_id INT NOT NULL,
+                start_time DATETIME NOT NULL,
+                end_time DATETIME NOT NULL,
+                purpose TEXT,
+                status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
+                FOREIGN KEY (facility_id) REFERENCES sports_facilities(id) ON DELETE CASCADE,
+                FOREIGN KEY (booked_by_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+        SPORTS_PRACTICE_SESSIONS: `
+            CREATE TABLE IF NOT EXISTS sports_practice_sessions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                activity_id INT NOT NULL,
+                coach_id INT NOT NULL,
+                start_time DATETIME NOT NULL,
+                end_time DATETIME NOT NULL,
+                location_id INT,
+                FOREIGN KEY (activity_id) REFERENCES sports_activities(id) ON DELETE CASCADE,
+                FOREIGN KEY (coach_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (location_id) REFERENCES sports_facilities(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+        SPORTS_ATTENDANCE: `
+            CREATE TABLE IF NOT EXISTS sports_attendance (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                session_id INT NOT NULL,
+                student_id INT NOT NULL,
+                status ENUM('Present', 'Absent', 'Excused', 'Late') NOT NULL,
+                recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (session_id) REFERENCES sports_practice_sessions(id) ON DELETE CASCADE,
+                FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+        SPORTS_ACHIEVEMENTS: `
+            CREATE TABLE IF NOT EXISTS sports_achievements (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                student_id INT,
+                activity_id INT NOT NULL,
+                title VARCHAR(150) NOT NULL,
+                date DATE NOT NULL,
+                merit_points INT DEFAULT 0,
+                description TEXT,
+                FOREIGN KEY (activity_id) REFERENCES sports_activities(id) ON DELETE CASCADE,
+                FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+        SPORTS_ATTENDANCE_REPORTS: `
+            CREATE TABLE IF NOT EXISTS sports_attendance_reports (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                activity_id INT NOT NULL,
+                coach_id INT NOT NULL,
+                report_date DATE NOT NULL,
+                total_students INT DEFAULT 0,
+                present_count INT DEFAULT 0,
+                absent_count INT DEFAULT 0,
+                late_count INT DEFAULT 0,
+                excused_count INT DEFAULT 0,
+                notes TEXT,
+                status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
+                submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                reviewed_at TIMESTAMP NULL,
+                reviewed_by INT NULL,
+                FOREIGN KEY (activity_id) REFERENCES sports_activities(id) ON DELETE CASCADE,
+                FOREIGN KEY (coach_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `,
+        SPORTS_TEACHER_NOTIFICATIONS: `
+            CREATE TABLE IF NOT EXISTS sports_teacher_notifications (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                report_id INT NOT NULL,
+                teacher_id INT NOT NULL,
+                message TEXT NOT NULL,
+                status ENUM('Unread', 'Read', 'Actioned') DEFAULT 'Unread',
+                sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (report_id) REFERENCES sports_attendance_reports(id) ON DELETE CASCADE,
+                FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `
     }
 };

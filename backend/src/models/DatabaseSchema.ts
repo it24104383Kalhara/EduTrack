@@ -23,6 +23,19 @@ export class DatabaseSchema {
       await pool.query(SCHEMA_QUERIES.TABLES.MARKS);
       await pool.query(SCHEMA_QUERIES.TABLES.EMAIL_LOGS);
 
+      // Sports & Extra-curricular Tables
+      await pool.query(SCHEMA_QUERIES.TABLES.SPORTS_ACTIVITIES);
+      await pool.query(SCHEMA_QUERIES.TABLES.SPORTS_MEMBERSHIPS);
+      await pool.query(SCHEMA_QUERIES.TABLES.SPORTS_INVENTORY);
+      await pool.query(SCHEMA_QUERIES.TABLES.SPORTS_INVENTORY_LOGS);
+      await pool.query(SCHEMA_QUERIES.TABLES.SPORTS_FACILITIES);
+      await pool.query(SCHEMA_QUERIES.TABLES.SPORTS_BOOKINGS);
+      await pool.query(SCHEMA_QUERIES.TABLES.SPORTS_PRACTICE_SESSIONS);
+      await pool.query(SCHEMA_QUERIES.TABLES.SPORTS_ATTENDANCE);
+      await pool.query(SCHEMA_QUERIES.TABLES.SPORTS_ACHIEVEMENTS);
+      await pool.query(SCHEMA_QUERIES.TABLES.SPORTS_ATTENDANCE_REPORTS);
+      await pool.query(SCHEMA_QUERIES.TABLES.SPORTS_TEACHER_NOTIFICATIONS);
+
       console.log('✅ Database initialized successfully with centralized schema');
     } catch (error) {
       console.error('❌ Error initializing database schema:', error);

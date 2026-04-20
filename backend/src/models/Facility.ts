@@ -1,4 +1,4 @@
-import pool from '../config/db';
+import pool from '../config/database';
 import { RowDataPacket, OkPacket } from 'mysql2';
 
 export interface Facility {

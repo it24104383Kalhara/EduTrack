@@ -7,7 +7,7 @@
     "dev": "nodemon src/index.ts",
     "start": "node dist/index.js",
     "build": "tsc",
-    "setup-db": "node scripts/setup-student-progress-db.js"
+    "setup-db": "ts-node src/config/setup-database.ts"
   },
   "keywords": [],
   "author": "",
