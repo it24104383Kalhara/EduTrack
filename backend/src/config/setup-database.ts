@@ -21,6 +21,7 @@ export const setupDatabase = async () => {
             rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED === 'true'
         } : undefined
     });
+    console.log('🔌 Connection object created, attempting to connect...');
 
     try {
         const dbName = process.env.DB_NAME || 'edutrack';
@@ -48,8 +49,11 @@ export const setupDatabase = async () => {
         console.log(' - Student Progress (Academics, Marks, Attendance)');
         console.log(' - Sport Management (Activities, Inventory, Facilities)');
         
-    } catch (error) {
-        console.error('\n❌ Database setup failed:', error);
+    } catch (error: any) {
+        console.error('\n❌ Database setup failed details:');
+        console.error('Error Code:', error.code);
+        console.error('Error Message:', error.message);
+        console.error('Stack Trace:', error.stack);
         throw error;
     } finally {
         await connection.end();
@@ -60,11 +64,11 @@ export const setupDatabase = async () => {
 if (require.main === module) {
     setupDatabase()
         .then(() => {
-            console.log('Setup finished.');
+            console.log('Setup finished successfully.');
             process.exit(0);
         })
         .catch((error) => {
-            console.error('Setup failed.');
+            console.error('\n🛑 Fatal: Setup script encountered an error.');
             process.exit(1);
         });
 }
