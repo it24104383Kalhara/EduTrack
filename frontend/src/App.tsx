@@ -182,40 +182,69 @@ function StudentProgressLayout() {
   );
 }
 
+// Wrapper to provide Academic AuthProvider only for student-facing routes
+function AcademicAuthWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <ToastProvider>
+        {children}
+      </ToastProvider>
+    </AuthProvider>
+  );
+}
+
 function App() {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ToastProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<StudentLoginPage />} />
-              <Route path="/sports/login" element={<SportsLoginPage />} />
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
 
-              {/* Student Progress (Academic) Routes */}
-              <Route path="/academic/*" element={<StudentProgressLayout />} />
+          {/* Student Progress Login - wrapped in Academic Auth */}
+          <Route path="/login" element={
+            <AcademicAuthWrapper>
+              <StudentLoginPage />
+            </AcademicAuthWrapper>
+          } />
 
-              {/* Sport Management Routes */}
-              <Route path="/sports" element={<Navigate to="/sports/dashboard" replace />} />
-              <Route path="/sports/dashboard" element={<ProtectedRoute><DashboardLayout><DashBoardPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/sports/activities" element={<ProtectedRoute><DashboardLayout><ActivitiesPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/sports/activities/:id/members" element={<ProtectedRoute><DashboardLayout><ActivityMembersPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/sports/attendance" element={<ProtectedRoute allowedRoles={['Admin', 'Coach']}><DashboardLayout><AttendancePage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/sports/attendance/report" element={<ProtectedRoute allowedRoles={['Admin', 'Coach']}><DashboardLayout><AttendanceReportPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/sports/inventory" element={<ProtectedRoute allowedRoles={['Admin', 'Coach']}><DashboardLayout><InventoryPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/sports/achievements" element={<ProtectedRoute><DashboardLayout><AchievementsPage /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/sports/principal" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><PrincipalDashboard /></DashboardLayout></ProtectedRoute>} />
-              <Route path="/sports/teacher-notifications" element={<ProtectedRoute allowedRoles={['Admin', 'Teacher']}><DashboardLayout><TeacherNotificationsPage /></DashboardLayout></ProtectedRoute>} />
+          {/* Student Progress (Academic) Routes - wrapped in Academic Auth */}
+          <Route path="/academic/*" element={
+            <AcademicAuthWrapper>
+              <StudentProgressLayout />
+            </AcademicAuthWrapper>
+          } />
 
-              <Route path="*" element={<Navigate to="/academic" replace />} />
-            </Routes>
-          </BrowserRouter>
-        </ToastProvider>
-      </AuthProvider>
+          {/* Sport Management Login - fully independent */}
+          <Route path="/sports/login" element={<SportsLoginPage />} />
+
+          {/* Sport Management Routes - uses its own ProtectedRoute from utils/auth */}
+          <Route path="/sports" element={<Navigate to="/sports/dashboard" replace />} />
+          <Route path="/sports/dashboard" element={<ProtectedRoute><DashboardLayout><DashBoardPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/sports/activities" element={<ProtectedRoute><DashboardLayout><ActivitiesPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/sports/activities/:id/members" element={<ProtectedRoute><DashboardLayout><ActivityMembersPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/sports/attendance" element={<ProtectedRoute allowedRoles={['Admin', 'Coach']}><DashboardLayout><AttendancePage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/sports/attendance/report" element={<ProtectedRoute allowedRoles={['Admin', 'Coach']}><DashboardLayout><AttendanceReportPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/sports/inventory" element={<ProtectedRoute allowedRoles={['Admin', 'Coach']}><DashboardLayout><InventoryPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/sports/achievements" element={<ProtectedRoute><DashboardLayout><AchievementsPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/sports/principal" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><PrincipalDashboard /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/sports/teacher-notifications" element={<ProtectedRoute allowedRoles={['Admin', 'Teacher']}><DashboardLayout><TeacherNotificationsPage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/sports/facilities" element={<ProtectedRoute><DashboardLayout><div className="p-8">Facilities Management (Coming Soon)</div></DashboardLayout></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute allowedRoles={['Admin']}><DashboardLayout><div className="p-8">System Administration (Coming Soon)</div></DashboardLayout></ProtectedRoute>} />
+
+          {/* Legacy/Common Redirects */}
+          <Route path="/dashboard" element={<Navigate to="/sports/dashboard" replace />} />
+          <Route path="/academics" element={<Navigate to="/academic" replace />} />
+
+          {/* Catch-all for Sports to stay in Sports module */}
+          <Route path="/sports/*" element={<Navigate to="/sports/dashboard" replace />} />
+
+          {/* Global Catch-all - go to landing page, not academic (which triggers login redirect) */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }

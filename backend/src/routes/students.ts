@@ -73,7 +73,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
       students = await StudentModel.findAll();
     } else if (userRole === 'teacher') {
       // Teachers only see students assigned to their class
-      const [rows] = await pool.execute(`
+      const [rows] = await pool.query(`
         SELECT s.* 
         FROM students s
         INNER JOIN student_assignment sa ON s.id = sa.student_id

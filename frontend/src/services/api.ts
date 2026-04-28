@@ -1107,7 +1107,7 @@ export default {
 
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/sports';
+const API_URL = 'http://localhost:5005/api/sports';
 
 // Create axios instance with auth interceptor
 const api = axios.create({
@@ -1129,18 +1129,17 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        // Handle connection errors (backend down) or 401 Unauthorized
-        const isNetworkError = !error.response && error.code !== 'ERR_CANCELED';
+        // Handle 401 Unauthorized only (not network errors - those are transient)
         const isUnauthorized = error.response?.status === 401;
 
-        if (isNetworkError || isUnauthorized) {
-            // Only clear and redirect if we're not on the landing page or login page
-            const publicPaths = ['/', '/login'];
-            const isPublicRoute = publicPaths.includes(window.location.pathname);
+        if (isUnauthorized) {
+            // Only clear and redirect if we're on a sports route
+            const isSportsRoute = window.location.pathname.startsWith('/sports');
+            const isPublicRoute = ['/', '/login', '/sports/login'].includes(window.location.pathname);
             
-            if (!isPublicRoute) {
+            if (isSportsRoute && !isPublicRoute) {
                 localStorage.removeItem('user');
-                window.location.href = '/login';
+                window.location.href = '/sports/login';
             }
         }
         return Promise.reject(error);

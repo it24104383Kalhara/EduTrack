@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../services/api';
 
 const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
   const [isRegister, setIsRegister] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [username, setUsername] = useState('');
@@ -134,6 +136,7 @@ const LoginPage: React.FC = () => {
 
         if (response.ok && data.success) {
           login(data.data.token, data.data.user);
+          navigate('/academic');
         } else {
           setError(data.message || 'Login failed. Please verify your credentials.');
         }

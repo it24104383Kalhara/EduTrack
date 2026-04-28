@@ -49,7 +49,7 @@ app.use('/api/sports', sportActivityRoutes);
 app.use('/api/sports/memberships', membershipRoutes);
 app.use('/api/sports/inventory', inventoryRoutes);
 app.use('/api/sports/facilities', facilityRoutes);
-app.use('/api/sports/attendance', attendanceRoutes); // Wait, line 9 is attendanceRoutes from sport, line 21 is attendanceRoutes from student. I will rename line 9.
+app.use('/api/sports/attendance', sportAttendanceRoutes);
 app.use('/api/sports/alerts', alertRoutes);
 app.use('/api/sports/achievements', achievementRoutes);
 app.use('/api/sports/students', studentRoutes);

@@ -16,7 +16,7 @@ const LoginPage = () => {
         login(role, name);
         
         // Redirect to the page they tried to visit, or dashboard
-        const from = (location.state as any)?.from?.pathname || "/dashboard";
+        const from = (location.state as any)?.from?.pathname || "/sports/dashboard";
         navigate(from, { replace: true });
     };
 

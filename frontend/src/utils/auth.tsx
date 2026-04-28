@@ -10,12 +10,12 @@ export const useAuth = () => {
     const login = (role: string, name: string) => {
         const mockUser = { id: 1, role, name };
         localStorage.setItem("user", JSON.stringify(mockUser));
-        navigate("/dashboard");
+        navigate("/sports/dashboard");
     };
 
     const logout = () => {
         localStorage.removeItem("user");
-        navigate("/login");
+        navigate("/sports/login");
     };
 
     return { user, login, logout, isAuthenticated: !!user };
@@ -28,7 +28,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: { children: React.Rea
     const location = useLocation();
 
     if (!isAuthenticated) {
-        return <Navigate to="/login" state={{ from: location }} replace />;
+        return <Navigate to="/sports/login" state={{ from: location }} replace />;
     }
 
     if (allowedRoles && !allowedRoles.includes(user.role)) {

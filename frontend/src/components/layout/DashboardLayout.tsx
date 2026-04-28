@@ -74,7 +74,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         {
             name: 'Dashboard',
             icon: HomeIcon,
-            path: '/dashboard',
+            path: '/sports/dashboard',
         },
         {
             name: 'Sports & Activities',
@@ -94,7 +94,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 { name: 'Teacher Alerts', path: '/sports/teacher-notifications' },
             ],
         },
-        { name: 'Academics', icon: AcademicCapIcon, path: '/academics' },
+        { name: 'Academics', icon: AcademicCapIcon, path: '/academic' },
         { name: 'Inventory', icon: RectangleStackIcon, path: '/sports/inventory' },
         { name: 'Facilities', icon: BuildingOfficeIcon, path: '/sports/facilities' },
         { name: 'Achievements', icon: TrophyIcon, path: '/sports/achievements' },
