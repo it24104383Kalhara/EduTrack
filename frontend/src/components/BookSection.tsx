@@ -23,7 +23,7 @@ export default function ManageBooks() {
 
   const fetchBooks = async () => {
     try {
-      const res = await fetch("http://localhost:3000/books");
+      const res = await fetch("http://localhost:5000/books");
       const data: Book[] = await res.json();
       setBooks(data);
       
@@ -40,7 +40,7 @@ export default function ManageBooks() {
       const booksWithCounts = await Promise.all(
         books.map(async (book) => {
           try {
-            const res = await fetch(`http://localhost:3000/esp/book/${book.book_id}`);
+            const res = await fetch(`http://localhost:5000/esp/book/${book.book_id}`);
             const copies = await res.json();
             return { ...book, copy_count: copies.length };
           } catch (err) {
@@ -81,7 +81,7 @@ export default function ManageBooks() {
     };
 
     try {
-      const res = await fetch(`http://localhost:3000/books/${editingBook.book_id}`, {
+      const res = await fetch(`http://localhost:5000/books/${editingBook.book_id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -109,7 +109,7 @@ export default function ManageBooks() {
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/books/${book.book_id}`, { method: "DELETE" });
+      const res = await fetch(`http://localhost:5000/books/${book.book_id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete book");
 
       setBooks((prev) => prev.filter((b) => b.book_id !== book.book_id));

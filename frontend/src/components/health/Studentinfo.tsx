@@ -71,12 +71,11 @@ function StudentInfo({ onLogout, onBack }: StudentInfoProps) {
 
   return (
     <div className="student-page">
-      <button className="back-btn" onClick={onBack}>
-        ← Back to Dashboard
-      </button>
-      <button className="logout-btn" onClick={onLogout}>
-        Logout
-      </button>
+      <div className="top-nav">
+        <button className="back-btn" onClick={onBack}>← Back to Dashboard</button>
+        <button className="logout-btn" onClick={onLogout}>Logout</button>
+      </div>
+      <div style={{ padding: '0 40px' }}>
 
       <div className="student-page-header">
         <div className="student-badge">
@@ -155,6 +154,7 @@ function StudentInfo({ onLogout, onBack }: StudentInfoProps) {
           Send Email to Parent
         </button>
       </form>
+      </div>
     </div>
   );
 }

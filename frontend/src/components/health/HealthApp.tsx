@@ -5,11 +5,13 @@ import StudentInfo from "./Studentinfo";
 import ViewStudents from "./ViewStudents";
 import FindHospital from "./FindHospital";
 import HeartRateMonitor from "./HeartRateMonitor";
+import ResetPassword from "./ResetPassword";
 
-type Page = "login" | "dashboard" | "student-form" | "view-students" | "find-hospital" | "heart-rate";
+type Page = "login" | "dashboard" | "student-form" | "view-students" | "find-hospital" | "heart-rate" | "reset-password";
 
 export default function HealthApp() {
   const [page, setPage] = useState<Page>("login");
+  const [username, setUsername] = useState("");
 
   if (page === "dashboard") {
     return (
@@ -17,9 +19,18 @@ export default function HealthApp() {
         onLogout={() => setPage("login")}
         onNavigateToStudentForm={() => setPage("student-form")}
         onNavigateToViewStudents={() => setPage("view-students")}
-        onNavigateToResetPassword={() => {}}
+        onNavigateToResetPassword={() => setPage("reset-password")}
         onNavigateToHeartRateMonitor={() => setPage("heart-rate")}
         onNavigateToFindHospital={() => setPage("find-hospital")}
+      />
+    );
+  }
+
+  if (page === "reset-password") {
+    return (
+      <ResetPassword
+        onBack={() => setPage("dashboard")}
+        username={username}
       />
     );
   }
@@ -60,5 +71,5 @@ export default function HealthApp() {
     );
   }
 
-  return <Health onLoginSuccess={() => setPage("dashboard")} />;
+  return <Health onLoginSuccess={(u) => { setUsername(u); setPage("dashboard"); }} />;
 }

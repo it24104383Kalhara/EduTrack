@@ -44,12 +44,28 @@ app.use("/api", analyticsRouter);
 app.use("/api/overdue", overdueFinesRouter);
 
 // Health module routes
-app.post("/api/login", (req, res) => {
+app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
-  if (username === "health" && password === "health123") {
-    res.json({ success: true, message: "Login successful" });
-  } else {
+  try {
+    // 1. Check database first
+    const [rows]: any = await db.query(
+      "SELECT * FROM users WHERE username = ? AND password = ?",
+      [username, password]
+    );
+
+    if (rows.length > 0) {
+      return res.json({ success: true, message: "Login successful" });
+    }
+
+    // 2. Fallback for default user if not in DB yet
+    if (username === "health" && password === "health123") {
+      return res.json({ success: true, message: "Login successful" });
+    }
+
     res.json({ success: false, message: "Invalid credentials" });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
@@ -91,15 +107,37 @@ app.delete("/api/students/:id", async (req, res) => {
 app.post("/api/reset-password", async (req, res) => {
   const { oldPassword, newPassword, username } = req.body;
   try {
+    // Check if user exists in DB
     const [rows]: any = await db.query(
-      "SELECT * FROM users WHERE username = ? AND password = ?",
-      [username, oldPassword]
+      "SELECT * FROM users WHERE username = ?",
+      [username]
     );
-    if (rows.length === 0)
+
+    if (rows.length === 0) {
+      // Fallback for default 'health' user
+      if (username === "health" && oldPassword === "health123") {
+        await db.query(
+          "INSERT INTO users (username, password) VALUES (?, ?)",
+          [username, newPassword]
+        );
+        return res.json({ success: true, message: "Password reset successfully!" });
+      }
       return res.json({ success: false, message: "Old password is incorrect" });
-    await db.query("UPDATE users SET password = ? WHERE username = ?", [newPassword, username]);
+    }
+
+    // User exists, verify old password
+    if (rows[0].password !== oldPassword) {
+      return res.json({ success: false, message: "Old password is incorrect" });
+    }
+
+    // Update password
+    await db.query(
+      "UPDATE users SET password = ? WHERE username = ?",
+      [newPassword, username]
+    );
     res.json({ success: true, message: "Password reset successfully!" });
   } catch (error) {
+    console.error("Reset password error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });

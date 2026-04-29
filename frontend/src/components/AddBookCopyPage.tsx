@@ -43,7 +43,7 @@ export default function AddBookCopyPage() {
       fetchBookCopies(selectedBook.book_id);
       
       // Tell ESP32 to switch to copy mode
-      fetch("http://localhost:3000/esp/mode", {
+      fetch("http://localhost:5000/esp/mode", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode: "copy", book_id: selectedBook.book_id })
@@ -52,7 +52,7 @@ export default function AddBookCopyPage() {
     
     return () => {
       if (selectedBook) {
-        fetch("http://localhost:3000/esp/mode", {
+        fetch("http://localhost:5000/esp/mode", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ mode: "student" })
@@ -63,7 +63,7 @@ export default function AddBookCopyPage() {
 
   const fetchBooks = async () => {
     try {
-      const response = await fetch("http://localhost:3000/books");
+      const response = await fetch("http://localhost:5000/books");
       const data = await response.json();
       setBooks(data);
     } catch (err) {
@@ -75,7 +75,7 @@ export default function AddBookCopyPage() {
   const fetchBookCopies = async (bookId: number) => {
     try {
       console.log("Fetching copies for book:", bookId);
-      const response = await fetch(`http://localhost:3000/esp/book/${bookId}`);
+      const response = await fetch(`http://localhost:5000/esp/book/${bookId}`);
       const data = await response.json();
       console.log("Copies received:", data);
       setBookCopies(data);
@@ -98,7 +98,7 @@ export default function AddBookCopyPage() {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:3000/esp/copy?uid=${rfidUID.trim().toUpperCase()}&book_id=${selectedBook.book_id}`
+        `http://localhost:5000/esp/copy?uid=${rfidUID.trim().toUpperCase()}&book_id=${selectedBook.book_id}`
       );
       const data = await response.json();
       

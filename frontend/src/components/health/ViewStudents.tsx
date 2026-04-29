@@ -19,8 +19,13 @@ function ViewStudents({ onLogout, onBack }: ViewStudentsProps) {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedDate, setExpandedDate] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
-  const groupedStudents = students.reduce(
+  const filtered = students.filter(s =>
+    s.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const groupedStudents = filtered.reduce(
     (acc, student) => {
       const dateStr = new Date(student.date).toLocaleDateString();
       if (!acc[dateStr]) acc[dateStr] = [];
@@ -65,12 +70,21 @@ function ViewStudents({ onLogout, onBack }: ViewStudentsProps) {
 
   return (
     <div className="view-students-page">
-      <button className="back-btn" onClick={onBack}>
-        ← Back
-      </button>
-      <button className="logout-btn" onClick={onLogout}>
-        Logout
-      </button>
+      <div className="top-nav">
+        <button className="back-btn" onClick={onBack}>← Back</button>
+        <button className="logout-btn" onClick={onLogout}>Logout</button>
+      </div>
+      <div style={{ padding: '0 40px' }}>
+
+      <div className="view-students-search">
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="search-input"
+        />
+      </div>
 
       <div className="view-students-header">
         <div className="view-students-badge">
@@ -97,11 +111,11 @@ function ViewStudents({ onLogout, onBack }: ViewStudentsProps) {
       </div>
 
       {loading && <p className="loading">Loading records...</p>}
-      {!loading && students.length === 0 && (
+      {!loading && filtered.length === 0 && (
         <p className="no-data">No students found.</p>
       )}
 
-      {!loading && students.length > 0 && (
+      {!loading && filtered.length > 0 && (
         <div className="date-blocks-wrapper">
           {Object.entries(groupedStudents).map(([date, dateStudents]) => (
             <div key={date} className="date-block">
@@ -196,6 +210,7 @@ function ViewStudents({ onLogout, onBack }: ViewStudentsProps) {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

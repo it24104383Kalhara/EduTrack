@@ -15,7 +15,7 @@ export default function AttendanceSection() {
   const [error, setError] = useState("");
 
   const fetchLogs = () => {
-    fetch("http://localhost:3000/library_entry_logs")
+    fetch("http://localhost:5000/library_entry_logs")
       .then(res => {
         if (!res.ok) throw new Error("Failed to fetch library logs");
         return res.json();

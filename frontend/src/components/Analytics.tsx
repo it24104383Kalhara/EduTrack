@@ -65,7 +65,7 @@ export default function Analytics() {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/analytics");
+      const response = await fetch("http://localhost:5000/api/analytics");
       const data = await response.json();
       console.log("Analytics data:", data);
       setAnalytics(data);
@@ -78,7 +78,7 @@ export default function Analytics() {
 
   const fetchAlerts = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/alerts");
+      const response = await fetch("http://localhost:5000/api/alerts");
       const data = await response.json();
       setAlerts(data);
     } catch (err) {

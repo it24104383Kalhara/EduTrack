@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../../css/health/health.css";
 
 interface HealthProps {
@@ -8,6 +9,7 @@ interface HealthProps {
 function Health({ onLoginSuccess }: HealthProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,9 +107,18 @@ function Health({ onLoginSuccess }: HealthProps) {
                 required
               />
             </div>
-            <button type="submit" className="signin-btn">
-              Sign In
-            </button>
+            <div className="login-actions">
+              <button type="submit" className="signin-btn">
+                Sign In
+              </button>
+              <button
+                type="button"
+                className="back-home-btn"
+                onClick={() => navigate("/")}
+              >
+                Back 
+              </button>
+            </div>
           </form>
         </div>
       </div>

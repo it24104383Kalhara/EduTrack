@@ -29,7 +29,7 @@ export default function OverdueFinesSection() {
   const fetchOverdues = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3000/api/overdue");
+      const response = await fetch("http://localhost:5000/api/overdue");
       if (!response.ok) throw new Error("Failed to fetch overdues");
       const data = await response.json();
       setOverdues(data);
@@ -49,7 +49,7 @@ export default function OverdueFinesSection() {
     if (!confirm(`Pay fine of Rs. ${amount}?`)) return;
     
     try {
-      const response = await fetch("http://localhost:3000/api/overdue/pay", {
+      const response = await fetch("http://localhost:5000/api/overdue/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ borrowing_id, amount })

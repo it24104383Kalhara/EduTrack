@@ -24,7 +24,7 @@ export default function BorrowingsSection() {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/borrowings")
+    fetch("http://localhost:5000/api/borrowings")
       .then((res) => {
         if (!res.ok) throw new Error(`Server responded with ${res.status}`);
         return res.json();
