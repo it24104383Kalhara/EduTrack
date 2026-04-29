@@ -20,6 +20,13 @@ function StudentInfo({ onLogout, onBack }: StudentInfoProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const ageNum = parseInt(student.age);
+    if (ageNum < 6 || ageNum > 20) {
+      alert("Age must be between 6 and 20.");
+      return;
+    }
+
     try {
       const response = await fetch("http://localhost:5000/api/students", {
         method: "POST",
@@ -27,8 +34,12 @@ function StudentInfo({ onLogout, onBack }: StudentInfoProps) {
         body: JSON.stringify(student),
       });
       const data = await response.json();
-      alert(data.message);
-      setStudent({ name: "", age: "", date: "", symptoms: "", parentEmail: "" });
+      if (data.success) {
+        alert(data.message);
+        setStudent({ name: "", age: "", date: "", symptoms: "", parentEmail: "" });
+      } else {
+        alert(data.message);
+      }
     } catch {
       alert("Connection error");
     }
@@ -74,6 +85,7 @@ function StudentInfo({ onLogout, onBack }: StudentInfoProps) {
         <div className="form-group">
           <label>Age</label>
           <input type="number" placeholder="Enter age" value={student.age}
+            min="6" max="20"
             onChange={(e) => setStudent({ ...student, age: e.target.value })} required />
         </div>
         <div className="form-group">

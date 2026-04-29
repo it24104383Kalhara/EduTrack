@@ -35,6 +35,11 @@ app.post("/api/login", async (req, res) => {
 
 app.post("/api/students", async (req, res) => {
   const { name, age, date, symptoms, parentEmail } = req.body;
+
+  if (age < 6 || age > 20) {
+    return res.status(400).json({ success: false, message: "Age must be between 6 and 20." });
+  }
+
   try {
     await pool.query(
       "INSERT INTO students (name, age, date, symptoms, parent_email) VALUES (?, ?, ?, ?, ?)",
