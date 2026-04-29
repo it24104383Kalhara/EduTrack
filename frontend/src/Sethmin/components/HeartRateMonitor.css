@@ -1,0 +1,583 @@
+/* ─── HeartRateMonitor — LandingPage-matched theme ───────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+.hrm-root {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #faf8ff 0%, #f0e9ff 40%, #ffe4ec 100%);
+  font-family: 'Inter', sans-serif;
+  color: #1f2937;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ─── Background blobs ───────────────────────────────────────────────────── */
+.hrm-blob-1 {
+  position: fixed;
+  top: -120px;
+  left: 15%;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #c39bd3 0%, transparent 70%);
+  opacity: 0.25;
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hrm-blob-2 {
+  position: fixed;
+  bottom: -80px;
+  right: -60px;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fda4af 0%, transparent 70%);
+  opacity: 0.2;
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+.hrm-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.75);
+  border-bottom: 1px solid rgba(99, 49, 148, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.hrm-header-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hrm-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.hrm-logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #633194, #9b59b6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(99, 49, 148, 0.3);
+  flex-shrink: 0;
+}
+
+.hrm-logo-icon svg {
+  width: 18px;
+  height: 18px;
+  color: white;
+}
+
+.hrm-logo-text {
+  font-size: 16px;
+  font-weight: 800;
+  color: #633194;
+}
+
+.hrm-title-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hrm-page-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #633194;
+  line-height: 1;
+}
+
+.hrm-page-sub {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.hrm-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hrm-btn-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 2px solid rgba(99, 49, 148, 0.2);
+  background: transparent;
+  color: #633194;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.hrm-btn-back:hover {
+  background: #F4F0FF;
+  border-color: #633194;
+  transform: translateY(-1px);
+}
+
+.hrm-btn-logout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
+  font-family: 'Inter', sans-serif;
+}
+
+.hrm-btn-logout:hover {
+  box-shadow: 0 6px 20px rgba(244, 63, 94, 0.4);
+  transform: translateY(-1px);
+}
+
+/* ─── Main content ────────────────────────────────────────────────────────── */
+.hrm-main {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 24px 60px;
+}
+
+/* ─── Status + IP row ─────────────────────────────────────────────────────── */
+.hrm-top-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+  .hrm-top-row { grid-template-columns: 1fr; }
+}
+
+.hrm-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid rgba(99, 49, 148, 0.08);
+  box-shadow: 0 4px 24px rgba(99, 49, 148, 0.07);
+  padding: 20px 24px;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.hrm-card:hover {
+  box-shadow: 0 8px 32px rgba(99, 49, 148, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Connection status */
+.hrm-conn-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hrm-conn-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+
+.hrm-conn-dot.connected {
+  background: #22c55e;
+  animation: hrm-pulse 2s infinite;
+}
+
+@keyframes hrm-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+}
+
+.hrm-conn-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.hrm-conn-badge {
+  margin-left: auto;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.hrm-conn-badge.connected {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.hrm-conn-badge.disconnected {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* IP config */
+.hrm-ip-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.hrm-ip-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(99, 49, 148, 0.15);
+  background: rgba(244, 240, 255, 0.4);
+  font-size: 14px;
+  font-family: 'Inter', monospace;
+  font-weight: 600;
+  color: #633194;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.hrm-ip-input:focus {
+  border-color: #633194;
+  box-shadow: 0 0 0 3px rgba(99, 49, 148, 0.12);
+}
+
+/* ─── Heart display (hero card) ───────────────────────────────────────────── */
+.hrm-hero-card {
+  background: linear-gradient(135deg, #633194 0%, #9b59b6 60%, #c39bd3 100%);
+  border-radius: 28px;
+  padding: 48px 40px;
+  text-align: center;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(99, 49, 148, 0.35);
+}
+
+.hrm-hero-card::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.15), transparent 70%);
+  pointer-events: none;
+}
+
+.hrm-hero-card::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; left: -40px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1), transparent 70%);
+  pointer-events: none;
+}
+
+.hrm-heart-icon {
+  font-size: 80px;
+  line-height: 1;
+  display: inline-block;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
+}
+
+.hrm-heart-icon.beating {
+  animation: hrm-heartbeat 0.8s ease-in-out infinite;
+}
+
+@keyframes hrm-heartbeat {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.18); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.1); }
+}
+
+.hrm-bpm-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.hrm-bpm-value {
+  font-size: 88px;
+  font-weight: 900;
+  line-height: 1;
+  color: white;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  transition: color 0.4s;
+}
+
+.hrm-bpm-value.low    { color: #fde68a; }
+.hrm-bpm-value.high   { color: #f9a8d4; }
+.hrm-bpm-value.normal { color: white; }
+
+.hrm-bpm-unit {
+  font-size: 22px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.7);
+  padding-bottom: 12px;
+}
+
+.hrm-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 18px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(4px);
+  margin-top: 4px;
+}
+
+.hrm-status-badge.low,
+.hrm-status-badge.high {
+  background: rgba(249, 168, 212, 0.25);
+  border-color: rgba(249, 168, 212, 0.5);
+}
+
+.hrm-status-badge.normal {
+  background: rgba(134, 239, 172, 0.25);
+  border-color: rgba(134, 239, 172, 0.5);
+}
+
+/* ─── Stats row ───────────────────────────────────────────────────────────── */
+.hrm-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 500px) {
+  .hrm-stats-row { grid-template-columns: 1fr; }
+}
+
+.hrm-stat-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid rgba(99, 49, 148, 0.08);
+  box-shadow: 0 4px 20px rgba(99, 49, 148, 0.07);
+  padding: 20px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.hrm-stat-card:hover {
+  box-shadow: 0 8px 30px rgba(99, 49, 148, 0.12);
+  transform: translateY(-2px);
+}
+
+.hrm-stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #F4F0FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  font-size: 18px;
+}
+
+.hrm-stat-value {
+  font-size: 26px;
+  font-weight: 900;
+  color: #633194;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.hrm-stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─── History graph ───────────────────────────────────────────────────────── */
+.hrm-history-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 24px;
+  border: 1px solid rgba(99, 49, 148, 0.08);
+  box-shadow: 0 4px 24px rgba(99, 49, 148, 0.07);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.hrm-section-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #633194;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 16px;
+}
+
+.hrm-section-label span {
+  width: 4px;
+  height: 16px;
+  border-radius: 99px;
+  background: linear-gradient(135deg, #633194, #9b59b6);
+  display: inline-block;
+}
+
+.hrm-graph {
+  display: flex;
+  align-items: flex-end;
+  height: 120px;
+  gap: 5px;
+  padding: 0 4px;
+  border-bottom: 2px solid rgba(99, 49, 148, 0.1);
+  margin-bottom: 16px;
+}
+
+.hrm-bar {
+  flex: 1;
+  border-radius: 6px 6px 0 0;
+  transition: height 0.4s ease, background-color 0.3s;
+  min-height: 6px;
+  cursor: pointer;
+  position: relative;
+}
+
+.hrm-bar.normal { background: linear-gradient(to top, #633194, #9b59b6); }
+.hrm-bar.abnormal { background: linear-gradient(to top, #e11d48, #f43f5e); }
+
+.hrm-bar:hover::after {
+  content: attr(data-bpm) ' BPM';
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ─── Instructions card ───────────────────────────────────────────────────── */
+.hrm-info-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 24px;
+  border: 1px solid rgba(99, 49, 148, 0.08);
+  box-shadow: 0 4px 24px rgba(99, 49, 148, 0.07);
+  padding: 24px;
+}
+
+.hrm-info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.hrm-info-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(99, 49, 148, 0.06);
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.hrm-info-list li:last-child { border-bottom: none; }
+
+.hrm-info-list li .hrm-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  background: #F4F0FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.hrm-info-list li .hrm-check svg {
+  width: 12px;
+  height: 12px;
+  color: #633194;
+}
+
+/* ─── Range indicator pill ────────────────────────────────────────────────── */
+.hrm-range {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 8px 16px;
+  border-radius: 99px;
+  background: #F4F0FF;
+  font-size: 12px;
+  font-weight: 700;
+  color: #633194;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}

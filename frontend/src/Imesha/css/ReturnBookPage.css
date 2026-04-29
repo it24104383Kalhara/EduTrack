@@ -1,0 +1,405 @@
+/* ReturnBookPage.css - Modern Purple Theme */
+
+.return-book-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Poppins', Roboto, sans-serif;
+  background: #F9FAFB;
+  min-height: 100vh;
+}
+
+.return-book-page h2 {
+  color: #1F2937;
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #633194 0%, #7B46B0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+}
+
+/* Main Card */
+.main-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #F0F0F0;
+}
+
+/* Last Scanned Card */
+.last-scanned-card {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.last-scanned-card.student {
+  background: #E3F2FD;
+  border-left: 4px solid #2196F3;
+}
+
+.last-scanned-card.book {
+  background: #FFF3E0;
+  border-left: 4px solid #FF9800;
+}
+
+.last-scanned-card .label {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #1F2937;
+}
+
+.last-scanned-card .content {
+  font-size: 1rem;
+  color: #1F2937;
+}
+
+.last-scanned-card .uid {
+  color: #666;
+  font-size: 0.75rem;
+}
+
+/* Instructions Box */
+.instructions-box {
+  background: #F4F0FF;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #E9E4FF;
+}
+
+.instructions-box strong {
+  color: #633194;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.instructions-box p {
+  margin: 0;
+  color: #1F2937;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* Steps Indicator */
+.steps-container {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.step {
+  flex: 1;
+  text-align: center;
+  padding: 0.75rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.step.active {
+  background: linear-gradient(135deg, #633194 0%, #7B46B0 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(99, 49, 148, 0.2);
+}
+
+.step.inactive {
+  background: #F3F4F6;
+  color: #6B7280;
+}
+
+/* Manual Input Toggle */
+.manual-toggle {
+  margin-bottom: 1.5rem;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.manual-toggle summary {
+  cursor: pointer;
+  color: #633194;
+  font-weight: 600;
+  padding: 1rem;
+  background: #F9FAFB;
+  transition: all 0.2s ease;
+}
+
+.manual-toggle summary:hover {
+  background: #F4F0FF;
+}
+
+.manual-content {
+  padding: 1rem;
+  border-top: 1px solid #E5E7EB;
+}
+
+.input-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #1F2937;
+}
+
+.input-group {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.input-group input {
+  flex: 1;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  background: white;
+  color: #1F2937;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #633194;
+  box-shadow: 0 0 0 3px rgba(99, 49, 148, 0.1);
+}
+
+.input-group input::placeholder {
+  color: #9CA3AF;
+}
+
+.hint-text {
+  font-size: 0.7rem;
+  color: #9CA3AF;
+  margin-top: 0.5rem;
+}
+
+.verify-btn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #633194 0%, #7B46B0 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.verify-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 49, 148, 0.3);
+}
+
+.verify-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Info Cards */
+.info-card {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+.info-card.book {
+  background: #FFF3E0;
+  border-left: 4px solid #FF9800;
+}
+
+.info-card.student {
+  background: #E8F5E9;
+  border-left: 4px solid #4CAF50;
+}
+
+.info-card strong {
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.info-card .sub-text {
+  font-size: 0.8rem;
+  color: #6B7280;
+  margin-top: 0.25rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.return-btn {
+  flex: 1;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #FF9800 0%, #F59E0B 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.return-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.return-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.reset-btn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.reset-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Message */
+.message {
+  margin-bottom: 1.25rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.message.success {
+  background: #D4EDDA;
+  color: #155724;
+  border: 1px solid #C3E6CB;
+}
+
+.message.error {
+  background: #F8D7DA;
+  color: #721C24;
+  border: 1px solid #F5C6CB;
+}
+
+/* Footer */
+.footer-info {
+  margin-top: 1.25rem;
+  padding: 0.75rem;
+  background: #F9FAFB;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #E5E7EB;
+}
+
+.footer-info p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #6B7280;
+  line-height: 1.5;
+}
+
+.footer-info strong {
+  color: #633194;
+}
+
+/* Success Page */
+.success-page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.success-card {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border: 1px solid #F0F0F0;
+}
+
+.success-icon {
+  font-size: 3rem;
+  margin-bottom: 1.25rem;
+}
+
+.success-card h3 {
+  color: #1F2937;
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.success-card p {
+  color: #6B7280;
+  font-size: 0.875rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .return-book-page {
+    padding: 1rem;
+  }
+  
+  .main-card {
+    padding: 1rem;
+  }
+  
+  .steps-container {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .input-group {
+    flex-direction: column;
+  }
+  
+  .verify-btn {
+    width: 100%;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .reset-btn {
+    width: 100%;
+  }
+  
+  .success-card {
+    padding: 2rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.main-card,
+.info-card,
+.last-scanned-card {
+  animation: fadeIn 0.3s ease;
+}

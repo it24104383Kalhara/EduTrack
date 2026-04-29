@@ -1,0 +1,337 @@
+.view-students-page {
+  min-height: 100vh;
+  padding: 80px 40px 60px;
+  background: linear-gradient(160deg, #faf8ff 0%, #f0e9ff 40%, #e8f5fe 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.view-students-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 25%;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #c39bd3 0%, transparent 70%);
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.view-students-page::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #93c5fd 0%, transparent 70%);
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+/* ── Buttons ── */
+.back-btn,
+.logout-btn {
+  position: absolute;
+  top: 20px;
+  padding: 10px 22px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 18px;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+  z-index: 10;
+}
+
+.back-btn {
+  left: 20px;
+  background: #4caf50;
+  color: white;
+  box-shadow: 0 2px 8px rgba(76,175,80,0.25);
+}
+
+.logout-btn {
+  right: 20px;
+  background: #ff4d6d;
+  color: white;
+  box-shadow: 0 2px 8px rgba(255,77,109,0.25);
+}
+
+.back-btn:hover,
+.logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+/* ── Header ── */
+.view-students-header {
+  text-align: center;
+  margin-bottom: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.view-students-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  border: 1px solid #bfdbfe;
+  color: #2563eb;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(37,99,235,0.08);
+  margin-bottom: 14px;
+  letter-spacing: 0.03em;
+}
+
+.view-students-page h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 8px;
+  line-height: 1.15;
+}
+
+.view-students-page h1 span {
+  background: linear-gradient(135deg, #2563eb, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.view-students-subtitle {
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* ── States ── */
+.loading,
+.no-data {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #6b7280;
+  margin-top: 60px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Grid ── */
+.students-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Student Card ── */
+.student-card {
+  background: white;
+  padding: 26px;
+  border-radius: 24px;
+  border: 1px solid #eff6ff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+
+.student-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #2563eb, #60a5fa);
+  border-radius: 24px 24px 0 0;
+}
+
+.student-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 36px rgba(0,0,0,0.1);
+}
+
+/* Student avatar initial */
+.student-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #2563eb, #60a5fa);
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.student-card h2 {
+  color: #111827;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+
+.student-card p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 7px 0;
+  color: #4b5563;
+  font-size: 0.85rem;
+}
+
+.student-card strong {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+/* ── Delete btn ── */
+.delete-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+  border-radius: 10px;
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.delete-btn:hover {
+  background: #ff4d6d;
+  color: white;
+  border-color: #ff4d6d;
+  transform: scale(1.1);
+}
+
+/* ── Date Blocks ── */
+.date-blocks-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.date-block {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid #eff6ff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  overflow: hidden;
+  transition: box-shadow 0.25s, transform 0.2s;
+}
+
+.date-block:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+.date-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  cursor: pointer;
+  background: #ffffff;
+  transition: background 0.2s;
+  user-select: none;
+}
+
+.date-block-header:hover {
+  background: #f8fafc;
+}
+
+.date-block-header.expanded {
+  border-bottom: 1px solid #eef2ff;
+  background: #f8fafc;
+}
+
+.date-block-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #2563eb;
+}
+
+.date-block-info h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.date-block-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.student-count.badge {
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid #bfdbfe;
+}
+
+.chevron {
+  color: #9ca3af;
+  transition: transform 0.3s ease;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+  color: #2563eb;
+}
+
+.date-block-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease-in-out;
+  background-color: #f8fafc;
+}
+
+.date-block-content.open {
+  grid-template-rows: 1fr;
+}
+
+.date-block-inner {
+  overflow: hidden;
+}
+
+.date-specific-grid {
+  padding: 24px;
+  margin: 0;
+}

@@ -1,0 +1,244 @@
+/* Dashboard.css - Modern Light Theme with Deep Purple Accents */
+/* Only visual changes - all functionality preserved */
+
+/* ── Overall Dashboard ── */
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+  background: #F9FAFB; /* Light grey/white background */
+  color: #1F2937;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Poppins', Roboto, sans-serif;
+}
+
+/* ── Sidebar Container ── */
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: white;
+  border-right: 1px solid #E5E7EB;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+  transition: width 0.28s ease;
+  padding: 1.5rem 0.5rem;
+}
+
+/* Sidebar title / logo */
+.sidebar h1, 
+.sidebar h2, 
+.sidebar-title {
+  color: #633194; /* Deep Purple */
+  font-weight: 700;
+  padding: 1rem 1.5rem 1rem;
+  margin: 0 0 1.5rem 0;
+  letter-spacing: -0.3px;
+  border-bottom: 2px solid #F3F4F6;
+}
+
+/* ── Sidebar Buttons – Modern Light Theme ── */
+.sidebar button,
+.sidebar a {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  margin: 0.25rem 0;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  color: #4B5563;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: visible;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.sidebar button::before,
+.sidebar a::before {
+  display: none;
+}
+
+.sidebar button:hover,
+.sidebar a:hover {
+  background: #F9FAFB;
+  color: #633194;
+  transform: translateX(0);
+  box-shadow: none;
+}
+
+.sidebar button:hover .icon,
+.sidebar a:hover .icon {
+  color: #633194;
+  transform: scale(1);
+}
+
+/* Active state - Soft Lavender background with Deep Purple indicator */
+.sidebar button.active,
+.sidebar a.active {
+  background: #F4F0FF; /* Soft Lavender */
+  color: #633194;
+  font-weight: 600;
+  box-shadow: none;
+  border-right: none;
+  transform: translateX(0);
+  position: relative;
+}
+
+.sidebar button.active::after,
+.sidebar a.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 32px;
+  background: #633194;
+  border-radius: 0 4px 4px 0;
+}
+
+.sidebar button.active .icon,
+.sidebar a.active .icon {
+  color: #633194;
+  transform: scale(1);
+}
+
+.sidebar button .icon,
+.sidebar a .icon {
+  margin-right: 16px;
+  font-size: 1.25rem;
+  color: #9CA3AF;
+  transition: all 0.2s ease;
+}
+
+/* ── Main Content Area ── */
+.content {
+  flex: 1;
+  padding: 2rem 2.5rem;
+  overflow-y: auto;
+  background: #F9FAFB;
+  min-height: 100vh;
+}
+
+/* Cards/sections inside content - Clean white cards */
+.content > div {
+  background: white;
+  border-radius: 16px;
+  padding: 1.8rem 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #F0F0F0;
+  margin-bottom: 1.5rem;
+}
+
+/* Optional: Add colored cards if your components use these classes */
+/* You can add these classes to your existing cards if needed */
+.card-purple {
+  background: #F4F0FF; /* Soft Lavender */
+}
+
+.card-blue {
+  background: #E1F5FE; /* Pastel Blue */
+}
+
+.card-peach {
+  background: #FFF0E6; /* Peach */
+}
+
+.card-green {
+  background: #E8F5E9; /* Green */
+}
+
+/* Typography enhancements - keeps your existing text styles */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Button styles for any action buttons in your app */
+button:not(.sidebar button) {
+  transition: all 0.2s ease;
+}
+
+button:not(.sidebar button):hover {
+  transform: translateY(-1px);
+}
+
+/* Responsive Design - preserves your existing layout behavior */
+@media (max-width: 768px) {
+  .dashboard {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 1rem;
+    background: white;
+  }
+
+  .sidebar h1, 
+  .sidebar h2, 
+  .sidebar-title {
+    display: none;
+  }
+
+  .sidebar button,
+  .sidebar a {
+    padding: 0.75rem 1rem;
+    margin: 0 0.25rem;
+    border-radius: 12px;
+    min-width: auto;
+    justify-content: center;
+    width: auto;
+  }
+
+  .sidebar button .icon,
+  .sidebar a .icon {
+    margin-right: 8px;
+  }
+
+  .sidebar button.active::after,
+  .sidebar a.active::after {
+    display: none;
+  }
+
+  .sidebar button.active,
+  .sidebar a.active {
+    border-right: none;
+  }
+
+  .content {
+    padding: 1.5rem 1.2rem;
+  }
+}
+
+/* Smooth scrollbar for modern look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F3F4F6;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
