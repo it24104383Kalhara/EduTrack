@@ -1,0 +1,53 @@
+@import "tailwindcss" layer(utilities);
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body, #root { margin: 0; padding: 0; min-height: 100vh; }
+}
+
+.dashboard {
+  display: flex;
+}
+
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  background-color: #1f2937;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.sidebar-title {
+  margin-bottom: 30px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.sidebar-btn {
+  background: none;
+  border: none;
+  color: white;
+  text-align: left;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.sidebar-btn:hover {
+  background-color: #374151;
+}
+
+.sidebar-btn.active {
+  background-color: #4f46e5;
+}
+
+.content {
+  flex: 1;
+  padding: 30px;
+  background-color: #f3f4f6;
+  min-height: 100vh;
+}
