@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/ReturnBookPage.css";
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 export default function ReturnBookPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState<"book" | "student">("book");
@@ -21,7 +23,7 @@ export default function ReturnBookPage() {
   useEffect(() => {
     const scanInterval = setInterval(async () => {
       try {
-        const response = await fetch("http://10.136.142.116:3000/api/last-scan");
+        const response = await fetch(`${API_BASE}/api/last-scan`);
         const data = await response.json();
         if (data.uid) {
           setLastScanned(data);
@@ -47,14 +49,14 @@ export default function ReturnBookPage() {
 
   // Tell ESP32 to switch to return mode when page loads
   useEffect(() => {
-    fetch("http://10.136.142.116:3000/api/esp/mode", {
+    fetch(`${API_BASE}/api/esp/mode`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mode: "return" })
     }).catch(err => console.error("Failed to switch mode:", err));
 
     // Get initial borrowings to track returns
-    fetch("http://10.136.142.116:3000/api/borrowings")
+    fetch(`${API_BASE}/api/borrowings`)
       .then(res => res.json())
       .then(data => {
         if (data.length > 0) {
@@ -68,7 +70,7 @@ export default function ReturnBookPage() {
 
     return () => {
       clearInterval(interval);
-      fetch("http://10.136.142.116:3000/api/esp/mode", {
+      fetch(`${API_BASE}/api/esp/mode`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode: "student" })
@@ -78,7 +80,7 @@ export default function ReturnBookPage() {
 
   const checkNewReturns = async () => {
     try {
-      const response = await fetch("http://10.136.142.116:3000/api/borrowings");
+      const response = await fetch(`${API_BASE}/api/borrowings`);
       const borrowings = await response.json();
       
       if (borrowings.length > 0) {
@@ -101,7 +103,7 @@ export default function ReturnBookPage() {
     if (step === "book") {
       setLoading(true);
       try {
-        const response = await fetch(`http://10.136.142.116:3000/api/borrowings/by-book-rfid/${rfid}`);
+        const response = await fetch(`${API_BASE}/api/borrowings/by-book-rfid/${rfid}`);
         if (!response.ok) throw new Error("Book not found or not borrowed");
         
         const data = await response.json();
@@ -125,7 +127,7 @@ export default function ReturnBookPage() {
     else if (step === "student") {
       setLoading(true);
       try {
-        const response = await fetch(`http://10.136.142.116:3000/api/students/rfid/${rfid}`);
+        const response = await fetch(`${API_BASE}/api/students/rfid/${rfid}`);
         if (!response.ok) throw new Error("Student not found");
         
         const student = await response.json();
@@ -159,7 +161,7 @@ export default function ReturnBookPage() {
         fineAmount = daysOverdue * 10;
       }
       
-      const response = await fetch("http://10.136.142.116:3000/api/return-book", {
+      const response = await fetch(`${API_BASE}/api/return-book`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -334,25 +336,24 @@ export default function ReturnBookPage() {
         </div>
 
         <div style={{ marginBottom: "20px" }}>
-  <button 
-    onClick={() => navigate("/dashboard")}
-    style={{ 
-      background: "#8f58d7", 
-      color: "white", 
-      border: "none", 
-      padding: "8px 16px", 
-      borderRadius: "5px",
-      cursor: "pointer",
-      fontSize: "14px",
-      display: "flex",
-      alignItems: "center",
-      gap: "5px"
-    }}
-  >
-    ← Back to Dashboard
-  </button>
-</div>
-
+          <button 
+            onClick={() => navigate("/dashboard")}
+            style={{ 
+              background: "#8f58d7", 
+              color: "white", 
+              border: "none", 
+              padding: "8px 16px", 
+              borderRadius: "5px",
+              cursor: "pointer",
+              fontSize: "14px",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px"
+            }}
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
       </div>
     </div>
   );

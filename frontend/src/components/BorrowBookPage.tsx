@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/BorrowBookPage.css";
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 export default function BorrowBookPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState<"student" | "book">("student");
@@ -20,7 +22,7 @@ export default function BorrowBookPage() {
   useEffect(() => {
     const scanInterval = setInterval(async () => {
       try {
-        const response = await fetch("http://10.136.142.116:3000/api/last-scan");
+        const response = await fetch(`${API_BASE}/api/last-scan`);
         const data = await response.json();
         if (data.uid) {
           setLastScanned(data);
@@ -45,13 +47,13 @@ export default function BorrowBookPage() {
   }, []);
 
   useEffect(() => {
-    fetch("http://10.136.142.116:3000/api/esp/mode", {
+    fetch(`${API_BASE}/api/esp/mode`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mode: "borrow" })
     }).catch(err => console.error("Failed to switch mode:", err));
 
-    fetch("http://10.136.142.116:3000/api/borrowings")
+    fetch(`${API_BASE}/api/borrowings`)
       .then(res => res.json())
       .then(data => {
         if (data.length > 0) {
@@ -64,7 +66,7 @@ export default function BorrowBookPage() {
     
     return () => {
       clearInterval(interval);
-      fetch("http://10.136.142.116:3000/api/esp/mode", {
+      fetch(`${API_BASE}/api/esp/mode`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode: "student" })
@@ -74,7 +76,7 @@ export default function BorrowBookPage() {
 
   const checkNewBorrowings = async () => {
     try {
-      const response = await fetch("http://10.136.142.116:3000/api/borrowings");
+      const response = await fetch(`${API_BASE}/api/borrowings`);
       const borrowings = await response.json();
       
       if (borrowings.length > 0) {
@@ -107,7 +109,7 @@ export default function BorrowBookPage() {
     
     setLoading(true);
     try {
-      const response = await fetch(`http://10.136.142.116:3000/api/students/rfid/${studentRFID}`);
+      const response = await fetch(`${API_BASE}/api/students/rfid/${studentRFID}`);
       if (!response.ok) throw new Error("Student not found");
       
       const student = await response.json();
@@ -137,7 +139,7 @@ export default function BorrowBookPage() {
     
     setLoading(true);
     try {
-      const response = await fetch(`http://10.136.142.116:3000/api/books/rfid/${bookRFID}`);
+      const response = await fetch(`${API_BASE}/api/books/rfid/${bookRFID}`);
       if (!response.ok) throw new Error("Book not found");
       
       const book = await response.json();
@@ -165,7 +167,7 @@ export default function BorrowBookPage() {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 14);
       
-      const response = await fetch("http://10.136.142.116:3000/api/borrowings", {
+      const response = await fetch(`${API_BASE}/api/borrowings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -336,27 +338,25 @@ export default function BorrowBookPage() {
           </p>
         </div>
 
-
         <div style={{ marginBottom: "20px" }}>
-  <button 
-    onClick={() => navigate("/dashboard")}
-    style={{ 
-      background: "#8f58d7", 
-      color: "white", 
-      border: "none", 
-      padding: "8px 16px", 
-      borderRadius: "5px",
-      cursor: "pointer",
-      fontSize: "14px",
-      display: "flex",
-      alignItems: "center",
-      gap: "5px"
-    }}
-  >
-    ← Back to Dashboard
-  </button>
-</div>
-
+          <button 
+            onClick={() => navigate("/dashboard")}
+            style={{ 
+              background: "#8f58d7", 
+              color: "white", 
+              border: "none", 
+              padding: "8px 16px", 
+              borderRadius: "5px",
+              cursor: "pointer",
+              fontSize: "14px",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px"
+            }}
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
       </div>
     </div>
   );
