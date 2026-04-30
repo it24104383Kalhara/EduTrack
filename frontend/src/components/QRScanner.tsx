@@ -8,68 +8,66 @@ interface QRScannerProps {
 
 const QRScanner: React.FC<QRScannerProps> = ({ onScan }) => {
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
-  const isRunningRef = useRef(false);
   const [scannerOn, setScannerOn] = useState(false);
+  const isStartingRef = useRef(false);
+  const isMounted = useRef(true);
 
   const startScanner = async () => {
+    // Prevent multiple simultaneous start attempts
+    if (isStartingRef.current || scannerOn) return;
+
     if (!html5QrCodeRef.current) {
       html5QrCodeRef.current = new Html5Qrcode("qr-reader");
     }
 
+    isStartingRef.current = true;
     try {
       await html5QrCodeRef.current.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: 300 },
         (decodedText) => {
-          onScan(decodedText);
+          if (isMounted.current) onScan(decodedText);
         },
         () => {}
       );
-
-      isRunningRef.current = true;
-      setScannerOn(true);
-      console.log("Scanner started");
+      if (isMounted.current) setScannerOn(true);
     } catch (err) {
       console.error("Unable to start scanner:", err);
+    } finally {
+      isStartingRef.current = false;
     }
   };
 
   const stopScanner = async () => {
-    if (html5QrCodeRef.current && isRunningRef.current) {
-      try {
-        await html5QrCodeRef.current.stop();
-        await html5QrCodeRef.current.clear();
-        isRunningRef.current = false;
-        setScannerOn(false);
-        console.log("Scanner stopped");
-      } catch (err) {
-        console.warn("Error stopping scanner:", err);
-      }
+    if (!scannerOn || !html5QrCodeRef.current) return;
+    try {
+      await html5QrCodeRef.current.stop();
+      await html5QrCodeRef.current.clear();
+      if (isMounted.current) setScannerOn(false);
+    } catch (err) {
+      console.warn("Error stopping scanner:", err);
     }
   };
 
-  // 🚀 AUTO START WHEN PAGE LOADS
   useEffect(() => {
     startScanner();
 
     return () => {
-      if (html5QrCodeRef.current && isRunningRef.current) {
+      isMounted.current = false;
+      if (html5QrCodeRef.current && scannerOn) {
         html5QrCodeRef.current.stop().catch(() => {});
         try {
           html5QrCodeRef.current.clear();
         } catch {}
       }
     };
-  }, []);
+  }, []); // Empty dependency array – starts once on mount
 
   return (
     <div style={{ textAlign: "center" }}>
       <div id="qr-reader" />
-
       {scannerOn && (
-        <button onClick={stopScanner}>
-          Stop Scanner
-        </button>
+        <button onClick={stopScanner}>Stop Scanner</button>
       )}
     </div>
   );
