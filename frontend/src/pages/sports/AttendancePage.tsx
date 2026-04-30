@@ -343,8 +343,9 @@ export default function AttendancePage() {
                             const cfg = STATUS_CONFIG[status];
                             const Ico = cfg.icon;
 
-                            // Avatar letter fallback from index
-                            const letter = String.fromCharCode(65 + (idx % 26));
+                            // Avatar letter from name or fallback
+                            const name = member.student_name || member.name;
+                            const letter = name ? name.charAt(0).toUpperCase() : String.fromCharCode(65 + (idx % 26));
                             const isPopoverOpen = activePopover === member.student_id;
 
                             return (
@@ -364,7 +365,7 @@ export default function AttendancePage() {
                                             {letter}
                                         </div>
                                         <div>
-                                            <p className="text-[15px] font-bold text-gray-800">Student #{member.student_id}</p>
+                                            <p className="text-[15px] font-bold text-gray-800">{member.student_name || member.name || `Student #${member.student_id}`}</p>
                                             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">{member.role.replace('-', ' ')}</p>
                                         </div>
                                     </div>

@@ -51,7 +51,8 @@ export interface Activity {
 export interface Member {
     id: number;
     student_id: number;
-    name?: string;
+    student_name?: string;
+    name?: string; // Keep name for backward compatibility if used
     role: 'Member' | 'Captain' | 'Vice_Captain' | 'Secretary';
     joined_at: string;
 }
