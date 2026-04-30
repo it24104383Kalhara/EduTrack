@@ -94,11 +94,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 { name: 'Teacher Alerts', path: '/sports/teacher-notifications' },
             ],
         },
-        { name: 'Academics', icon: AcademicCapIcon, path: '/academics' },
         { name: 'Inventory', icon: RectangleStackIcon, path: '/sports/inventory' },
-        { name: 'Facilities', icon: BuildingOfficeIcon, path: '/sports/facilities' },
         { name: 'Achievements', icon: TrophyIcon, path: '/sports/achievements' },
-        { name: 'Management', icon: BriefcaseIcon, path: '/admin' },
     ];
 
     const toggleGroup = (name: string) => {
