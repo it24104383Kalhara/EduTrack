@@ -294,6 +294,15 @@ export default function AchievementsPage() {
     const handleCreateMatch = (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedActivityId) return alert('Please select an activity first.');
+
+        // Validation for positive scores
+        const teamScore = matchForm.score_team ? parseInt(matchForm.score_team) : 0;
+        const opponentScore = matchForm.score_opponent ? parseInt(matchForm.score_opponent) : 0;
+        if (teamScore < 0 || opponentScore < 0) {
+            alert('Scores must be non-negative values.');
+            return;
+        }
+
         createMatchMutation.mutate({
             activity_id: selectedActivityId,
             opponent: matchForm.opponent,
@@ -679,12 +688,14 @@ export default function AchievementsPage() {
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Our Score</label>
                                     <input type="number" min="0" placeholder="0"
+                                        onKeyDown={(e) => { if (e.key === '-' || e.key === 'e') e.preventDefault(); }}
                                         className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 bg-gray-50 focus:bg-white"
                                         value={matchForm.score_team} onChange={e => setMatchForm(f => ({ ...f, score_team: e.target.value }))} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Opponent Score</label>
                                     <input type="number" min="0" placeholder="0"
+                                        onKeyDown={(e) => { if (e.key === '-' || e.key === 'e') e.preventDefault(); }}
                                         className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#633194] focus:ring-2 focus:ring-[#633194]/15 bg-gray-50 focus:bg-white"
                                         value={matchForm.score_opponent} onChange={e => setMatchForm(f => ({ ...f, score_opponent: e.target.value }))} />
                                 </div>
